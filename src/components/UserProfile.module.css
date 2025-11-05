@@ -1,0 +1,152 @@
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #1a1a1a;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a4a4a;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  padding-right: 2.5rem;
+  font-size: 1rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.input.valid {
+  border-color: #10b981;
+}
+
+.input.invalid {
+  border-color: #ef4444;
+}
+
+.successIcon {
+  position: absolute;
+  right: 0.75rem;
+  color: #10b981;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.errorIcon {
+  position: absolute;
+  right: 0.75rem;
+  color: #ef4444;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.errorMessage {
+  font-size: 0.875rem;
+  color: #ef4444;
+  margin-top: 0.25rem;
+}
+
+.helperText {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.stats {
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.statsTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.submitButton {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background-color: #4a90e2;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #357abd;
+}
+
+.submitButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.submitButton:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}

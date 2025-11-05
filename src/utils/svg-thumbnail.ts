@@ -1,0 +1,152 @@
+/**
+ * SVG thumbnail generation for board visualization
+ */
+
+import type { Board, CellContent } from '@/types';
+
+/**
+ * Generate SVG thumbnail for a board (player perspective)
+ */
+export function generateBoardThumbnail(board: Board): string {
+  const svg = createBoardSvg(board, false);
+  return createDataUri(svg);
+}
+
+/**
+ * Generate SVG thumbnail for opponent's board (180-degree rotated)
+ */
+export function generateOpponentThumbnail(board: Board): string {
+  const svg = createBoardSvg(board, true);
+  return createDataUri(svg);
+}
+
+/**
+ * Create SVG string for board
+ */
+function createBoardSvg(board: Board, rotated: boolean): string {
+  const size = board.grid.length;
+  const cellSize = 45;
+  const viewBoxSize = size * cellSize + 10;
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}">`;
+  svg += `<rect width="${viewBoxSize}" height="${viewBoxSize}" fill="#f5f5f5"/>`;
+  svg += '<g transform="translate(5,5)">';
+
+  // Draw grid cells
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size; j++) {
+      const x = j * cellSize;
+      const y = i * cellSize;
+      svg += `<rect x="${x}" y="${y}" width="40" height="40" fill="#e8e8e8" stroke="#d9d9d9" stroke-width="1"/>`;
+    }
+  }
+
+  // Draw pieces and traps from sequence
+  // NOTE: Skip 'final' moves - they're goal markers, not rendered on grid
+  board.sequence.forEach((move, idx) => {
+    // Skip final moves (goal reached marker)
+    if (move.type === 'final') {
+      return;
+    }
+
+    let row = move.position.row;
+    let col = move.position.col;
+
+    // Rotate 180 degrees if opponent view
+    if (rotated) {
+      row = size - 1 - row;
+      col = size - 1 - col;
+    }
+
+    const x = col * cellSize;
+    const y = row * cellSize;
+
+    const content = board.grid[move.position.row]?.[move.position.col];
+    if (!content) return;
+
+    if (content === 'piece') {
+      svg += drawPiece(x, y, idx + 1, rotated);
+    } else if (content === 'trap') {
+      svg += drawTrap(x, y, idx + 1);
+    }
+  });
+
+  svg += '</g></svg>';
+  return svg;
+}
+
+/**
+ * Draw piece (circle with number)
+ */
+function drawPiece(x: number, y: number, order: number, isOpponent: boolean): string {
+  const centerX = x + 20;
+  const centerY = y + 20;
+  const color = isOpponent ? '#722ed1' : '#4a90e2'; // Purple for opponent, blue for player
+
+  return `
+    <circle cx="${centerX}" cy="${centerY}" r="15" fill="${color}"/>
+    <text x="${centerX}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${order}</text>
+  `;
+}
+
+/**
+ * Draw trap (X with number)
+ */
+function drawTrap(x: number, y: number, order: number): string {
+  const startX = x + 5;
+  const startY = y + 5;
+  const color = '#f5222d'; // Red for traps
+
+  return `
+    <path d="M${startX} ${startY} l30 30 m0 -30 l-30 30" stroke="${color}" stroke-width="4" opacity="0.7"/>
+    <text x="${x + 35}" y="${y + 20}" font-size="14" fill="${color}" text-anchor="middle" dy=".3em" font-weight="bold">${order}</text>
+  `;
+}
+
+/**
+ * Create data URI from SVG string
+ */
+function createDataUri(svg: string): string {
+  const encoded = encodeURIComponent(svg);
+  return `data:image/svg+xml,${encoded}`;
+}
+
+/**
+ * Create a blank board thumbnail (for new boards)
+ */
+export function generateBlankThumbnail(gridSize: number = 2): string {
+  const cellSize = 45;
+  const viewBoxSize = gridSize * cellSize + 10;
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}">`;
+  svg += `<rect width="${viewBoxSize}" height="${viewBoxSize}" fill="#f5f5f5"/>`;
+  svg += '<g transform="translate(5,5)">';
+
+  // Draw empty grid
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      const x = j * cellSize;
+      const y = i * cellSize;
+      svg += `<rect x="${x}" y="${y}" width="40" height="40" fill="#e8e8e8" stroke="#d9d9d9" stroke-width="1"/>`;
+    }
+  }
+
+  svg += '</g></svg>';
+  return createDataUri(svg);
+}
+
+/**
+ * Get cell content color for display
+ */
+export function getCellContentColor(content: CellContent): string {
+  switch (content) {
+    case 'piece':
+      return '#4a90e2'; // Blue
+    case 'trap':
+      return '#f5222d'; // Red
+    case 'final':
+      return '#52c41a'; // Green (goal reached)
+    case 'empty':
+      return '#e8e8e8'; // Light gray
+  }
+}

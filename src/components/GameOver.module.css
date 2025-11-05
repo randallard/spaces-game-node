@@ -1,0 +1,221 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.trophy {
+  font-size: 6rem;
+  margin-bottom: 1rem;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.winnerText {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.winnerplayer {
+  color: #10b981;
+}
+
+.winneropponent {
+  color: #ef4444;
+}
+
+.winnertie {
+  color: #6b7280;
+}
+
+/* Sections */
+.scoreSection,
+.historySection,
+.statsSection {
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Final Score */
+.finalScore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  padding: 2rem;
+  background-color: #f9fafb;
+  border-radius: 0.75rem;
+}
+
+.finalScoreItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.finalScoreName {
+  font-size: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.finalScoreValue {
+  font-size: 4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.finalScoreDivider {
+  font-size: 3rem;
+  font-weight: 300;
+  color: #d1d5db;
+}
+
+/* Round History */
+.roundsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.roundItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.roundNumber {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.roundWinner {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.statValue {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.newGameButton,
+.shareButton {
+  flex: 1;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.newGameButton {
+  color: white;
+  background-color: #10b981;
+}
+
+.newGameButton:hover {
+  background-color: #059669;
+}
+
+.shareButton {
+  color: white;
+  background-color: #4a90e2;
+}
+
+.shareButton:hover {
+  background-color: #357abd;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .trophy {
+    font-size: 4rem;
+  }
+
+  .winnerText {
+    font-size: 2rem;
+  }
+
+  .finalScore {
+    gap: 2rem;
+  }
+
+  .finalScoreValue {
+    font-size: 3rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}
