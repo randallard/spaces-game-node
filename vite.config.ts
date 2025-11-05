@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/spaces-game/', // Update this to match GitHub repo name
+  base: '/spaces-game-node/', // GitHub Pages base path
   build: {
     outDir: 'dist',
     sourcemap: true,

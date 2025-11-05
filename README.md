@@ -2,6 +2,10 @@
 
 A turn-based strategy board game built with React, TypeScript, and Vite.
 
+try the initial implementation at https://randallard.github.io/spaces-game/
+
+and the current implementation of this one at https://randallard.github.io/spaces-game-node/
+
 ## Overview
 
 Spaces Game is a competitive strategy game where players create 2x2 board patterns with pieces and traps, then compete in 8-round matches. Players share game states via URL hash fragments for easy sharing.
