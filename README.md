@@ -4,7 +4,7 @@ A turn-based strategy board game built with React, TypeScript, and Vite.
 
 try the initial implementation at https://randallard.github.io/spaces-game/
 
-and the current implementation of this one at https://randallard.github.io/spaces-game-node/
+and the current implementation of this one at https://randallard.github.io/spaces-game-node/ 
 
 ## Overview
 
