@@ -145,7 +145,43 @@
   color: #9ca3af;
 }
 
-/* Score Section */
+/* Round Score Section */
+.roundScoreSection {
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 1.5rem 2rem;
+  background-color: #f9fafb;
+  border-radius: 0.75rem;
+}
+
+.roundScoreTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Total Score Section */
+.totalScoreSection {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem 2rem;
+  background-color: #f3f4f6;
+  border-radius: 0.75rem;
+}
+
+.totalScoreTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Legacy scoreSection for backwards compatibility */
 .scoreSection {
   text-align: center;
   margin-bottom: 2rem;

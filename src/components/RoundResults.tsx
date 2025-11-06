@@ -132,9 +132,25 @@ export function RoundResults({
         </div>
       </div>
 
-      {/* Score Display */}
-      <div className={styles.scoreSection}>
-        <h4 className={styles.scoreTitle}>Current Score</h4>
+      {/* Round Scores Display */}
+      <div className={styles.roundScoreSection}>
+        <h4 className={styles.roundScoreTitle}>Round Score</h4>
+        <div className={styles.scoreDisplay}>
+          <div className={styles.scoreItem}>
+            <span className={styles.scoreName}>{playerName}</span>
+            <span className={styles.scoreValue}>{result.playerPoints ?? 0}</span>
+          </div>
+          <span className={styles.scoreDivider}>-</span>
+          <div className={styles.scoreItem}>
+            <span className={styles.scoreName}>{opponentName}</span>
+            <span className={styles.scoreValue}>{result.opponentPoints ?? 0}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Total Score Display */}
+      <div className={styles.totalScoreSection}>
+        <h4 className={styles.totalScoreTitle}>Total Score</h4>
         <div className={styles.scoreDisplay}>
           <div className={styles.scoreItem}>
             <span className={styles.scoreName}>{playerName}</span>

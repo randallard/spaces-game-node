@@ -100,8 +100,8 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
     setState((prev) => ({
       ...prev,
       roundHistory: [...prev.roundHistory, result],
-      playerScore: prev.playerScore + (result.winner === 'player' ? 1 : 0),
-      opponentScore: prev.opponentScore + (result.winner === 'opponent' ? 1 : 0),
+      playerScore: prev.playerScore + (result.playerPoints ?? 0),
+      opponentScore: prev.opponentScore + (result.opponentPoints ?? 0),
       phase: { type: 'round-results', round: prev.currentRound, result },
       checksum: '', // Checksum managed externally
     }));
