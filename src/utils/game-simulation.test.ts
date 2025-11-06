@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { simulateRound, isBoardPlayable } from './game-simulation';
+import { simulateRound, simulateAllRounds, isBoardPlayable } from './game-simulation';
 import type { Board } from '@/types';
 
 // Test board fixtures
@@ -442,5 +442,208 @@ describe('isBoardPlayable', () => {
     };
 
     expect(isBoardPlayable(board)).toBe(false);
+  });
+});
+
+describe('simulateAllRounds', () => {
+  it('should simulate 10 rounds and return results array', () => {
+    const playerBoards: Board[] = [];
+    const opponentBoards: Board[] = [];
+
+    // Create 10 simple boards for each player
+    for (let i = 0; i < 10; i++) {
+      playerBoards.push(
+        createTestBoard(
+          `Player Board ${i + 1}`,
+          [
+            ['piece', 'empty'],
+            ['empty', 'empty'],
+          ],
+          [{ row: 0, col: 0, type: 'piece' }]
+        )
+      );
+
+      opponentBoards.push(
+        createTestBoard(
+          `Opponent Board ${i + 1}`,
+          [
+            ['empty', 'piece'],
+            ['empty', 'empty'],
+          ],
+          [{ row: 0, col: 1, type: 'piece' }]
+        )
+      );
+    }
+
+    const results = simulateAllRounds(playerBoards, opponentBoards);
+
+    expect(results).toHaveLength(10);
+    results.forEach((result, index) => {
+      expect(result.round).toBe(index + 1);
+      expect(result.winner).toBeOneOf(['player', 'opponent', 'tie']);
+      expect(result.playerBoard).toBe(playerBoards[index]);
+      expect(result.opponentBoard).toBe(opponentBoards[index]);
+    });
+  });
+
+  it('should throw error if player deck does not have exactly 10 boards', () => {
+    const playerBoards: Board[] = [];
+    const opponentBoards: Board[] = [];
+
+    // Only 9 boards for player
+    for (let i = 0; i < 9; i++) {
+      playerBoards.push(
+        createTestBoard(
+          `Player Board ${i + 1}`,
+          [
+            ['piece', 'empty'],
+            ['empty', 'empty'],
+          ],
+          [{ row: 0, col: 0, type: 'piece' }]
+        )
+      );
+    }
+
+    // 10 boards for opponent
+    for (let i = 0; i < 10; i++) {
+      opponentBoards.push(
+        createTestBoard(
+          `Opponent Board ${i + 1}`,
+          [
+            ['empty', 'piece'],
+            ['empty', 'empty'],
+          ],
+          [{ row: 0, col: 1, type: 'piece' }]
+        )
+      );
+    }
+
+    expect(() => simulateAllRounds(playerBoards, opponentBoards)).toThrow(
+      'Both decks must have exactly 10 boards'
+    );
+  });
+
+  it('should throw error if opponent deck does not have exactly 10 boards', () => {
+    const playerBoards: Board[] = [];
+    const opponentBoards: Board[] = [];
+
+    // 10 boards for player
+    for (let i = 0; i < 10; i++) {
+      playerBoards.push(
+        createTestBoard(
+          `Player Board ${i + 1}`,
+          [
+            ['piece', 'empty'],
+            ['empty', 'empty'],
+          ],
+          [{ row: 0, col: 0, type: 'piece' }]
+        )
+      );
+    }
+
+    // Only 11 boards for opponent (too many)
+    for (let i = 0; i < 11; i++) {
+      opponentBoards.push(
+        createTestBoard(
+          `Opponent Board ${i + 1}`,
+          [
+            ['empty', 'piece'],
+            ['empty', 'empty'],
+          ],
+          [{ row: 0, col: 1, type: 'piece' }]
+        )
+      );
+    }
+
+    expect(() => simulateAllRounds(playerBoards, opponentBoards)).toThrow(
+      'Both decks must have exactly 10 boards'
+    );
+  });
+
+  it('should accumulate points across all 10 rounds', () => {
+    const playerBoards: Board[] = [];
+    const opponentBoards: Board[] = [];
+
+    // Create boards where player always moves forward (scores 1 point each round)
+    // Use col 1 for player to avoid collision with opponent
+    for (let i = 0; i < 10; i++) {
+      playerBoards.push(
+        createTestBoard(
+          `Player Board ${i + 1}`,
+          [
+            ['empty', 'piece'],
+            ['empty', 'piece'],
+          ],
+          [
+            { row: 1, col: 1, type: 'piece' },
+            { row: 0, col: 1, type: 'piece' },
+          ]
+        )
+      );
+
+      opponentBoards.push(
+        createTestBoard(
+          `Opponent Board ${i + 1}`,
+          [
+            ['empty', 'piece'],
+            ['empty', 'empty'],
+          ],
+          [{ row: 0, col: 1, type: 'piece' }]
+        )
+      );
+    }
+
+    const results = simulateAllRounds(playerBoards, opponentBoards);
+
+    expect(results).toHaveLength(10);
+
+    // Each round player should score at least 1 point for forward movement
+    const totalPlayerPoints = results.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0);
+    expect(totalPlayerPoints).toBeGreaterThanOrEqual(10);
+  });
+
+  it('should correctly determine round winners', () => {
+    const playerBoards: Board[] = [];
+    const opponentBoards: Board[] = [];
+
+    // Create boards where player reaches goal (should win each round)
+    // Use col 1 for player to avoid collision with opponent who will be at (1, 0)
+    for (let i = 0; i < 10; i++) {
+      playerBoards.push(
+        createTestBoard(
+          `Player Board ${i + 1}`,
+          [
+            ['empty', 'piece'],
+            ['empty', 'piece'],
+          ],
+          [
+            { row: 1, col: 1, type: 'piece' },
+            { row: 0, col: 1, type: 'piece' },
+            { row: -1, col: 1, type: 'final' },
+          ]
+        )
+      );
+
+      opponentBoards.push(
+        createTestBoard(
+          `Opponent Board ${i + 1}`,
+          [
+            ['empty', 'piece'],
+            ['empty', 'empty'],
+          ],
+          [{ row: 0, col: 1, type: 'piece' }]
+        )
+      );
+    }
+
+    const results = simulateAllRounds(playerBoards, opponentBoards);
+
+    expect(results).toHaveLength(10);
+
+    // Player should win all rounds since they reach the goal
+    results.forEach((result) => {
+      expect(result.winner).toBe('player');
+      expect(result.playerPoints).toBeGreaterThan(result.opponentPoints ?? 0);
+    });
   });
 });

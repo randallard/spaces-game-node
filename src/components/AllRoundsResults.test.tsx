@@ -1,0 +1,614 @@
+/**
+ * Tests for AllRoundsResults component
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { AllRoundsResults } from './AllRoundsResults';
+import type { RoundResult, Board } from '@/types';
+
+describe('AllRoundsResults', () => {
+  const mockOnPlayAgain = vi.fn();
+
+  const createMockBoard = (id: string, name: string): Board => ({
+    id,
+    name,
+    grid: [
+      ['piece', 'empty'],
+      ['empty', 'empty'],
+    ],
+    sequence: [{ position: { row: 0, col: 0 }, type: 'piece', order: 1 }],
+    thumbnail: 'data:image/svg+xml,%3Csvg%3E%3C/svg%3E',
+    createdAt: Date.now(),
+  });
+
+  const createMockResult = (
+    round: number,
+    winner: 'player' | 'opponent' | 'tie',
+    playerPoints: number,
+    opponentPoints: number
+  ): RoundResult => ({
+    round,
+    winner,
+    playerBoard: createMockBoard(`player-board-${round}`, `Player Board ${round}`),
+    opponentBoard: createMockBoard(`opponent-board-${round}`, `Opponent Board ${round}`),
+    playerFinalPosition: { row: 0, col: 0 },
+    opponentFinalPosition: { row: 1, col: 1 },
+    playerPoints,
+    opponentPoints,
+    playerOutcome: winner === 'player' ? 'won' : winner === 'opponent' ? 'lost' : 'tie',
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('Header and winner display', () => {
+    it('should display game complete title', () => {
+      const results = [createMockResult(1, 'player', 1, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('Game Complete!')).toBeInTheDocument();
+    });
+
+    it('should display player win message', () => {
+      const results = [createMockResult(1, 'player', 1, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('Alice Wins!')).toBeInTheDocument();
+    });
+
+    it('should display opponent win message', () => {
+      const results = [createMockResult(1, 'opponent', 0, 1)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="CPU"
+          playerScore={0}
+          opponentScore={1}
+          winner="opponent"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('CPU Wins!')).toBeInTheDocument();
+    });
+
+    it('should display tie message', () => {
+      const results = [createMockResult(1, 'tie', 1, 1)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={1}
+          winner="tie"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText("It's a Tie!")).toBeInTheDocument();
+    });
+
+    it('should display celebration emoji for player win', () => {
+      const results = [createMockResult(1, 'player', 1, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('🎉')).toBeInTheDocument();
+    });
+
+    it('should display sad emoji for opponent win', () => {
+      const results = [createMockResult(1, 'opponent', 0, 1)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={0}
+          opponentScore={1}
+          winner="opponent"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('😔')).toBeInTheDocument();
+    });
+
+    it('should display handshake emoji for tie', () => {
+      const results = [createMockResult(1, 'tie', 1, 1)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={1}
+          winner="tie"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('🤝')).toBeInTheDocument();
+    });
+  });
+
+  describe('Final score display', () => {
+    it('should display final scores', () => {
+      const results = [createMockResult(1, 'player', 5, 3)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={5}
+          opponentScore={3}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const fives = screen.getAllByText('5');
+      const threes = screen.getAllByText('3');
+
+      expect(fives.length).toBeGreaterThanOrEqual(1);
+      expect(threes.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should display zero scores', () => {
+      const results = [createMockResult(1, 'tie', 0, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={0}
+          opponentScore={0}
+          winner="tie"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const zeros = screen.getAllByText('0');
+      expect(zeros.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should display player and opponent names with scores', () => {
+      const results = [createMockResult(1, 'player', 5, 3)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={5}
+          opponentScore={3}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const aliceElements = screen.getAllByText('Alice');
+      const bobElements = screen.getAllByText('Bob');
+
+      expect(aliceElements.length).toBeGreaterThanOrEqual(1);
+      expect(bobElements.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('Rounds grid', () => {
+    it('should display "All Rounds" section title', () => {
+      const results = [createMockResult(1, 'player', 1, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('All Rounds (Click to view details)')).toBeInTheDocument();
+    });
+
+    it('should display all 10 rounds', () => {
+      const results = Array.from({ length: 10 }, (_, i) =>
+        createMockResult(i + 1, 'player', 1, 0)
+      );
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={10}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('Round 1')).toBeInTheDocument();
+      expect(screen.getByText('Round 10')).toBeInTheDocument();
+    });
+
+    it('should display round winner labels', () => {
+      const results = [
+        createMockResult(1, 'player', 1, 0),
+        createMockResult(2, 'opponent', 0, 1),
+        createMockResult(3, 'tie', 1, 1),
+      ];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={2}
+          winner="tie"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('Alice Won')).toBeInTheDocument();
+      expect(screen.getByText('Bob Won')).toBeInTheDocument();
+      expect(screen.getByText('Tie')).toBeInTheDocument();
+    });
+
+    it('should display round points', () => {
+      const results = [createMockResult(1, 'player', 5, 3)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={5}
+          opponentScore={3}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const fives = screen.getAllByText('5');
+      const threes = screen.getAllByText('3');
+
+      expect(fives.length).toBeGreaterThanOrEqual(1);
+      expect(threes.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should display board thumbnails for each round', () => {
+      const results = [createMockResult(1, 'player', 1, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const playerThumbnail = screen.getByAltText('Player Board 1');
+      const opponentThumbnail = screen.getByAltText('Opponent Board 1');
+
+      expect(playerThumbnail).toBeInTheDocument();
+      expect(opponentThumbnail).toBeInTheDocument();
+    });
+  });
+
+  describe('Round selection and modal', () => {
+    it('should open round details modal when round card clicked', () => {
+      const results = [createMockResult(1, 'player', 2, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const roundCard = screen.getByText('Round 1').closest('button');
+      fireEvent.click(roundCard!);
+
+      // Should show Round Results component in modal
+      expect(screen.getByText('Round 1 Complete')).toBeInTheDocument();
+    });
+
+    it('should display close button in modal', () => {
+      const results = [createMockResult(1, 'player', 2, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const roundCard = screen.getByText('Round 1').closest('button');
+      fireEvent.click(roundCard!);
+
+      const closeButton = screen.getByLabelText('Close');
+      expect(closeButton).toBeInTheDocument();
+    });
+
+    it('should close modal when close button clicked', () => {
+      const results = [createMockResult(1, 'player', 2, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      // Open modal
+      const roundCard = screen.getByText('Round 1').closest('button');
+      fireEvent.click(roundCard!);
+
+      // Close modal
+      const closeButton = screen.getByLabelText('Close');
+      fireEvent.click(closeButton);
+
+      // Should return to rounds grid
+      expect(screen.queryByText('Round 1 Complete')).not.toBeInTheDocument();
+      expect(screen.getByText('All Rounds (Click to view details)')).toBeInTheDocument();
+    });
+
+    it('should close modal when continue button clicked', () => {
+      const results = [createMockResult(1, 'player', 2, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      // Open modal
+      const roundCard = screen.getByText('Round 1').closest('button');
+      fireEvent.click(roundCard!);
+
+      // Click continue button in RoundResults
+      const continueButton = screen.getByText('Continue to Next Round');
+      fireEvent.click(continueButton);
+
+      // Should close modal
+      expect(screen.queryByText('Round 1 Complete')).not.toBeInTheDocument();
+    });
+
+    it('should show running total scores in modal', () => {
+      const results = [
+        createMockResult(1, 'player', 2, 1),
+        createMockResult(2, 'opponent', 1, 3),
+      ];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={4}
+          winner="opponent"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      // Open round 1 modal
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+
+      // Should show running total after round 1: 2-1
+      expect(screen.getByText('Total Score')).toBeInTheDocument();
+    });
+  });
+
+  describe('Play Again button', () => {
+    it('should display play again button', () => {
+      const results = [createMockResult(1, 'player', 1, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('Play Again')).toBeInTheDocument();
+    });
+
+    it('should call onPlayAgain when button clicked', () => {
+      const results = [createMockResult(1, 'player', 1, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const playAgainButton = screen.getByText('Play Again');
+      fireEvent.click(playAgainButton);
+
+      expect(mockOnPlayAgain).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Multiple rounds scenarios', () => {
+    it('should handle viewing different rounds', () => {
+      const results = [
+        createMockResult(1, 'player', 2, 0),
+        createMockResult(2, 'opponent', 0, 2),
+      ];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={2}
+          winner="tie"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      // View round 1
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+      expect(screen.getByText('Round 1 Complete')).toBeInTheDocument();
+
+      // Close and view round 2
+      const closeButton = screen.getByLabelText('Close');
+      fireEvent.click(closeButton);
+
+      const round2Card = screen.getByText('Round 2').closest('button');
+      fireEvent.click(round2Card!);
+      expect(screen.getByText('Round 2 Complete')).toBeInTheDocument();
+    });
+
+    it('should display all 10 rounds with mixed results', () => {
+      const results = Array.from({ length: 10 }, (_, i) => {
+        const winner = i % 3 === 0 ? 'player' : i % 3 === 1 ? 'opponent' : 'tie';
+        return createMockResult(i + 1, winner as any, 1, 1);
+      });
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={10}
+          opponentScore={10}
+          winner="tie"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      // Should have 10 round cards
+      for (let i = 1; i <= 10; i++) {
+        expect(screen.getByText(`Round ${i}`)).toBeInTheDocument();
+      }
+    });
+  });
+
+  describe('Edge cases', () => {
+    it('should handle long player names', () => {
+      const results = [createMockResult(1, 'player', 1, 0)];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="VeryLongPlayerName123"
+          opponentName="AnotherLongOpponentName"
+          playerScore={1}
+          opponentScore={0}
+          winner="player"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      expect(screen.getByText('VeryLongPlayerName123 Wins!')).toBeInTheDocument();
+    });
+
+    it('should handle zero points in all rounds', () => {
+      const results = Array.from({ length: 10 }, (_, i) =>
+        createMockResult(i + 1, 'tie', 0, 0)
+      );
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={0}
+          opponentScore={0}
+          winner="tie"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      const zeros = screen.getAllByText('0');
+      expect(zeros.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+});
