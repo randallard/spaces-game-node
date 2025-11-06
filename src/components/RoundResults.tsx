@@ -125,26 +125,37 @@ export function RoundResults({
     let opponentPosition: { row: number; col: number } | null = null;
     const playerTraps: Array<{ row: number; col: number }> = [];
     const opponentTraps: Array<{ row: number; col: number }> = [];
+    let playerRoundEnded = false;
+    let opponentRoundEnded = false;
 
-    // Replay all previous steps to get current state
+    // Replay all previous steps to get current state and check if round ended
     for (let i = 0; i < step; i++) {
-      if (i <= playerLastStep && i < playerBoard.sequence.length) {
+      if (!playerRoundEnded && i <= playerLastStep && i < playerBoard.sequence.length) {
         const move = playerBoard.sequence[i]!;
         if (move.type === 'piece') {
           playerPosition = move.position;
         } else if (move.type === 'trap') {
           playerTraps.push(move.position);
+        } else if (move.type === 'final') {
+          playerRoundEnded = true;
         }
       }
 
-      if (i <= opponentLastStep && i < opponentBoard.sequence.length) {
+      if (!opponentRoundEnded && i <= opponentLastStep && i < opponentBoard.sequence.length) {
         const move = opponentBoard.sequence[i]!;
         const rotated = rotatePosition(move.position.row, move.position.col);
         if (move.type === 'piece') {
           opponentPosition = rotated;
         } else if (move.type === 'trap') {
           opponentTraps.push(rotated);
+        } else if (move.type === 'final') {
+          opponentRoundEnded = true;
         }
+      }
+
+      // Check if either player reached goal - round ends immediately
+      if (playerRoundEnded || opponentRoundEnded) {
+        break;
       }
     }
 
@@ -152,8 +163,8 @@ export function RoundResults({
     let newPlayerPosition: { row: number; col: number } | null = null;
     let newOpponentPosition: { row: number; col: number } | null = null;
 
-    // Process player action (only if they haven't ended yet)
-    if (step <= playerLastStep && step < playerBoard.sequence.length) {
+    // Process player action (only if they haven't ended yet and round hasn't ended)
+    if (!playerRoundEnded && !opponentRoundEnded && step <= playerLastStep && step < playerBoard.sequence.length) {
       const move = playerBoard.sequence[step]!;
       if (move.type === 'piece') {
         explanations.push(`Player moves to (${move.position.row}, ${move.position.col})`);
@@ -170,11 +181,12 @@ export function RoundResults({
       } else if (move.type === 'final') {
         explanations.push('Player reaches the goal!');
         explanations.push('  +1 point (goal reached)');
+        playerRoundEnded = true;
       }
     }
 
-    // Process opponent action (only if they haven't ended yet)
-    if (step <= opponentLastStep && step < opponentBoard.sequence.length) {
+    // Process opponent action (only if they haven't ended yet and round hasn't ended)
+    if (!opponentRoundEnded && !playerRoundEnded && step <= opponentLastStep && step < opponentBoard.sequence.length) {
       const move = opponentBoard.sequence[step]!;
       const rotated = rotatePosition(move.position.row, move.position.col);
       if (move.type === 'piece') {
@@ -192,29 +204,43 @@ export function RoundResults({
       } else if (move.type === 'final') {
         explanations.push('Opponent reaches the goal!');
         explanations.push('  +1 point (goal reached)');
+        opponentRoundEnded = true;
       }
     }
 
-    // After both actions are processed, check for trap hits and collisions
-    if (newPlayerPosition) {
-      // Check if player hit opponent's trap (including traps placed this turn)
-      const hitTrap = opponentTraps.some(trap => positionsMatch(trap, newPlayerPosition!));
-      if (hitTrap) {
-        explanations.push('  -1 point (hit trap!)');
+    // After both actions are processed, check for trap hits and collisions (only if round hasn't ended)
+    if (!playerRoundEnded && !opponentRoundEnded) {
+      if (newPlayerPosition) {
+        // Check if player hit opponent's trap (including traps placed this turn)
+        const hitTrap = opponentTraps.some(trap => positionsMatch(trap, newPlayerPosition!));
+        if (hitTrap) {
+          explanations.push('  -1 point (hit trap!)');
+        }
+      }
+
+      if (newOpponentPosition) {
+        // Check if opponent hit player's trap (including traps placed this turn)
+        const hitTrap = playerTraps.some(trap => positionsMatch(trap, newOpponentPosition!));
+        if (hitTrap) {
+          explanations.push('  -1 point (hit trap!)');
+        }
+      }
+
+      // Check for collision if both players moved to a position
+      if (newPlayerPosition && newOpponentPosition && positionsMatch(newPlayerPosition, newOpponentPosition)) {
+        explanations.push('  -1 point (collision!)');
       }
     }
 
-    if (newOpponentPosition) {
-      // Check if opponent hit player's trap (including traps placed this turn)
-      const hitTrap = playerTraps.some(trap => positionsMatch(trap, newOpponentPosition!));
-      if (hitTrap) {
-        explanations.push('  -1 point (hit trap!)');
+    // Add round end message if appropriate
+    if (playerRoundEnded || opponentRoundEnded) {
+      if (playerRoundEnded) {
+        explanations.push('');
+        explanations.push('Round ends - Player reached the goal!');
+      } else if (opponentRoundEnded) {
+        explanations.push('');
+        explanations.push('Round ends - Opponent reached the goal!');
       }
-    }
-
-    // Check for collision if both players moved to a position
-    if (newPlayerPosition && newOpponentPosition && positionsMatch(newPlayerPosition, newOpponentPosition)) {
-      explanations.push('  -1 point (collision!)');
     }
 
     return explanations;

@@ -36,6 +36,9 @@ describe('compressGameState', () => {
     playerSelectedBoard: null,
     opponentSelectedBoard: null,
     roundHistory: [],
+  gameMode: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
     checksum: 'abc123',
   };
 
@@ -93,6 +96,9 @@ describe('decompressGameState', () => {
     playerSelectedBoard: null,
     opponentSelectedBoard: null,
     roundHistory: [],
+  gameMode: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
     checksum: 'abc123',
   };
 
@@ -163,6 +169,9 @@ describe('compressPayload and decompressPayload', () => {
       playerSelectedBoard: null,
       opponentSelectedBoard: null,
       roundHistory: [],
+  gameMode: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
       checksum: 'abc',
     };
 
@@ -216,6 +225,9 @@ describe('getGameStateFromHash', () => {
     playerSelectedBoard: null,
     opponentSelectedBoard: null,
     roundHistory: [],
+  gameMode: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
     checksum: 'abc',
   };
 
@@ -266,6 +278,9 @@ describe('setGameStateToHash', () => {
     playerSelectedBoard: null,
     opponentSelectedBoard: null,
     roundHistory: [],
+  gameMode: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
     checksum: 'abc',
   };
 
@@ -314,6 +329,9 @@ describe('getCompressionRatio', () => {
     playerSelectedBoard: null,
     opponentSelectedBoard: null,
     roundHistory: [],
+  gameMode: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
     checksum: 'abc123',
   };
 

@@ -274,6 +274,48 @@ export function simulateRound(
 }
 
 /**
+ * Simulate all 10 rounds for deck-based gameplay
+ *
+ * @param playerBoards - Player's deck of 10 boards
+ * @param opponentBoards - Opponent's deck of 10 boards
+ * @returns Array of 10 round results
+ *
+ * @example
+ * ```ts
+ * const results = simulateAllRounds(playerDeck.boards, opponentDeck.boards);
+ * results.forEach(result => {
+ *   console.log(`Round ${result.round}: ${result.winner} wins`);
+ * });
+ * ```
+ */
+export function simulateAllRounds(
+  playerBoards: Board[],
+  opponentBoards: Board[]
+): RoundResult[] {
+  if (playerBoards.length !== 10 || opponentBoards.length !== 10) {
+    throw new Error('Both decks must have exactly 10 boards');
+  }
+
+  console.log('\n====== Starting Deck vs Deck (10 Rounds) ======');
+
+  const results: RoundResult[] = [];
+
+  for (let round = 1; round <= 10; round++) {
+    const playerBoard = playerBoards[round - 1]!;
+    const opponentBoard = opponentBoards[round - 1]!;
+
+    const result = simulateRound(round, playerBoard, opponentBoard);
+    results.push(result);
+  }
+
+  console.log('\n====== All Rounds Complete ======');
+  console.log(`Total Player Score: ${results.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0)}`);
+  console.log(`Total Opponent Score: ${results.reduce((sum, r) => sum + (r.opponentPoints ?? 0), 0)}`);
+
+  return results;
+}
+
+/**
  * Quick validation that a board is playable
  */
 export function isBoardPlayable(board: Board): boolean {

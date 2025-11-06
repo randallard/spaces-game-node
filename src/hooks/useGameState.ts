@@ -7,15 +7,19 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { GameState, GamePhase, Board, Opponent, RoundResult } from '@/types';
+import type { GameState, GamePhase, Board, Opponent, RoundResult, Deck, GameMode } from '@/types';
 
 export interface UseGameStateReturn {
   state: GameState;
   setPhase: (phase: GamePhase) => void;
-  selectOpponent: (opponent: Opponent) => void;
+  setGameMode: (mode: GameMode) => void;
+  selectOpponent: (opponent: Opponent, gameMode: GameMode) => void;
   selectPlayerBoard: (board: Board) => void;
   selectOpponentBoard: (board: Board) => void;
+  selectPlayerDeck: (deck: Deck) => void;
+  selectOpponentDeck: (deck: Deck) => void;
   completeRound: (result: RoundResult) => void;
+  completeAllRounds: (results: RoundResult[]) => void;
   advanceToNextRound: () => void;
   endGame: (winner: 'player' | 'opponent' | 'tie') => void;
   resetGame: () => void;
@@ -60,13 +64,31 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
   }, []);
 
   /**
-   * Select opponent and transition to board selection
+   * Set game mode
    */
-  const selectOpponent = useCallback((opponent: Opponent): void => {
+  const setGameMode = useCallback((mode: GameMode): void => {
+    setState((prev) => ({
+      ...prev,
+      gameMode: mode,
+      checksum: '', // Checksum managed externally
+    }));
+  }, []);
+
+  /**
+   * Select opponent and transition based on game mode
+   */
+  const selectOpponent = useCallback((opponent: Opponent, gameMode: GameMode): void => {
+    const nextPhase: GamePhase =
+      gameMode === 'deck'
+        ? { type: 'deck-selection' }
+        : { type: 'board-selection', round: 1 };
+
     setState((prev) => ({
       ...prev,
       opponent,
-      phase: { type: 'board-selection', round: 1 },
+      gameMode,
+      phase: nextPhase,
+      currentRound: 1,
       checksum: '', // Checksum managed externally
     }));
   }, []);
@@ -94,7 +116,29 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
   }, []);
 
   /**
-   * Complete current round with result
+   * Select player's deck (deck mode)
+   */
+  const selectPlayerDeck = useCallback((deck: Deck): void => {
+    setState((prev) => ({
+      ...prev,
+      playerSelectedDeck: deck,
+      checksum: '', // Checksum managed externally
+    }));
+  }, []);
+
+  /**
+   * Select opponent's deck (deck mode)
+   */
+  const selectOpponentDeck = useCallback((deck: Deck): void => {
+    setState((prev) => ({
+      ...prev,
+      opponentSelectedDeck: deck,
+      checksum: '', // Checksum managed externally
+    }));
+  }, []);
+
+  /**
+   * Complete current round with result (round-by-round mode)
    */
   const completeRound = useCallback((result: RoundResult): void => {
     setState((prev) => ({
@@ -108,7 +152,24 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
   }, []);
 
   /**
-   * Advance to next round or end game
+   * Complete all rounds at once (deck mode)
+   */
+  const completeAllRounds = useCallback((results: RoundResult[]): void => {
+    const totalPlayerScore = results.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0);
+    const totalOpponentScore = results.reduce((sum, r) => sum + (r.opponentPoints ?? 0), 0);
+
+    setState((prev) => ({
+      ...prev,
+      roundHistory: results,
+      playerScore: totalPlayerScore,
+      opponentScore: totalOpponentScore,
+      phase: { type: 'all-rounds-results', results },
+      checksum: '', // Checksum managed externally
+    }));
+  }, []);
+
+  /**
+   * Advance to next round or end game (round-by-round mode)
    */
   const advanceToNextRound = useCallback((): void => {
     setState((prev) => {
@@ -167,11 +228,14 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
       phase: { type: 'user-setup' },
       user: prev.user, // Preserve user profile
       opponent: null,
+      gameMode: null,
       currentRound: 1,
       playerScore: 0,
       opponentScore: 0,
       playerSelectedBoard: null,
       opponentSelectedBoard: null,
+      playerSelectedDeck: null,
+      opponentSelectedDeck: null,
       roundHistory: [],
       checksum: '', // Checksum managed externally
     }));
@@ -187,10 +251,14 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
   return {
     state,
     setPhase,
+    setGameMode,
     selectOpponent,
     selectPlayerBoard,
     selectOpponentBoard,
+    selectPlayerDeck,
+    selectOpponentDeck,
     completeRound,
+    completeAllRounds,
     advanceToNextRound,
     endGame,
     resetGame,

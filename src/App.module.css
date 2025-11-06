@@ -355,3 +355,75 @@ body {
     font-size: 2rem;
   }
 }
+
+/* Game Mode Selection */
+.gameModeSelection {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.gameModeSelection h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: var(--spacing-xl);
+  color: var(--text-primary);
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.modeCard {
+  padding: var(--spacing-xl);
+  background-color: var(--bg-secondary);
+  border: 2px solid #e5e7eb;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.modeCard:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.modeCard h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.modeCard p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.backButton {
+  display: block;
+  margin: 0 auto;
+  padding: var(--spacing-md) var(--spacing-xl);
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.backButton:hover {
+  background-color: #4b5563;
+}
+
+@media (max-width: 640px) {
+  .modeGrid {
+    grid-template-columns: 1fr;
+  }
+}

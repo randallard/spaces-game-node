@@ -20,7 +20,10 @@ describe('GamePhaseSchema', () => {
 
   it('should accept opponent-selection phase', () => {
     expect(() =>
-      GamePhaseSchema.parse({ type: 'opponent-selection' })
+      GamePhaseSchema.parse({ type: 'opponent-selection', gameMode: 'round-by-round' })
+    ).not.toThrow();
+    expect(() =>
+      GamePhaseSchema.parse({ type: 'opponent-selection', gameMode: 'deck' })
     ).not.toThrow();
   });
 
@@ -31,6 +34,9 @@ describe('GamePhaseSchema', () => {
     expect(() =>
       GamePhaseSchema.parse({ type: 'board-selection', round: 8 })
     ).not.toThrow();
+    expect(() =>
+      GamePhaseSchema.parse({ type: 'board-selection', round: 10 })
+    ).not.toThrow();
   });
 
   it('should reject board-selection with invalid round', () => {
@@ -38,7 +44,7 @@ describe('GamePhaseSchema', () => {
       GamePhaseSchema.parse({ type: 'board-selection', round: 0 })
     ).toThrow();
     expect(() =>
-      GamePhaseSchema.parse({ type: 'board-selection', round: 9 })
+      GamePhaseSchema.parse({ type: 'board-selection', round: 11 })
     ).toThrow();
   });
 
@@ -96,13 +102,19 @@ describe('RoundResultSchema', () => {
     expect(() => RoundResultSchema.parse(validResult)).not.toThrow();
   });
 
-  it('should reject round outside 1-8 range', () => {
+  it('should reject round outside 1-10 range', () => {
     expect(() =>
       RoundResultSchema.parse({ ...validResult, round: 0 })
     ).toThrow();
     expect(() =>
-      RoundResultSchema.parse({ ...validResult, round: 9 })
+      RoundResultSchema.parse({ ...validResult, round: 11 })
     ).toThrow();
+  });
+
+  it('should accept round 10', () => {
+    expect(() =>
+      RoundResultSchema.parse({ ...validResult, round: 10 })
+    ).not.toThrow();
   });
 
   it('should reject negative points', () => {
@@ -146,6 +158,9 @@ describe('GameStateSchema', () => {
     playerSelectedBoard: null,
     opponentSelectedBoard: null,
     roundHistory: [],
+  gameMode: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
     checksum: 'abc123',
   };
 
@@ -158,8 +173,14 @@ describe('GameStateSchema', () => {
       GameStateSchema.parse({ ...validGameState, currentRound: -1 })
     ).toThrow();
     expect(() =>
-      GameStateSchema.parse({ ...validGameState, currentRound: 9 })
+      GameStateSchema.parse({ ...validGameState, currentRound: 11 })
     ).toThrow();
+  });
+
+  it('should accept round 10', () => {
+    expect(() =>
+      GameStateSchema.parse({ ...validGameState, currentRound: 10 })
+    ).not.toThrow();
   });
 
   it('should reject negative scores', () => {
@@ -202,6 +223,9 @@ describe('UrlPayloadSchema', () => {
     playerSelectedBoard: null,
     opponentSelectedBoard: null,
     roundHistory: [],
+  gameMode: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
     checksum: 'abc123',
   };
 
