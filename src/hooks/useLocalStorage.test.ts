@@ -2,7 +2,7 @@
  * Tests for useLocalStorage hook
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { z } from 'zod';
 import { useLocalStorage } from './useLocalStorage';
@@ -98,12 +98,17 @@ describe('useLocalStorage', () => {
   it('should handle invalid data in localStorage', () => {
     localStorage.setItem('test-key', 'invalid-json');
 
+    // Suppress console.error for this test
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     const { result } = renderHook(() =>
       useLocalStorage('test-key', TestSchema, null)
     );
 
     // Should fall back to initialValue
     expect(result.current[0]).toBeNull();
+
+    consoleErrorSpy.mockRestore();
   });
 
   it('should handle data that fails schema validation', () => {
@@ -112,12 +117,17 @@ describe('useLocalStorage', () => {
       JSON.stringify({ id: '1', name: 'Test' })
     ); // Missing 'count'
 
+    // Suppress console.error for this test
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     const { result } = renderHook(() =>
       useLocalStorage('test-key', TestSchema, null)
     );
 
     // Should fall back to initialValue
     expect(result.current[0]).toBeNull();
+
+    consoleErrorSpy.mockRestore();
   });
 
   it('should use custom initialValue', () => {

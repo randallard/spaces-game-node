@@ -81,15 +81,25 @@ describe('localStorage utilities', () => {
       const invalidData = { name: 'Test', value: 'not-a-number' };
       window.localStorage.setItem('test-key', JSON.stringify(invalidData));
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const loaded = loadFromLocalStorage('test-key', TestSchema);
       expect(loaded).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should return null for malformed JSON', () => {
       window.localStorage.setItem('test-key', '{invalid json}');
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const loaded = loadFromLocalStorage('test-key', TestSchema);
       expect(loaded).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should validate complex schemas', () => {

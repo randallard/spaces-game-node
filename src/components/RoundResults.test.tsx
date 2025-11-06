@@ -306,7 +306,8 @@ describe('RoundResults', () => {
         />
       );
 
-      expect(screen.getByText('Current Score')).toBeInTheDocument();
+      expect(screen.getByText('Total Score')).toBeInTheDocument();
+      expect(screen.getByText('Round Score')).toBeInTheDocument();
       expect(screen.getByText('5')).toBeInTheDocument();
       expect(screen.getByText('3')).toBeInTheDocument();
     });
@@ -344,7 +345,9 @@ describe('RoundResults', () => {
         />
       );
 
-      expect(screen.getByText('8')).toBeInTheDocument();
+      // "8" appears multiple times: in round title and in score displays
+      const eights = screen.getAllByText('8');
+      expect(eights.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should display player legend for combined board', () => {
