@@ -7,7 +7,7 @@ import { z } from 'zod';
 export const CellContentSchema = z.enum(['empty', 'piece', 'trap', 'final']);
 
 export const PositionSchema = z.object({
-  row: z.number().int().min(0).max(1), // 2x2 grid (0-1)
+  row: z.number().int().min(-1).max(1), // 2x2 grid (0-1), -1 for final moves (off the board)
   col: z.number().int().min(0).max(1),
 });
 

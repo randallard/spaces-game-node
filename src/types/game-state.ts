@@ -33,6 +33,7 @@ export type RoundResult = {
  */
 export type GamePhase =
   | { type: 'user-setup' }
+  | { type: 'board-management' }
   | { type: 'opponent-selection' }
   | { type: 'board-selection'; round: number }
   | { type: 'waiting-for-opponent'; round: number }

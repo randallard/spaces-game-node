@@ -1,122 +1,50 @@
 .container {
-  max-width: 600px;
+  max-width: 500px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
-.title {
-  font-size: 1.75rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
-  text-align: center;
-  color: #1a1a1a;
-}
-
-.section {
-  margin-bottom: 2rem;
-}
-
-.label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4a4a4a;
-  margin-bottom: 0.5rem;
-}
-
-.input {
+/* Final Move Button (appears at top when piece reaches row 0) */
+.finalMoveButton {
   width: 100%;
-  padding: 0.75rem;
-  font-size: 1rem;
-  border: 2px solid #d1d5db;
-  border-radius: 0.5rem;
-  transition: border-color 0.2s ease;
-}
-
-.input:focus {
-  outline: none;
-  border-color: #4a90e2;
-}
-
-/* Tool Selection */
-.toolLabel {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4a4a4a;
-  margin-bottom: 0.75rem;
-}
-
-.toolGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-}
-
-.toolButton {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem 0.5rem;
-  background-color: white;
-  border: 2px solid #e5e7eb;
+  padding: 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  background-color: #10b981;
+  border: none;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  margin-bottom: 1rem;
+  transition: background-color 0.2s ease;
 }
 
-.toolButton:hover {
-  border-color: #4a90e2;
-  background-color: #f0f9ff;
-}
-
-.toolButtonActive {
-  border-color: #4a90e2;
-  background-color: #eff6ff;
-}
-
-.toolIcon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.toolName {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #4a4a4a;
+.finalMoveButton:hover {
+  background-color: #059669;
 }
 
 /* Grid */
-.gridLabel {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4a4a4a;
-  margin-bottom: 0.75rem;
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .cell {
   aspect-ratio: 1;
-  min-height: 120px;
-  background-color: #f9fafb;
-  border: 2px solid #d1d5db;
+  min-height: 140px;
+  background-color: #374151;
+  border: 2px solid #4b5563;
   border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
-.cell:hover {
-  border-color: #4a90e2;
-  background-color: #f0f9ff;
-}
-
-.cellEmpty {
+/* Piece Display */
+.cellPiece {
   width: 100%;
   height: 100%;
   display: flex;
@@ -124,73 +52,86 @@
   justify-content: center;
 }
 
-.cellPiece,
-.cellTrap,
-.cellFinal {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.cellIcon {
+.pieceIcon {
   font-size: 3rem;
   line-height: 1;
 }
 
-.cellOrder {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  width: 2rem;
-  height: 2rem;
+/* Trap Display */
+.cellTrap {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #4a90e2;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 700;
-  border-radius: 50%;
 }
 
-.gridHint {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-style: italic;
-  text-align: center;
+.trapIcon {
+  font-size: 3rem;
+  line-height: 1;
+  color: #ef4444;
 }
 
-/* Stats */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  padding: 1.5rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.statItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.statLabel {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.statValue {
+/* Start Button (bottom row, choosing phase) */
+.startButton {
+  padding: 0.75rem 1.5rem;
   font-size: 1rem;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-weight: 500;
+  color: white;
+  background-color: #4b5563;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.startButton:hover {
+  background-color: #6b7280;
+}
+
+/* Action Buttons (Move/Trap on adjacent squares) */
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.moveButton,
+.trapButton {
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.moveButton {
+  background-color: #3b82f6;
+}
+
+.moveButton:hover {
+  background-color: #2563eb;
+}
+
+.trapButton {
+  background-color: #ef4444;
+}
+
+.trapButton:hover {
+  background-color: #dc2626;
+}
+
+/* Instruction Text */
+.instruction {
+  font-size: 0.875rem;
+  color: #d1d5db;
+  text-align: left;
+  margin-bottom: 1rem;
 }
 
 /* Errors */
@@ -199,20 +140,7 @@
   background-color: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.errorTitle {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #991b1b;
-  margin-bottom: 0.5rem;
-}
-
-.errorList {
-  list-style: disc;
-  padding-left: 1.5rem;
-  margin: 0;
+  margin-bottom: 1rem;
 }
 
 .errorItem {
@@ -221,52 +149,42 @@
   margin-bottom: 0.25rem;
 }
 
-/* Actions */
+.errorItem:last-child {
+  margin-bottom: 0;
+}
+
+/* Bottom Actions */
 .actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .cancelButton,
-.clearButton,
-.saveButton {
-  padding: 0.875rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 0.5rem;
+.restartButton {
+  flex: 1;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
 }
 
 .cancelButton {
-  flex: 1;
-  color: #4a4a4a;
-  background-color: white;
-  border: 2px solid #d1d5db;
+  color: white;
+  background-color: #4b5563;
 }
 
 .cancelButton:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: #6b7280;
 }
 
-.clearButton {
-  flex: 1;
+.restartButton {
   color: white;
-  background-color: #ef4444;
+  background-color: #6366f1;
 }
 
-.clearButton:hover {
-  background-color: #dc2626;
-}
-
-.saveButton {
-  flex: 2;
-  color: white;
-  background-color: #10b981;
-}
-
-.saveButton:hover {
-  background-color: #059669;
+.restartButton:hover {
+  background-color: #4f46e5;
 }

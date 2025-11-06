@@ -61,3 +61,13 @@ export {
   simulateRound,
   isBoardPlayable,
 } from './game-simulation';
+
+// Backup & Restore
+export {
+  exportBackup,
+  downloadBackup,
+  validateBackup,
+  importBackup,
+  loadBackupFromFile,
+  type BackupData,
+} from './backup';

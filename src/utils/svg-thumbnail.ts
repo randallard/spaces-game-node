@@ -41,14 +41,22 @@ function createBoardSvg(board: Board, rotated: boolean): string {
     }
   }
 
-  // Draw pieces and traps from sequence
+  // Build map of position -> last move (so traps override pieces)
   // NOTE: Skip 'final' moves - they're goal markers, not rendered on grid
-  board.sequence.forEach((move, idx) => {
+  const positionMap = new Map<string, { move: typeof board.sequence[0]; order: number }>();
+
+  board.sequence.forEach((move) => {
     // Skip final moves (goal reached marker)
     if (move.type === 'final') {
       return;
     }
 
+    const key = `${move.position.row},${move.position.col}`;
+    positionMap.set(key, { move, order: move.order });
+  });
+
+  // Draw pieces and traps (only the last entry for each position)
+  positionMap.forEach(({ move, order }) => {
     let row = move.position.row;
     let col = move.position.col;
 
@@ -65,9 +73,9 @@ function createBoardSvg(board: Board, rotated: boolean): string {
     if (!content) return;
 
     if (content === 'piece') {
-      svg += drawPiece(x, y, idx + 1, rotated);
+      svg += drawPiece(x, y, order, rotated);
     } else if (content === 'trap') {
-      svg += drawTrap(x, y, idx + 1);
+      svg += drawTrap(x, y, order);
     }
   });
 

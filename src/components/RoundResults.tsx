@@ -3,8 +3,9 @@
  * @module components/RoundResults
  */
 
-import { type ReactElement } from 'react';
+import { type ReactElement, useMemo } from 'react';
 import type { RoundResult } from '@/types';
+import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
 import styles from './RoundResults.module.css';
 
 export interface RoundResultsProps {
@@ -43,6 +44,12 @@ export function RoundResults({
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard, playerFinalPosition, opponentFinalPosition } = result;
 
+  // Generate combined board SVG
+  const combinedBoardSvg = useMemo(
+    () => generateCombinedBoardSvg(playerBoard, opponentBoard, result),
+    [playerBoard, opponentBoard, result]
+  );
+
   const getWinnerText = (): string => {
     if (winner === 'player') {
       return `${playerName} Wins!`;
@@ -73,57 +80,54 @@ export function RoundResults({
         </h3>
       </div>
 
-      <div className={styles.boardsComparison}>
-        {/* Player Board */}
-        <div className={styles.boardSection}>
-          <h4 className={styles.boardTitle}>{playerName}</h4>
-          <div className={styles.boardThumbnail}>
-            <img
-              src={playerBoard.thumbnail}
-              alt={`${playerName}'s board`}
-              className={styles.thumbnailImage}
-            />
+      {/* Combined Board Display */}
+      <div className={styles.combinedBoard}>
+        <h4 className={styles.boardTitle}>Combined Board View</h4>
+        <div className={styles.boardThumbnail}>
+          <img
+            src={combinedBoardSvg}
+            alt="Combined board showing both players"
+            className={styles.thumbnailImage}
+          />
+        </div>
+        <div className={styles.legend}>
+          <div className={styles.legendItem}>
+            <div className={styles.legendCircle} style={{ backgroundColor: 'rgb(37, 99, 235)' }}></div>
+            <span>{playerName}</span>
           </div>
-          <div className={styles.boardDetails}>
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Board:</span>
-              <span className={styles.detailValue}>{playerBoard.name}</span>
-            </div>
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Final Position:</span>
-              <span className={styles.detailValue}>
-                ({playerFinalPosition.row}, {playerFinalPosition.col})
-              </span>
-            </div>
+          <div className={styles.legendItem}>
+            <div className={styles.legendCircle} style={{ backgroundColor: 'rgb(147, 51, 234)' }}></div>
+            <span>{opponentName}</span>
           </div>
         </div>
+      </div>
 
-        {/* VS Divider */}
-        <div className={styles.divider}>
-          <span className={styles.dividerText}>VS</span>
-        </div>
-
-        {/* Opponent Board */}
-        <div className={styles.boardSection}>
-          <h4 className={styles.boardTitle}>{opponentName}</h4>
-          <div className={styles.boardThumbnail}>
-            <img
-              src={opponentBoard.thumbnail}
-              alt={`${opponentName}'s board`}
-              className={styles.thumbnailImage}
-            />
+      {/* Board Details */}
+      <div className={styles.boardDetails}>
+        <div className={styles.detailSection}>
+          <h5>{playerName}</h5>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Board:</span>
+            <span className={styles.detailValue}>{playerBoard.name}</span>
           </div>
-          <div className={styles.boardDetails}>
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Board:</span>
-              <span className={styles.detailValue}>{opponentBoard.name}</span>
-            </div>
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Final Position:</span>
-              <span className={styles.detailValue}>
-                ({opponentFinalPosition.row}, {opponentFinalPosition.col})
-              </span>
-            </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Final Position:</span>
+            <span className={styles.detailValue}>
+              ({playerFinalPosition.row}, {playerFinalPosition.col})
+            </span>
+          </div>
+        </div>
+        <div className={styles.detailSection}>
+          <h5>{opponentName}</h5>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Board:</span>
+            <span className={styles.detailValue}>{opponentBoard.name}</span>
+          </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Final Position:</span>
+            <span className={styles.detailValue}>
+              ({opponentFinalPosition.row}, {opponentFinalPosition.col})
+            </span>
           </div>
         </div>
       </div>

@@ -25,15 +25,14 @@ export interface SavedBoardsProps {
   opponentName: string;
 }
 
-type ViewMode = 'list' | 'create' | 'edit';
+type ViewMode = 'list' | 'create';
 
 /**
- * Saved boards component with list, create, and edit views.
+ * Saved boards component with list and create views.
  *
  * Features:
  * - Display all saved boards as cards with thumbnails
  * - Create new boards
- * - Edit existing boards
  * - Delete boards
  * - Select board for current round
  *
@@ -49,22 +48,12 @@ export function SavedBoards({
   opponentName,
 }: SavedBoardsProps): ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [editingBoard, setEditingBoard] = useState<Board | null>(null);
 
   /**
    * Handle create new board
    */
   const handleCreateNew = (): void => {
     setViewMode('create');
-    setEditingBoard(null);
-  };
-
-  /**
-   * Handle edit board
-   */
-  const handleEdit = (board: Board): void => {
-    setViewMode('edit');
-    setEditingBoard(board);
   };
 
   /**
@@ -73,15 +62,13 @@ export function SavedBoards({
   const handleBoardSaved = (board: Board): void => {
     onBoardSaved(board);
     setViewMode('list');
-    setEditingBoard(null);
   };
 
   /**
-   * Handle cancel creation/editing
+   * Handle cancel creation
    */
   const handleCancel = (): void => {
     setViewMode('list');
-    setEditingBoard(null);
   };
 
   /**
@@ -94,25 +81,30 @@ export function SavedBoards({
   };
 
   // Show board creator
-  if (viewMode === 'create' || viewMode === 'edit') {
+  if (viewMode === 'create') {
     return (
       <BoardCreator
         onBoardSaved={handleBoardSaved}
         onCancel={handleCancel}
-        existingBoard={editingBoard}
+        existingBoards={boards}
       />
     );
   }
 
   // Show board list
+  // Check if we're in management mode (not in an active round)
+  const isManagementMode = currentRound === 0;
+
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h2 className={styles.title}>Select a Board for Round {currentRound}</h2>
-        <p className={styles.subtitle}>
-          {userName} vs {opponentName}
-        </p>
-      </div>
+      {!isManagementMode && (
+        <div className={styles.header}>
+          <h2 className={styles.title}>Select a Board for Round {currentRound}</h2>
+          <p className={styles.subtitle}>
+            {userName} vs {opponentName}
+          </p>
+        </div>
+      )}
 
       {boards.length === 0 ? (
         <div className={styles.emptyState}>
@@ -151,18 +143,14 @@ export function SavedBoards({
                 </div>
 
                 <div className={styles.boardActions}>
-                  <button
-                    onClick={() => onBoardSelected(board)}
-                    className={styles.selectButton}
-                  >
-                    Select
-                  </button>
-                  <button
-                    onClick={() => handleEdit(board)}
-                    className={styles.editButton}
-                  >
-                    Edit
-                  </button>
+                  {!isManagementMode && (
+                    <button
+                      onClick={() => onBoardSelected(board)}
+                      className={styles.selectButton}
+                    >
+                      Select
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(board.id)}
                     className={styles.deleteButton}

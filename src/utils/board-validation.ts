@@ -27,17 +27,14 @@ export function validateBoard(board: Board): ValidationResult {
   const errors: ValidationError[] = [];
 
   // Check piece count
-  // NOTE: If board has a final move, the piece is removed from grid (count = 0)
+  // NOTE: Pieces in grid <= piece moves in sequence (traps can override piece waypoints)
   const pieceCount = countCellType(board.grid, 'piece');
-  const hasFinalMove = board.sequence.some(m => m.type === 'final');
-  const expectedPieceCount = hasFinalMove ? 0 : 1;
+  const pieceMoves = board.sequence.filter(m => m.type === 'piece').length;
 
-  if (pieceCount !== expectedPieceCount) {
+  if (pieceCount > pieceMoves) {
     errors.push({
       field: 'piece',
-      message: hasFinalMove
-        ? `Board with final move should have 0 pieces in grid (found ${pieceCount})`
-        : `Board must have exactly 1 piece (found ${pieceCount})`,
+      message: `Grid has ${pieceCount} pieces but sequence only has ${pieceMoves} piece moves`,
     });
   }
 
@@ -65,14 +62,12 @@ export function validateBoard(board: Board): ValidationResult {
     });
   }
 
-  // Check that sequence count matches grid content
-  // NOTE: Final moves are in sequence but not in grid, so we need to account for them
-  const finalMoveCount = board.sequence.filter(m => m.type === 'final').length;
-  const totalItems = pieceCount + trapCount + finalMoveCount;
-  if (sequenceCount !== totalItems) {
+  // Check that trap count matches trap moves in sequence
+  const trapMoves = board.sequence.filter(m => m.type === 'trap').length;
+  if (trapCount !== trapMoves) {
     errors.push({
-      field: 'sequence',
-      message: `Sequence length (${sequenceCount}) must match total pieces + traps + final moves (${totalItems})`,
+      field: 'trap',
+      message: `Grid has ${trapCount} traps but sequence has ${trapMoves} trap moves`,
     });
   }
 
@@ -165,11 +160,11 @@ function validateSequenceMatchesGrid(board: Board): ValidationResult {
 
     // Skip 'final' moves - they're in sequence but not in grid (goal reached marker)
     if (move.type === 'final') {
-      // Validate that final move is at row 0 (top row)
-      if (row !== 0) {
+      // Validate that final move is at row -1 (off the board, escaped)
+      if (row !== -1) {
         errors.push({
           field: 'sequence',
-          message: `Final move (item ${move.order}) must be at row 0 (top row), found at row ${row}`,
+          message: `Final move (item ${move.order}) must be at row -1 (off the board), found at row ${row}`,
         });
       }
       continue;
@@ -195,13 +190,23 @@ function validateSequenceMatchesGrid(board: Board): ValidationResult {
 
     // Check that cell content matches sequence type
     const cellContent = gridRow[col];
-    const expectedContent: CellContent = move.type === 'piece' ? 'piece' : 'trap';
 
-    if (cellContent !== expectedContent) {
-      errors.push({
-        field: 'sequence',
-        message: `Sequence item ${move.order} at (${row}, ${col}) expects ${expectedContent} but found ${cellContent}`,
-      });
+    if (move.type === 'trap') {
+      // Trap must be in grid
+      if (cellContent !== 'trap') {
+        errors.push({
+          field: 'sequence',
+          message: `Sequence item ${move.order} at (${row}, ${col}) expects trap but found ${cellContent}`,
+        });
+      }
+    } else if (move.type === 'piece') {
+      // Piece can be in grid OR replaced by a trap (trap overrides piece waypoint)
+      if (cellContent !== 'piece' && cellContent !== 'trap') {
+        errors.push({
+          field: 'sequence',
+          message: `Sequence item ${move.order} at (${row}, ${col}) expects piece or trap but found ${cellContent}`,
+        });
+      }
     }
   }
 

@@ -40,9 +40,17 @@ describe('PositionSchema', () => {
   });
 
   it('should reject out of bounds positions', () => {
-    expect(() => PositionSchema.parse({ row: -1, col: 0 })).toThrow();
+    // row -1 is now valid (for final moves off the board)
+    expect(() => PositionSchema.parse({ row: -2, col: 0 })).toThrow();
     expect(() => PositionSchema.parse({ row: 0, col: 2 })).toThrow();
     expect(() => PositionSchema.parse({ row: 2, col: 0 })).toThrow();
+  });
+
+  it('should accept row -1 for final moves', () => {
+    expect(PositionSchema.parse({ row: -1, col: 0 })).toEqual({
+      row: -1,
+      col: 0,
+    });
   });
 
   it('should reject non-integer positions', () => {
