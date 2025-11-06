@@ -29,7 +29,8 @@ function rotatePosition(row: number, col: number, size: number): Position {
 function buildGridData(
   playerBoard: Board,
   opponentBoard: Board,
-  result: RoundResult
+  result: RoundResult,
+  maxStep?: number
 ): SquareData[][] {
   const size = playerBoard.grid.length;
   const grid: SquareData[][] = [];
@@ -49,8 +50,9 @@ function buildGridData(
     grid.push(row);
   }
 
-  // Process player sequence
+  // Process player sequence (up to maxStep if provided)
   playerBoard.sequence.forEach((move, step) => {
+    if (maxStep !== undefined && step > maxStep) return; // Skip steps beyond maxStep
     if (move.type === 'final') return; // Skip final moves
 
     const { row, col } = move.position;
@@ -65,8 +67,9 @@ function buildGridData(
     }
   });
 
-  // Process opponent sequence (rotated)
+  // Process opponent sequence (rotated, up to maxStep if provided)
   opponentBoard.sequence.forEach((move, step) => {
+    if (maxStep !== undefined && step > maxStep) return; // Skip steps beyond maxStep
     if (move.type === 'final') return; // Skip final moves
 
     const rotated = rotatePosition(move.position.row, move.position.col, size);
@@ -106,17 +109,23 @@ function buildGridData(
 
 /**
  * Generate combined board SVG showing both player and opponent moves
+ *
+ * @param playerBoard - Player's board
+ * @param opponentBoard - Opponent's board
+ * @param result - Round result data
+ * @param maxStep - Optional maximum step to show (for replay animation)
  */
 export function generateCombinedBoardSvg(
   playerBoard: Board,
   opponentBoard: Board,
-  result: RoundResult
+  result: RoundResult,
+  maxStep?: number
 ): string {
   const size = playerBoard.grid.length;
   const cellSize = 45;
   const viewBoxSize = size * cellSize + 10;
 
-  const grid = buildGridData(playerBoard, opponentBoard, result);
+  const grid = buildGridData(playerBoard, opponentBoard, result, maxStep);
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}">`;
   svg += `<rect width="${viewBoxSize}" height="${viewBoxSize}" fill="rgb(30, 41, 59)"/>`;

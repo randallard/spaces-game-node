@@ -213,9 +213,14 @@ describe('backup', () => {
         opponents: [],
       };
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = validateBackup(invalidBackup);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should reject backup missing timestamp', () => {
@@ -226,9 +231,14 @@ describe('backup', () => {
         opponents: [],
       };
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = validateBackup(invalidBackup);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should reject backup with invalid user schema', () => {
@@ -240,9 +250,14 @@ describe('backup', () => {
         opponents: [],
       };
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = validateBackup(invalidBackup);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should reject backup with invalid board schema', () => {
@@ -254,9 +269,14 @@ describe('backup', () => {
         opponents: [],
       };
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = validateBackup(invalidBackup);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should reject backup with invalid opponent schema', () => {
@@ -268,17 +288,27 @@ describe('backup', () => {
         opponents: [{ id: 'test' }], // Missing required fields
       };
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = validateBackup(invalidBackup);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should reject non-object input', () => {
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       expect(validateBackup('string')).toBeNull();
       expect(validateBackup(123)).toBeNull();
       expect(validateBackup(null)).toBeNull();
       expect(validateBackup(undefined)).toBeNull();
       expect(validateBackup([])).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -326,10 +356,15 @@ describe('backup', () => {
         opponents: [],
       };
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = importBackup(invalidBackup);
 
       expect(result).toBe(false);
       expect(localStorage.getItem('spaces-game-user')).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should not partially import on validation failure', () => {
@@ -341,11 +376,16 @@ describe('backup', () => {
         opponents: [],
       };
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = importBackup(invalidBackup);
 
       expect(result).toBe(false);
       // Should not have imported user since boards failed
       expect(localStorage.getItem('spaces-game-user')).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should handle empty arrays', () => {
@@ -389,9 +429,14 @@ describe('backup', () => {
         type: 'application/json',
       });
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = await loadBackupFromFile(file);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should return null for invalid backup schema', async () => {
@@ -407,9 +452,14 @@ describe('backup', () => {
         type: 'application/json',
       });
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = await loadBackupFromFile(file);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should handle empty file', async () => {
@@ -417,9 +467,14 @@ describe('backup', () => {
         type: 'application/json',
       });
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = await loadBackupFromFile(file);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should handle file read errors', async () => {
@@ -430,9 +485,14 @@ describe('backup', () => {
       // Mock file.text() to throw error
       vi.spyOn(file, 'text').mockRejectedValue(new Error('Read error'));
 
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = await loadBackupFromFile(file);
 
       expect(result).toBeNull();
+
+      consoleErrorSpy.mockRestore();
     });
   });
 

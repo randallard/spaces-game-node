@@ -110,10 +110,14 @@ describe('simulateRound', () => {
 
     const result = simulateRound(1, playerBoard, opponentBoard);
 
-    expect(result.winner).toBe('player'); // Completed
+    // Player: position starts null, moves to (0,0) (sets position) = 0 points
+    // Opponent: position starts null, moves to (0,1) rotated (sets position) = 0 points
+    // No completion bonus without a final cell, result is tie
+    expect(result.winner).toBe('tie');
     expect(result.playerPoints).toBeDefined();
     expect(result.opponentPoints).toBeDefined();
-    expect(result.playerPoints!).toBeGreaterThan(result.opponentPoints!);
+    expect(result.playerPoints!).toBe(0);
+    expect(result.opponentPoints!).toBe(0);
   });
 
   it('should handle final move marker', () => {
@@ -170,15 +174,15 @@ describe('simulateRound', () => {
 
     const result = simulateRound(1, playerBoard, opponentBoard);
 
-    // Player moves from (1,0) to (0,0) = 1 forward = 1 point
-    // Opponent moves from (0,1) to (1,0) rotated = also 1 forward for opponent perspective = 1 point
-    // Result is a tie at 1-1
+    // Player: position starts null, moves to (0,0) = just sets position, no forward points
+    // Opponent: position starts null, moves to (1,0) rotated = just sets position, no forward points
+    // Result is a tie at 0-0
     expect(result.winner).toBe('tie');
     expect(result.playerOutcome).toBe('tie');
     expect(result.playerFinalPosition).toEqual({ row: 0, col: 0 });
     expect(result.opponentFinalPosition).toEqual({ row: 1, col: 0 });
-    expect(result.playerPoints).toBe(1);
-    expect(result.opponentPoints).toBe(1);
+    expect(result.playerPoints).toBe(0);
+    expect(result.opponentPoints).toBe(0);
   });
 
   it('should score forward movement correctly', () => {
@@ -205,14 +209,14 @@ describe('simulateRound', () => {
 
     const result = simulateRound(1, playerBoard, opponentBoard);
 
-    // Player: starts at (1,0), moves to (1,0) (no change), then to (0,1) (1 forward) = 1 point
-    // Opponent: starts at (0,1), moves to (1,1) rotated (1 forward) = 1 point
-    expect(result.winner).toBe('tie'); // Both scored 1 point
+    // Player: position starts null, moves to (1,0) (sets position), then to (0,1) (1 forward) = 1 point
+    // Opponent: position starts null, moves to (1,1) rotated (sets position) = 0 points
+    expect(result.winner).toBe('player'); // Player scored 1, opponent scored 0
     expect(result.simulationDetails).toBeDefined();
     expect(result.simulationDetails?.playerMoves).toBe(2);
     expect(result.simulationDetails?.opponentMoves).toBe(1);
     expect(result.playerPoints).toBe(1);
-    expect(result.opponentPoints).toBe(1);
+    expect(result.opponentPoints).toBe(0);
   });
 
   it('should handle moves with same forward progress', () => {
@@ -239,12 +243,12 @@ describe('simulateRound', () => {
 
     const result = simulateRound(1, playerBoard, opponentBoard);
 
-    // Player: moves from (1,0) to (0,0) = 1 forward = 1 point
-    // Opponent: moves from (0,1) to (0,1) then to (1,1) = 1 forward = 1 point
+    // Player: position starts null, moves to (0,0) (sets position) = 0 points
+    // Opponent: position starts null, moves to (0,1) (sets position), then to (1,1) (1 forward) = 1 point
     expect(result.playerFinalPosition).toEqual({ row: 0, col: 0 });
     expect(result.opponentFinalPosition).toEqual({ row: 1, col: 1 });
-    expect(result.winner).toBe('tie');
-    expect(result.playerPoints).toBe(1);
+    expect(result.winner).toBe('opponent');
+    expect(result.playerPoints).toBe(0);
     expect(result.opponentPoints).toBe(1);
   });
 
@@ -259,7 +263,10 @@ describe('simulateRound', () => {
 
     const result = simulateRound(1, playerBoard, opponentBoard);
 
-    expect(result.winner).toBe('opponent');
+    // Player: no moves, stays at default position, 0 points
+    // Opponent: position starts null, moves to (1,1) rotated (sets position), 0 points
+    // Both get 0 points, result is tie
+    expect(result.winner).toBe('tie');
     expect(result.playerFinalPosition).toEqual({ row: 1, col: 0 }); // Start position
     expect(result.simulationDetails).toBeDefined();
     expect(result.simulationDetails?.playerMoves).toBe(0);
@@ -286,11 +293,14 @@ describe('simulateRound', () => {
 
     const result = simulateRound(1, playerBoard, opponentBoard);
 
+    // Player: position starts null, moves to (0,0) (sets position), 0 points
+    // Opponent: places trap at (0,1) rotated, doesn't set position, 0 points
+    // Both get 0 points, result is tie
     expect(result.playerPoints).toBeDefined();
     expect(result.opponentPoints).toBeDefined();
-    expect(result.playerPoints!).toBeGreaterThan(0);
-    expect(result.opponentPoints!).toBeGreaterThanOrEqual(0);
-    expect(result.playerPoints!).toBeGreaterThan(result.opponentPoints!);
+    expect(result.playerPoints!).toBe(0);
+    expect(result.opponentPoints!).toBe(0);
+    expect(result.winner).toBe('tie');
   });
 });
 

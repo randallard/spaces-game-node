@@ -2,7 +2,7 @@
  * Tests for URL compression utilities
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   compressGameState,
   decompressGameState,
@@ -103,8 +103,13 @@ describe('decompressGameState', () => {
   });
 
   it('should return null for invalid compressed string', () => {
+    // Suppress console.error for this test
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     const result = decompressGameState('invalid-string');
     expect(result).toBeNull();
+
+    consoleErrorSpy.mockRestore();
   });
 
   it('should return null for empty string', () => {
@@ -118,9 +123,14 @@ describe('decompressGameState', () => {
     // Manually compress invalid state
     const compressed = compressGameState(invalidState as GameState);
 
+    // Suppress console.error for this test
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     // This compressed data is invalid, so decompression should fail validation
     const result = decompressGameState(compressed);
     expect(result).toBeNull();
+
+    consoleErrorSpy.mockRestore();
   });
 });
 
@@ -180,8 +190,13 @@ describe('compressPayload and decompressPayload', () => {
   });
 
   it('should return null for invalid payload', () => {
+    // Suppress console.error for this test
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     const result = decompressPayload('invalid');
     expect(result).toBeNull();
+
+    consoleErrorSpy.mockRestore();
   });
 });
 
@@ -224,8 +239,14 @@ describe('getGameStateFromHash', () => {
 
   it('should return null for invalid hash', () => {
     window.location.hash = '#invalid-hash';
+
+    // Suppress console.error for this test
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     const result = getGameStateFromHash();
     expect(result).toBeNull();
+
+    consoleErrorSpy.mockRestore();
   });
 });
 
