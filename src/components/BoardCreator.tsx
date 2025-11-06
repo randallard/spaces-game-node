@@ -15,164 +15,193 @@ export interface BoardCreatorProps {
   onBoardSaved: (board: Board) => void;
   /** Callback to cancel creation */
   onCancel: () => void;
-  /** Existing board to edit (optional) */
-  existingBoard?: Board | null;
+  /** Existing boards (to generate name) */
+  existingBoards?: Board[];
 }
 
-type ToolMode = 'piece' | 'trap' | 'final' | 'erase';
+type CreationPhase = 'choosing-start' | 'building';
 
 /**
- * Board creator component with 2x2 grid editor.
+ * Board creator component with simplified guided flow.
  *
- * Features:
- * - 2x2 grid with clickable cells
- * - Place pieces, traps, and final move marker
- * - Sequence ordering (1, 2, 3, ...)
- * - Real-time validation
- * - SVG thumbnail generation
- * - Edit existing boards
- *
- * Rules:
- * - Exactly 1 piece (or 0 if final move exists)
- * - 0-3 traps
- * - 2-8 total sequence items
- * - Final move must be at row 0 (top row)
+ * Flow:
+ * 1. Click on bottom row to choose starting position
+ * 2. Click "Move" on adjacent squares to move piece
+ * 3. Click "Trap" on adjacent squares to place traps
+ * 4. When piece reaches row 0, click "Final Move" to finish
+ * 5. Board is automatically saved
  *
  * @component
  */
 export function BoardCreator({
   onBoardSaved,
   onCancel,
-  existingBoard = null,
+  existingBoards = [],
 }: BoardCreatorProps): ReactElement {
-  const [name, setName] = useState(existingBoard?.name || '');
-  const [grid, setGrid] = useState<CellContent[][]>(
-    existingBoard?.grid || [
-      ['empty', 'empty'],
-      ['empty', 'empty'],
-    ]
-  );
-  const [sequence, setSequence] = useState<BoardMove[]>(
-    existingBoard?.sequence || []
-  );
-  const [selectedTool, setSelectedTool] = useState<ToolMode>('piece');
+  const [phase, setPhase] = useState<CreationPhase>('choosing-start');
+  const [grid, setGrid] = useState<CellContent[][]>([
+    ['empty', 'empty'],
+    ['empty', 'empty'],
+  ]);
+  const [sequence, setSequence] = useState<BoardMove[]>([]);
+  const [piecePosition, setPiecePosition] = useState<Position | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
 
   /**
-   * Handle cell click - place or remove content
+   * Get adjacent positions (orthogonal only: up, down, left, right)
    */
-  const handleCellClick = useCallback(
-    (row: number, col: number): void => {
-      const position: Position = { row, col };
+  const getAdjacentPositions = useCallback((pos: Position): Position[] => {
+    const adjacent: Position[] = [];
+    const directions = [
+      { row: -1, col: 0 }, // up
+      { row: 1, col: 0 },  // down
+      { row: 0, col: -1 }, // left
+      { row: 0, col: 1 },  // right
+    ];
 
-      // Check if cell already has content
-      const currentContent = grid[row]?.[col];
-      if (!currentContent) return;
-
-      // If erasing
-      if (selectedTool === 'erase') {
-        if (currentContent !== 'empty') {
-          // Remove from grid
-          const newGrid = grid.map((r, rIdx) =>
-            r.map((cell, cIdx) =>
-              rIdx === row && cIdx === col ? 'empty' : cell
-            )
-          );
-          setGrid(newGrid);
-
-          // Remove from sequence
-          const newSequence = sequence
-            .filter((move) => !(move.position.row === row && move.position.col === col))
-            .map((move, idx) => ({ ...move, order: idx + 1 })); // Reorder
-          setSequence(newSequence);
-        }
-        return;
+    for (const dir of directions) {
+      const newRow = pos.row + dir.row;
+      const newCol = pos.col + dir.col;
+      if (newRow >= 0 && newRow < 2 && newCol >= 0 && newCol < 2) {
+        adjacent.push({ row: newRow, col: newCol });
       }
-
-      // Can't place on top of existing content (must erase first)
-      if (currentContent !== 'empty') {
-        return;
-      }
-
-      // Place new content
-      let newContent: CellContent;
-      let moveType: 'piece' | 'trap' | 'final';
-
-      if (selectedTool === 'piece') {
-        newContent = 'piece';
-        moveType = 'piece';
-      } else if (selectedTool === 'trap') {
-        newContent = 'trap';
-        moveType = 'trap';
-      } else if (selectedTool === 'final') {
-        // Final move must be at row 0
-        if (row !== 0) {
-          setErrors(['Final move must be placed at the top row (row 0)']);
-          return;
-        }
-        newContent = 'empty'; // Final moves are not rendered in grid
-        moveType = 'final';
-      } else {
-        return;
-      }
-
-      // Update grid (except for final moves)
-      if (moveType !== 'final') {
-        const newGrid = grid.map((r, rIdx) =>
-          r.map((cell, cIdx) =>
-            rIdx === row && cIdx === col ? newContent : cell
-          )
-        );
-        setGrid(newGrid);
-      }
-
-      // Add to sequence
-      const nextOrder = sequence.length + 1;
-      const newMove: BoardMove = {
-        position,
-        type: moveType,
-        order: nextOrder,
-      };
-      setSequence([...sequence, newMove]);
-      setErrors([]);
-    },
-    [grid, sequence, selectedTool]
-  );
-
-  /**
-   * Get sequence order for a cell
-   */
-  const getCellOrder = useCallback(
-    (row: number, col: number): number | null => {
-      const move = sequence.find(
-        (m) => m.position.row === row && m.position.col === col
-      );
-      return move ? move.order : null;
-    },
-    [sequence]
-  );
-
-  /**
-   * Handle save
-   */
-  const handleSave = useCallback((): void => {
-    if (!name.trim()) {
-      setErrors(['Board name is required']);
-      return;
     }
+
+    return adjacent;
+  }, []);
+
+  /**
+   * Handle choosing starting position (bottom row only)
+   */
+  const handleChooseStart = useCallback((row: number, col: number): void => {
+    if (row !== 1) return; // Only allow bottom row
+
+    const position: Position = { row, col };
+
+    // Place piece on grid
+    const newGrid: CellContent[][] = [
+      ['empty', 'empty'],
+      ['empty', 'empty'],
+    ];
+    newGrid[row]![col] = 'piece';
+    setGrid(newGrid);
+
+    // Add to sequence
+    const move: BoardMove = {
+      position,
+      type: 'piece',
+      order: 1,
+    };
+    setSequence([move]);
+    setPiecePosition(position);
+    setPhase('building');
+    setErrors([]);
+  }, []);
+
+  /**
+   * Handle moving piece to adjacent square
+   * NOTE: Grid must have pieces at ALL sequence positions (for validation)
+   * Piece visually shows current position with highlight, but leaves "breadcrumbs"
+   */
+  const handleMove = useCallback((row: number, col: number): void => {
+    if (!piecePosition) return;
+
+    const position: Position = { row, col };
+
+    // Update grid - add piece to new position (keep old ones for validation)
+    const newGrid = grid.map((r, rIdx) =>
+      r.map((cell, cIdx) => {
+        // Add piece to new position
+        if (rIdx === row && cIdx === col) {
+          return 'piece';
+        }
+        return cell;
+      })
+    );
+    setGrid(newGrid);
+
+    // Add to sequence
+    const nextOrder = sequence.length + 1;
+    const move: BoardMove = {
+      position,
+      type: 'piece',
+      order: nextOrder,
+    };
+    setSequence([...sequence, move]);
+    setPiecePosition(position);
+    setErrors([]);
+  }, [piecePosition, grid, sequence]);
+
+  /**
+   * Handle placing trap on adjacent square
+   * Trap replaces whatever is at that position (could be piece or empty)
+   */
+  const handleTrap = useCallback((row: number, col: number): void => {
+    if (!piecePosition) return;
+
+    const position: Position = { row, col };
+
+    // Update grid - place trap (replaces piece if there was one)
+    const newGrid = grid.map((r, rIdx) =>
+      r.map((cell, cIdx) => {
+        if (rIdx === row && cIdx === col) {
+          return 'trap';
+        }
+        return cell;
+      })
+    );
+    setGrid(newGrid);
+
+    // Add to sequence
+    const nextOrder = sequence.length + 1;
+    const move: BoardMove = {
+      position,
+      type: 'trap',
+      order: nextOrder,
+    };
+    setSequence([...sequence, move]);
+    setErrors([]);
+  }, [piecePosition, grid, sequence]);
+
+  /**
+   * Handle final move (when piece is at row 0)
+   * ADD a final move at row -1 (off the board, escaped!)
+   */
+  const handleFinalMove = useCallback((): void => {
+    if (!piecePosition || piecePosition.row !== 0) return;
+
+    // ADD a final move at row -1 (off the board)
+    const nextOrder = sequence.length + 1;
+    const finalMove: BoardMove = {
+      position: { row: -1, col: piecePosition.col },
+      type: 'final',
+      order: nextOrder,
+    };
+    const finalSequence = [...sequence, finalMove];
+
+    // Grid keeps all pieces at waypoints (no removal)
+    const finalGrid = grid;
+
+    // Auto-generate board name
+    const boardNumber = existingBoards.length + 1;
+    const boardName = `Board ${boardNumber}`;
 
     // Create board object
     const board: Board = {
-      id: existingBoard?.id || uuidv4(),
-      name: name.trim(),
-      grid,
-      sequence,
+      id: uuidv4(),
+      name: boardName,
+      grid: finalGrid,
+      sequence: finalSequence,
       thumbnail: '', // Will be set after validation
-      createdAt: existingBoard?.createdAt || Date.now(),
+      createdAt: Date.now(),
     };
 
     // Validate
     const validation = validateBoard(board);
+    console.log('[BoardCreator] Validation result:', validation);
+    console.log('[BoardCreator] Final grid:', finalGrid);
+    console.log('[BoardCreator] Sequence:', finalSequence);
+
     if (!validation.valid) {
       setErrors(validation.errors.map((e) => e.message));
       return;
@@ -181,170 +210,129 @@ export function BoardCreator({
     // Generate thumbnail
     board.thumbnail = generateBoardThumbnail(board);
 
+    // Auto-save
     onBoardSaved(board);
-  }, [name, grid, sequence, existingBoard, onBoardSaved]);
+  }, [piecePosition, sequence, grid, existingBoards, onBoardSaved]);
 
   /**
-   * Handle clear
+   * Handle restart
    */
-  const handleClear = useCallback((): void => {
+  const handleRestart = useCallback((): void => {
+    setPhase('choosing-start');
     setGrid([
       ['empty', 'empty'],
       ['empty', 'empty'],
     ]);
     setSequence([]);
+    setPiecePosition(null);
     setErrors([]);
   }, []);
 
-  // Count pieces and traps
-  const pieceCount = grid.flat().filter((c) => c === 'piece').length;
-  const trapCount = grid.flat().filter((c) => c === 'trap').length;
-  const finalMoveCount = sequence.filter((m) => m.type === 'final').length;
+  // Get adjacent positions (for Move/Trap buttons)
+  // Filter out positions with traps (can't place Move/Trap buttons there)
+  const adjacentPositions = piecePosition
+    ? getAdjacentPositions(piecePosition).filter((pos) => {
+        const cell = grid[pos.row]?.[pos.col];
+        return cell !== 'trap'; // Can place buttons on empty or piece squares
+      })
+    : [];
+  const canFinish = piecePosition?.row === 0;
+
+  // Get instruction text
+  const getInstruction = (): string => {
+    if (phase === 'choosing-start') {
+      return 'Choose a starting square';
+    }
+    return 'Select an adjacent square to move your piece or place a trap.';
+  };
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>
-        {existingBoard ? 'Edit Board' : 'Create New Board'}
-      </h2>
-
-      {/* Board Name */}
-      <div className={styles.section}>
-        <label htmlFor="board-name" className={styles.label}>
-          Board Name
-        </label>
-        <input
-          id="board-name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={styles.input}
-          placeholder="Enter board name"
-          maxLength={50}
-        />
-      </div>
-
-      {/* Tool Selection */}
-      <div className={styles.section}>
-        <div className={styles.toolLabel}>Select Tool</div>
-        <div className={styles.toolGrid}>
-          <button
-            onClick={() => setSelectedTool('piece')}
-            className={`${styles.toolButton} ${selectedTool === 'piece' ? styles.toolButtonActive : ''}`}
-            aria-label="Place piece"
-          >
-            <span className={styles.toolIcon}>⚫</span>
-            <span className={styles.toolName}>Piece</span>
-          </button>
-          <button
-            onClick={() => setSelectedTool('trap')}
-            className={`${styles.toolButton} ${selectedTool === 'trap' ? styles.toolButtonActive : ''}`}
-            aria-label="Place trap"
-          >
-            <span className={styles.toolIcon}>✖</span>
-            <span className={styles.toolName}>Trap</span>
-          </button>
-          <button
-            onClick={() => setSelectedTool('final')}
-            className={`${styles.toolButton} ${selectedTool === 'final' ? styles.toolButtonActive : ''}`}
-            aria-label="Place final move"
-          >
-            <span className={styles.toolIcon}>🎯</span>
-            <span className={styles.toolName}>Final</span>
-          </button>
-          <button
-            onClick={() => setSelectedTool('erase')}
-            className={`${styles.toolButton} ${selectedTool === 'erase' ? styles.toolButtonActive : ''}`}
-            aria-label="Erase"
-          >
-            <span className={styles.toolIcon}>🗑️</span>
-            <span className={styles.toolName}>Erase</span>
-          </button>
-        </div>
-      </div>
+      {/* Final Move Button (shows when piece at row 0) */}
+      {canFinish && phase === 'building' && (
+        <button
+          onClick={handleFinalMove}
+          className={styles.finalMoveButton}
+          aria-label="Complete board with final move"
+        >
+          Final Move
+        </button>
+      )}
 
       {/* Grid */}
-      <div className={styles.section}>
-        <div className={styles.gridLabel}>Board Grid (2x2)</div>
-        <div className={styles.grid}>
-          {grid.map((row, rowIdx) =>
-            row.map((cell, colIdx) => {
-              const order = getCellOrder(rowIdx, colIdx);
-              return (
-                <button
-                  key={`${rowIdx}-${colIdx}`}
-                  onClick={() => handleCellClick(rowIdx, colIdx)}
-                  className={styles.cell}
-                  aria-label={`Cell ${rowIdx},${colIdx}`}
-                >
-                  {cell === 'piece' && (
-                    <div className={styles.cellPiece}>
-                      <span className={styles.cellIcon}>⚫</span>
-                      {order && <span className={styles.cellOrder}>{order}</span>}
-                    </div>
-                  )}
-                  {cell === 'trap' && (
-                    <div className={styles.cellTrap}>
-                      <span className={styles.cellIcon}>✖</span>
-                      {order && <span className={styles.cellOrder}>{order}</span>}
-                    </div>
-                  )}
-                  {cell === 'empty' && (
-                    <div className={styles.cellEmpty}>
-                      {order && (
-                        <div className={styles.cellFinal}>
-                          <span className={styles.cellIcon}>🎯</span>
-                          <span className={styles.cellOrder}>{order}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </button>
-              );
-            })
-          )}
-        </div>
-        <div className={styles.gridHint}>
-          Row 0 (top) is where pieces can reach the goal
-        </div>
+      <div className={styles.grid}>
+        {grid.map((row, rowIdx) =>
+          row.map((cell, colIdx) => {
+            const isAdjacent = adjacentPositions.some(
+              (p) => p.row === rowIdx && p.col === colIdx
+            );
+            const isStartChoice = phase === 'choosing-start' && rowIdx === 1;
+            const isEmpty = cell === 'empty';
+
+            return (
+              <div
+                key={`${rowIdx}-${colIdx}`}
+                className={styles.cell}
+                aria-label={`Cell ${rowIdx},${colIdx}`}
+              >
+                {/* Show piece only at CURRENT position */}
+                {piecePosition?.row === rowIdx && piecePosition?.col === colIdx && phase === 'building' && (
+                  <div className={styles.cellPiece}>
+                    <span className={styles.pieceIcon}>⚫</span>
+                  </div>
+                )}
+
+                {/* Show trap */}
+                {cell === 'trap' && (
+                  <div className={styles.cellTrap}>
+                    <span className={styles.trapIcon}>✖</span>
+                  </div>
+                )}
+
+                {/* Show Start button (bottom row, choosing phase) */}
+                {isEmpty && isStartChoice && (
+                  <button
+                    onClick={() => handleChooseStart(rowIdx, colIdx)}
+                    className={styles.startButton}
+                  >
+                    Start
+                  </button>
+                )}
+
+                {/* Show Move/Trap buttons (adjacent squares, building phase) */}
+                {isAdjacent && phase === 'building' && (
+                  <div className={styles.actionButtons}>
+                    <button
+                      onClick={() => handleMove(rowIdx, colIdx)}
+                      className={styles.moveButton}
+                    >
+                      Move
+                    </button>
+                    <button
+                      onClick={() => handleTrap(rowIdx, colIdx)}
+                      className={styles.trapButton}
+                    >
+                      Trap
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
 
-      {/* Stats */}
-      <div className={styles.stats}>
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>Pieces:</span>
-          <span className={styles.statValue}>
-            {pieceCount} / 1
-          </span>
-        </div>
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>Traps:</span>
-          <span className={styles.statValue}>
-            {trapCount} / 3
-          </span>
-        </div>
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>Sequence:</span>
-          <span className={styles.statValue}>
-            {sequence.length} (2-8)
-          </span>
-        </div>
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>Final Moves:</span>
-          <span className={styles.statValue}>{finalMoveCount}</span>
-        </div>
-      </div>
+      {/* Instruction */}
+      <div className={styles.instruction}>{getInstruction()}</div>
 
       {/* Errors */}
       {errors.length > 0 && (
         <div className={styles.errors}>
-          <div className={styles.errorTitle}>Validation Errors:</div>
-          <ul className={styles.errorList}>
-            {errors.map((error, idx) => (
-              <li key={idx} className={styles.errorItem}>
-                {error}
-              </li>
-            ))}
-          </ul>
+          {errors.map((error, idx) => (
+            <div key={idx} className={styles.errorItem}>
+              {error}
+            </div>
+          ))}
         </div>
       )}
 
@@ -353,12 +341,11 @@ export function BoardCreator({
         <button onClick={onCancel} className={styles.cancelButton}>
           Cancel
         </button>
-        <button onClick={handleClear} className={styles.clearButton}>
-          Clear Board
-        </button>
-        <button onClick={handleSave} className={styles.saveButton}>
-          {existingBoard ? 'Save Changes' : 'Save Board'}
-        </button>
+        {phase === 'building' && (
+          <button onClick={handleRestart} className={styles.restartButton}>
+            Restart
+          </button>
+        )}
       </div>
     </div>
   );

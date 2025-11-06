@@ -2,15 +2,14 @@ import React, { useEffect, useState } from 'react';
 import styles from './App.module.css';
 import { useGameState } from '@/hooks/useGameState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useUrlSync } from '@/hooks/useUrlSync';
 import { simulateRound, isBoardPlayable } from '@/utils/game-simulation';
 import {
   UserProfile,
   OpponentManager,
-  BoardCreator,
   SavedBoards,
   RoundResults,
   GameOver,
+  ProfileModal,
 } from '@/components';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema } from '@/schemas';
@@ -29,18 +28,25 @@ const createEmptyUser = (): UserProfileType => ({
 });
 
 // Initial game state
-const createInitialState = (user: UserProfileType): GameState => ({
-  phase: { type: 'user-setup' },
-  user,
-  opponent: null,
-  currentRound: 1,
-  playerScore: 0,
-  opponentScore: 0,
-  playerSelectedBoard: null,
-  opponentSelectedBoard: null,
-  roundHistory: [],
-  checksum: '',
-});
+const createInitialState = (user: UserProfileType | null): GameState => {
+  // If we have a saved user with a name, go to board management
+  const phase: GameState['phase'] = user && user.name
+    ? { type: 'board-management' }
+    : { type: 'user-setup' };
+
+  return {
+    phase,
+    user: user || createEmptyUser(),
+    opponent: null,
+    currentRound: 1,
+    playerScore: 0,
+    opponentScore: 0,
+    playerSelectedBoard: null,
+    opponentSelectedBoard: null,
+    roundHistory: [],
+    checksum: '',
+  };
+};
 
 function App(): React.ReactElement {
   // LocalStorage for persistence
@@ -49,6 +55,11 @@ function App(): React.ReactElement {
     UserProfileSchema.nullable(),
     null
   );
+
+  // Debug: log initial user
+  useEffect(() => {
+    console.log('[APP] savedUser changed:', savedUser?.name || 'null');
+  }, [savedUser]);
 
   const [savedBoards, setSavedBoards] = useLocalStorage<Board[] | null>(
     'spaces-game-boards',
@@ -62,16 +73,15 @@ function App(): React.ReactElement {
     []
   );
 
-  // Initialize game state with saved user or empty user
+  // Initialize game state with saved user or null
   const [initialState] = useState<GameState>(() =>
-    createInitialState(savedUser || createEmptyUser())
+    createInitialState(savedUser)
   );
 
   // Initialize game state hook
   const {
     state,
     setPhase,
-    selectOpponent,
     selectPlayerBoard,
     selectOpponentBoard,
     completeRound,
@@ -80,43 +90,32 @@ function App(): React.ReactElement {
     loadState,
   } = useGameState(initialState);
 
-  // URL state synchronization
-  const { updateUrl, getShareUrl, copyShareUrl } = useUrlSync({
-    debounceMs: 500,
-    onGameStateReceived: (urlState) => {
-      // Load game state from URL if shared
-      loadState(urlState);
-    },
-    onError: (error) => {
-      console.error('URL sync error:', error);
-    },
-  });
-
-  // Update URL when game state changes (skip user-setup phase)
-  useEffect(() => {
-    if (state.phase.type !== 'user-setup' && state.user.name) {
-      updateUrl(state);
-    }
-  }, [state, updateUrl]);
+  // Profile modal state
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Save user to localStorage when it changes
   useEffect(() => {
     if (state.user.name) {
+      console.log('[APP] Saving user to localStorage:', state.user.name);
       setSavedUser(state.user);
     }
   }, [state.user, setSavedUser]);
 
   // Handle user creation
   const handleUserCreate = (newUser: UserProfileType) => {
-    // Save user and transition to opponent selection
+    // Save user to localStorage
     setSavedUser(newUser);
-    setPhase({ type: 'opponent-selection' });
+
+    // Update game state with new user and transition to board management
+    loadState({
+      ...state,
+      user: newUser,
+      phase: { type: 'board-management' },
+    });
   };
 
-  // Handle opponent selection
+  // Handle opponent selection (for play button)
   const handleOpponentSelect = (opponent: Opponent) => {
-    selectOpponent(opponent);
-
     // Save opponent to localStorage if not already saved
     const existingIndex = (savedOpponents || []).findIndex((o) => o.id === opponent.id);
     if (existingIndex >= 0) {
@@ -126,6 +125,14 @@ function App(): React.ReactElement {
     } else {
       setSavedOpponents([...(savedOpponents || []), opponent]);
     }
+
+    // Select opponent and start game (go to board-selection for round 1)
+    loadState({
+      ...state,
+      opponent,
+      phase: { type: 'board-selection', round: 1 },
+      currentRound: 1,
+    });
   };
 
   // Handle board CRUD operations
@@ -143,10 +150,6 @@ function App(): React.ReactElement {
 
   const handleBoardDelete = (boardId: string) => {
     setSavedBoards((savedBoards || []).filter((b) => b.id !== boardId));
-  };
-
-  const handleBoardCancel = () => {
-    // No-op for now
   };
 
   // Handle board selection for round
@@ -202,7 +205,19 @@ function App(): React.ReactElement {
   // Handle play again
   const handlePlayAgain = () => {
     resetGame();
-    setPhase({ type: 'opponent-selection' });
+    setPhase({ type: 'board-management' });
+  };
+
+  // Handle profile update
+  const handleProfileUpdate = (updatedUser: UserProfileType) => {
+    // Save to localStorage
+    setSavedUser(updatedUser);
+
+    // Update game state
+    loadState({
+      ...state,
+      user: updatedUser,
+    });
   };
 
   // Render phase-specific content
@@ -216,6 +231,86 @@ function App(): React.ReactElement {
           />
         );
 
+      case 'board-management':
+        return (
+          <div className={styles.boardManagement}>
+            <div className={styles.managementHeader}>
+              <h1>Hello, {state.user.name}!</h1>
+              <button
+                className={styles.editProfileLink}
+                onClick={() => setIsProfileModalOpen(true)}
+              >
+                Edit Profile
+              </button>
+            </div>
+            <div className={styles.managementGrid}>
+              {/* Left Panel - Opponents */}
+              <div className={styles.opponentsPanel}>
+                <h2 className={styles.panelTitle}>Opponents</h2>
+                <div className={styles.opponentsList}>
+                  {savedOpponents && savedOpponents.length > 0 ? (
+                    savedOpponents.map((opponent) => (
+                      <div key={opponent.id} className={styles.opponentItem}>
+                        <div className={styles.opponentInfo}>
+                          <span className={styles.opponentIcon}>
+                            {opponent.type === 'cpu' ? '🤖' : '👤'}
+                          </span>
+                          <div className={styles.opponentDetails}>
+                            <span className={styles.opponentName}>{opponent.name}</span>
+                            <span className={styles.opponentRecord}>
+                              ({opponent.wins}-{opponent.losses})
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleOpponentSelect(opponent)}
+                          className={styles.playButton}
+                        >
+                          Play
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.emptyOpponents}>
+                      <p>No opponents yet</p>
+                      <button
+                        onClick={() => setPhase({ type: 'opponent-selection' })}
+                        className={styles.addOpponentButton}
+                      >
+                        + Add Opponent
+                      </button>
+                    </div>
+                  )}
+                  {savedOpponents && savedOpponents.length > 0 && (
+                    <button
+                      onClick={() => setPhase({ type: 'opponent-selection' })}
+                      className={styles.addOpponentButton}
+                    >
+                      + Add Opponent
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Panel - Boards */}
+              <div className={styles.boardsPanel}>
+                <h2 className={styles.panelTitle}>Boards</h2>
+                <div className={styles.boardsContent}>
+                  <SavedBoards
+                    boards={savedBoards || []}
+                    onBoardSelected={() => {}} // No selection in management mode
+                    onBoardSaved={handleBoardSave}
+                    onBoardDeleted={handleBoardDelete}
+                    currentRound={0} // Not in a round
+                    userName={state.user.name}
+                    opponentName=""
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
       case 'opponent-selection':
         return (
           <OpponentManager
@@ -227,50 +322,22 @@ function App(): React.ReactElement {
       case 'board-selection':
         return (
           <div>
-            <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h2>Round {state.phase.round} of 8</h2>
-                <p>
-                  Score: {state.user.name} {state.playerScore} - {state.opponent?.name}{' '}
-                  {state.opponentScore}
-                </p>
-              </div>
-              <button
-                className={styles.button}
-                onClick={async () => {
-                  const success = await copyShareUrl();
-                  if (success) {
-                    alert('Game URL copied to clipboard!');
-                  } else {
-                    alert('Failed to copy URL. URL: ' + getShareUrl());
-                  }
-                }}
-                style={{ height: 'fit-content' }}
-              >
-                Share Game
-              </button>
+            <div style={{ marginBottom: '2rem' }}>
+              <h2>Round {state.phase.round} of 8</h2>
+              <p>
+                Score: {state.user.name} {state.playerScore} - {state.opponent?.name}{' '}
+                {state.opponentScore}
+              </p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-              <div>
-                <h3>Create Board</h3>
-                <BoardCreator
-                  onBoardSaved={handleBoardSave}
-                  onCancel={handleBoardCancel}
-                />
-              </div>
-              <div>
-                <h3>Saved Boards</h3>
-                <SavedBoards
-                  boards={savedBoards || []}
-                  onBoardSelected={handleBoardSelect}
-                  onBoardSaved={handleBoardSave}
-                  onBoardDeleted={handleBoardDelete}
-                  currentRound={state.currentRound}
-                  userName={state.user.name}
-                  opponentName={state.opponent?.name || 'Opponent'}
-                />
-              </div>
-            </div>
+            <SavedBoards
+              boards={savedBoards || []}
+              onBoardSelected={handleBoardSelect}
+              onBoardSaved={handleBoardSave}
+              onBoardDeleted={handleBoardDelete}
+              currentRound={state.currentRound}
+              userName={state.user.name}
+              opponentName={state.opponent?.name || 'Opponent'}
+            />
           </div>
         );
 
@@ -309,10 +376,31 @@ function App(): React.ReactElement {
   return (
     <div className={styles.app}>
       <header className={styles.header}>
-        <h1>Spaces Game</h1>
-        <p>A turn-based strategy board game</p>
+        <div>
+          <h1>Spaces Game</h1>
+          <p>A turn-based strategy board game</p>
+        </div>
+        {state.user.name && (
+          <button
+            className={styles.profileButton}
+            onClick={() => setIsProfileModalOpen(true)}
+            aria-label="Open profile"
+          >
+            <span className={styles.profileIcon}>👤</span>
+            <span className={styles.profileName}>{state.user.name}</span>
+          </button>
+        )}
       </header>
       <main className={styles.main}>{renderPhase()}</main>
+
+      {/* Profile Modal */}
+      {isProfileModalOpen && state.user.name && (
+        <ProfileModal
+          user={state.user}
+          onUpdate={handleProfileUpdate}
+          onClose={() => setIsProfileModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

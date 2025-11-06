@@ -36,27 +36,31 @@ describe('validateBoard', () => {
     expect(result.errors).toHaveLength(0);
   });
 
-  it('should require exactly 1 piece', () => {
+  it('should reject grid pieces without corresponding piece moves', () => {
     const board = createValidBoard();
     board.grid = [
-      ['empty', 'trap'],
+      ['piece', 'trap'],
       ['empty', 'empty'],
     ];
-    board.sequence = [{ position: { row: 0, col: 1 }, type: 'trap', order: 1 }];
+    board.sequence = [
+      { position: { row: 0, col: 1 }, type: 'trap', order: 1 },
+      { position: { row: 1, col: 0 }, type: 'trap', order: 2 },
+    ];
 
     const result = validateBoard(board);
     expect(result.valid).toBe(false);
+    // Grid has 1 piece but sequence has 0 piece moves
     expect(result.errors).toContainEqual({
       field: 'piece',
-      message: 'Board must have exactly 1 piece (found 0)',
+      message: 'Grid has 1 pieces but sequence only has 0 piece moves',
     });
   });
 
-  it('should reject more than 1 piece', () => {
+  it('should reject more pieces in grid than piece moves in sequence', () => {
     const board = createValidBoard();
     board.grid = [
       ['piece', 'piece'],
-      ['empty', 'empty'],
+      ['piece', 'empty'],
     ];
     board.sequence = [
       { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
@@ -65,9 +69,10 @@ describe('validateBoard', () => {
 
     const result = validateBoard(board);
     expect(result.valid).toBe(false);
+    // Grid has 3 pieces but sequence only has 2 piece moves
     expect(result.errors).toContainEqual({
       field: 'piece',
-      message: 'Board must have exactly 1 piece (found 2)',
+      message: 'Grid has 3 pieces but sequence only has 2 piece moves',
     });
   });
 
@@ -168,13 +173,13 @@ describe('validateBoard', () => {
     });
   });
 
-  it('should require sequence to match grid content count', () => {
+  it('should require trap count in grid to match trap moves in sequence', () => {
     const board = createValidBoard();
     board.grid = [
       ['piece', 'trap'],
       ['trap', 'empty'],
     ];
-    // Sequence has only 2 items but grid has 3 (1 piece + 2 traps)
+    // Grid has 2 traps but sequence only has 1 trap move
     board.sequence = [
       { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
       { position: { row: 0, col: 1 }, type: 'trap', order: 2 },
@@ -182,9 +187,10 @@ describe('validateBoard', () => {
 
     const result = validateBoard(board);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) =>
-      e.message.includes('must match total pieces + traps')
-    )).toBe(true);
+    expect(result.errors).toContainEqual({
+      field: 'trap',
+      message: 'Grid has 2 traps but sequence has 1 trap moves',
+    });
   });
 
   it('should require consecutive sequence numbers starting from 1', () => {
@@ -218,15 +224,19 @@ describe('validateBoard', () => {
 
   it('should validate sequence positions match grid', () => {
     const board = createValidBoard();
+    board.grid = [
+      ['piece', 'empty'], // Empty at (0,1)
+      ['empty', 'empty'],
+    ];
     board.sequence = [
       { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
-      { position: { row: 0, col: 1 }, type: 'piece', order: 2 }, // Wrong type (should be trap)
+      { position: { row: 0, col: 1 }, type: 'piece', order: 2 }, // Expects piece or trap, but found empty
     ];
 
     const result = validateBoard(board);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) =>
-      e.message.includes('expects piece but found trap')
+      e.message.includes('expects piece or trap but found empty')
     )).toBe(true);
   });
 

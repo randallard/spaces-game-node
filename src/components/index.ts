@@ -19,3 +19,6 @@ export type { RoundResultsProps } from './RoundResults';
 
 export { GameOver } from './GameOver';
 export type { GameOverProps } from './GameOver';
+
+export { ProfileModal } from './ProfileModal';
+export type { ProfileModalProps } from './ProfileModal';
