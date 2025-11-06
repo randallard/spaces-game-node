@@ -160,6 +160,8 @@ describe('useGameState', () => {
         opponentBoard: mockBoard,
         playerFinalPosition: { row: 0, col: 0 },
         opponentFinalPosition: { row: 1, col: 1 },
+        playerPoints: 1,
+        opponentPoints: 0,
       };
 
       act(() => {
@@ -187,6 +189,8 @@ describe('useGameState', () => {
         opponentBoard: mockBoard,
         playerFinalPosition: { row: 1, col: 1 },
         opponentFinalPosition: { row: 0, col: 0 },
+        playerPoints: 0,
+        opponentPoints: 1,
       };
 
       act(() => {
