@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './App.module.css';
 import { useGameState } from '@/hooks/useGameState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { simulateRound, isBoardPlayable } from '@/utils/game-simulation';
+import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-simulation';
 import {
   UserProfile,
   OpponentManager,
@@ -10,9 +10,12 @@ import {
   RoundResults,
   GameOver,
   ProfileModal,
+  DeckCreator,
+  DeckManager,
+  AllRoundsResults,
 } from '@/components';
-import type { UserProfile as UserProfileType, Board, Opponent, GameState } from '@/types';
-import { UserProfileSchema, BoardSchema, OpponentSchema } from '@/schemas';
+import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode } from '@/types';
+import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
 
 // Create initial empty user for game state initialization
 const createEmptyUser = (): UserProfileType => ({
@@ -38,11 +41,14 @@ const createInitialState = (user: UserProfileType | null): GameState => {
     phase,
     user: user || createEmptyUser(),
     opponent: null,
+    gameMode: null,
     currentRound: 1,
     playerScore: 0,
     opponentScore: 0,
     playerSelectedBoard: null,
     opponentSelectedBoard: null,
+    playerSelectedDeck: null,
+    opponentSelectedDeck: null,
     roundHistory: [],
     checksum: '',
   };
@@ -73,6 +79,12 @@ function App(): React.ReactElement {
     []
   );
 
+  const [savedDecks, setSavedDecks] = useLocalStorage<Deck[] | null>(
+    'spaces-game-decks',
+    DeckSchema.array(),
+    []
+  );
+
   // Initialize game state with saved user or null
   const [initialState] = useState<GameState>(() =>
     createInitialState(savedUser)
@@ -82,9 +94,13 @@ function App(): React.ReactElement {
   const {
     state,
     setPhase,
+    setGameMode,
     selectPlayerBoard,
     selectOpponentBoard,
+    selectPlayerDeck,
+    selectOpponentDeck,
     completeRound,
+    completeAllRounds,
     advanceToNextRound,
     resetGame,
     loadState,
@@ -92,6 +108,10 @@ function App(): React.ReactElement {
 
   // Profile modal state
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Deck creator state
+  const [showDeckCreator, setShowDeckCreator] = useState(false);
+  const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
 
   // Save user to localStorage when it changes
   useEffect(() => {
@@ -114,8 +134,25 @@ function App(): React.ReactElement {
     });
   };
 
+  // Handle game mode selection
+  const handleGameModeSelect = (mode: GameMode) => {
+    // If we already have an opponent selected, go directly to next phase
+    if (state.opponent) {
+      loadState({
+        ...state,
+        gameMode: mode,
+        phase: mode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 },
+        currentRound: 1,
+      });
+    } else {
+      // No opponent yet, go to opponent selection
+      setGameMode(mode);
+      setPhase({ type: 'opponent-selection', gameMode: mode });
+    }
+  };
+
   // Handle opponent selection (for play button)
-  const handleOpponentSelect = (opponent: Opponent) => {
+  const handleOpponentSelect = (opponent: Opponent, gameMode: GameMode) => {
     // Save opponent to localStorage if not already saved
     const existingIndex = (savedOpponents || []).findIndex((o) => o.id === opponent.id);
     if (existingIndex >= 0) {
@@ -126,11 +163,12 @@ function App(): React.ReactElement {
       setSavedOpponents([...(savedOpponents || []), opponent]);
     }
 
-    // Select opponent and start game (go to board-selection for round 1)
+    // Select opponent with game mode
     loadState({
       ...state,
       opponent,
-      phase: { type: 'board-selection', round: 1 },
+      gameMode,
+      phase: gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 },
       currentRound: 1,
     });
   };
@@ -150,6 +188,90 @@ function App(): React.ReactElement {
 
   const handleBoardDelete = (boardId: string) => {
     setSavedBoards((savedBoards || []).filter((b) => b.id !== boardId));
+  };
+
+  // Handle deck CRUD operations
+  const handleDeckSave = (deck: Deck) => {
+    const decks = savedDecks || [];
+    const existingIndex = decks.findIndex((d) => d.id === deck.id);
+    if (existingIndex >= 0) {
+      const updated = [...decks];
+      updated[existingIndex] = deck;
+      setSavedDecks(updated);
+    } else {
+      setSavedDecks([...decks, deck]);
+    }
+    setShowDeckCreator(false);
+    setEditingDeck(null);
+  };
+
+  const handleDeckDelete = (deckId: string) => {
+    setSavedDecks((savedDecks || []).filter((d) => d.id !== deckId));
+  };
+
+  const handleDeckEdit = (deck: Deck) => {
+    setEditingDeck(deck);
+    setShowDeckCreator(true);
+  };
+
+  // Handle deck selection for gameplay
+  const handleDeckSelect = (deck: Deck) => {
+    selectPlayerDeck(deck);
+
+    // Opponent selects a deck
+    const boards = savedBoards || [];
+    let opponentDeck: Deck;
+
+    if (state.opponent?.type === 'cpu') {
+      // CPU creates a random deck from available boards
+      const opponentBoards: Board[] = [];
+
+      if (boards.length === 0) {
+        // No boards available - use player's deck
+        opponentDeck = deck;
+      } else {
+        // Randomly select 10 boards (with possible reuse)
+        for (let i = 0; i < 10; i++) {
+          const randomBoard = boards[Math.floor(Math.random() * boards.length)]!;
+          opponentBoards.push(randomBoard);
+        }
+
+        opponentDeck = {
+          id: `cpu-deck-${Date.now()}`,
+          name: `${state.opponent.name}'s Deck`,
+          boards: opponentBoards,
+          createdAt: Date.now(),
+        };
+      }
+    } else {
+      // Human opponent - would normally choose via URL sharing
+      // For now, create random deck from available boards
+      const opponentBoards: Board[] = [];
+
+      if (boards.length === 0) {
+        opponentDeck = deck;
+      } else {
+        for (let i = 0; i < 10; i++) {
+          const randomBoard = boards[Math.floor(Math.random() * boards.length)]!;
+          opponentBoards.push(randomBoard);
+        }
+
+        opponentDeck = {
+          id: `opponent-deck-${Date.now()}`,
+          name: `${state.opponent?.name || 'Opponent'}'s Deck`,
+          boards: opponentBoards,
+          createdAt: Date.now(),
+        };
+      }
+    }
+
+    selectOpponentDeck(opponentDeck);
+
+    // Run all 10 rounds at once
+    setTimeout(() => {
+      const results = simulateAllRounds(deck.boards, opponentDeck.boards);
+      completeAllRounds(results);
+    }, 500);
   };
 
   // Handle board selection for round
@@ -263,7 +385,14 @@ function App(): React.ReactElement {
                           </div>
                         </div>
                         <button
-                          onClick={() => handleOpponentSelect(opponent)}
+                          onClick={() => {
+                            // Save the selected opponent and go to game mode selection
+                            loadState({
+                              ...state,
+                              opponent,
+                              phase: { type: 'game-mode-selection' },
+                            });
+                          }}
                           className={styles.playButton}
                         >
                           Play
@@ -274,7 +403,14 @@ function App(): React.ReactElement {
                     <div className={styles.emptyOpponents}>
                       <p>No opponents yet</p>
                       <button
-                        onClick={() => setPhase({ type: 'opponent-selection' })}
+                        onClick={() => {
+                          // Clear any selected opponent when adding new one
+                          loadState({
+                            ...state,
+                            opponent: null,
+                            phase: { type: 'game-mode-selection' },
+                          });
+                        }}
                         className={styles.addOpponentButton}
                       >
                         + Add Opponent
@@ -283,7 +419,14 @@ function App(): React.ReactElement {
                   )}
                   {savedOpponents && savedOpponents.length > 0 && (
                     <button
-                      onClick={() => setPhase({ type: 'opponent-selection' })}
+                      onClick={() => {
+                        // Clear any selected opponent when adding new one
+                        loadState({
+                          ...state,
+                          opponent: null,
+                          phase: { type: 'game-mode-selection' },
+                        });
+                      }}
                       className={styles.addOpponentButton}
                     >
                       + Add Opponent
@@ -292,29 +435,131 @@ function App(): React.ReactElement {
                 </div>
               </div>
 
-              {/* Right Panel - Boards */}
+              {/* Right Panel - Boards and Decks */}
               <div className={styles.boardsPanel}>
-                <h2 className={styles.panelTitle}>Boards</h2>
-                <div className={styles.boardsContent}>
-                  <SavedBoards
-                    boards={savedBoards || []}
-                    onBoardSelected={() => {}} // No selection in management mode
-                    onBoardSaved={handleBoardSave}
-                    onBoardDeleted={handleBoardDelete}
-                    currentRound={0} // Not in a round
-                    userName={state.user.name}
-                    opponentName=""
-                  />
+                <div style={{ marginBottom: '2rem' }}>
+                  <h2 className={styles.panelTitle}>Boards</h2>
+                  <div className={styles.boardsContent}>
+                    <SavedBoards
+                      boards={savedBoards || []}
+                      onBoardSelected={() => {}} // No selection in management mode
+                      onBoardSaved={handleBoardSave}
+                      onBoardDeleted={handleBoardDelete}
+                      currentRound={0} // Not in a round
+                      userName={state.user.name}
+                      opponentName=""
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h2 className={styles.panelTitle}>Decks</h2>
+                    <button
+                      onClick={() => setPhase({ type: 'deck-management' })}
+                      className={styles.addOpponentButton}
+                    >
+                      Manage Decks
+                    </button>
+                  </div>
+                  <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                    {savedDecks?.length || 0} deck(s) created
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         );
 
+      case 'game-mode-selection':
+        return (
+          <div className={styles.gameModeSelection}>
+            {state.opponent && (
+              <div style={{ textAlign: 'center', marginBottom: '1rem', color: '#6b7280' }}>
+                Playing against: <strong>{state.opponent.name}</strong>
+              </div>
+            )}
+            <h2>Choose Game Mode</h2>
+            <div className={styles.modeGrid}>
+              <button
+                onClick={() => handleGameModeSelect('round-by-round')}
+                className={styles.modeCard}
+              >
+                <h3>Round by Round</h3>
+                <p>Classic mode - Select a board each round (8 rounds)</p>
+              </button>
+              <button
+                onClick={() => handleGameModeSelect('deck')}
+                className={styles.modeCard}
+              >
+                <h3>Deck Mode</h3>
+                <p>Fast mode - Create a deck of 10 boards and play all at once</p>
+              </button>
+            </div>
+            <button
+              onClick={() => setPhase({ type: 'board-management' })}
+              className={styles.backButton}
+            >
+              Back
+            </button>
+          </div>
+        );
+
       case 'opponent-selection':
         return (
           <OpponentManager
-            onOpponentSelected={handleOpponentSelect}
+            onOpponentSelected={(opponent) =>
+              handleOpponentSelect(opponent, state.phase.type === 'opponent-selection' ? state.phase.gameMode : 'round-by-round')
+            }
+            userName={state.user.name}
+          />
+        );
+
+      case 'deck-management':
+        if (showDeckCreator) {
+          return (
+            <DeckCreator
+              availableBoards={savedBoards || []}
+              onDeckSaved={handleDeckSave}
+              onCancel={() => {
+                setShowDeckCreator(false);
+                setEditingDeck(null);
+              }}
+              existingDeck={editingDeck ?? undefined}
+            />
+          );
+        }
+        return (
+          <DeckManager
+            decks={savedDecks || []}
+            onDeckSelected={handleDeckSelect}
+            onCreateDeck={() => setShowDeckCreator(true)}
+            onEditDeck={handleDeckEdit}
+            onDeleteDeck={handleDeckDelete}
+            userName={state.user.name}
+          />
+        );
+
+      case 'deck-selection':
+        if (showDeckCreator) {
+          return (
+            <DeckCreator
+              availableBoards={savedBoards || []}
+              onDeckSaved={handleDeckSave}
+              onCancel={() => {
+                setShowDeckCreator(false);
+                setEditingDeck(null);
+              }}
+              existingDeck={editingDeck ?? undefined}
+            />
+          );
+        }
+        return (
+          <DeckManager
+            decks={savedDecks || []}
+            onDeckSelected={handleDeckSelect}
+            onCreateDeck={() => setShowDeckCreator(true)}
+            onEditDeck={handleDeckEdit}
+            onDeleteDeck={handleDeckDelete}
             userName={state.user.name}
           />
         );
@@ -351,6 +596,31 @@ function App(): React.ReactElement {
             playerScore={state.playerScore}
             opponentScore={state.opponentScore}
             onContinue={handleContinue}
+          />
+        );
+
+      case 'all-rounds-results':
+        if (!state.phase.results || state.phase.results.length === 0) return null;
+
+        // Calculate winner
+        let winner: 'player' | 'opponent' | 'tie';
+        if (state.playerScore > state.opponentScore) {
+          winner = 'player';
+        } else if (state.opponentScore > state.playerScore) {
+          winner = 'opponent';
+        } else {
+          winner = 'tie';
+        }
+
+        return (
+          <AllRoundsResults
+            results={state.phase.results}
+            playerName={state.user.name}
+            opponentName={state.opponent?.name || 'Opponent'}
+            playerScore={state.playerScore}
+            opponentScore={state.opponentScore}
+            winner={winner}
+            onPlayAgain={handlePlayAgain}
           />
         );
 

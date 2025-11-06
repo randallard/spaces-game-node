@@ -22,3 +22,12 @@ export type { GameOverProps } from './GameOver';
 
 export { ProfileModal } from './ProfileModal';
 export type { ProfileModalProps } from './ProfileModal';
+
+export { DeckCreator } from './DeckCreator';
+export type { DeckCreatorProps } from './DeckCreator';
+
+export { DeckManager } from './DeckManager';
+export type { DeckManagerProps } from './DeckManager';
+
+export { AllRoundsResults } from './AllRoundsResults';
+export type { AllRoundsResultsProps } from './AllRoundsResults';

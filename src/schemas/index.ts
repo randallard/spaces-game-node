@@ -32,3 +32,6 @@ export {
   RoundResultSchema,
   UrlPayloadSchema,
 } from './game-state.schema';
+
+// Deck schemas
+export { DeckSchema, GameModeSchema } from './deck.schema';

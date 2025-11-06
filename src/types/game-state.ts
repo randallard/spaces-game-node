@@ -5,6 +5,7 @@
 import type { Board } from './board';
 import type { Opponent } from './opponent';
 import type { UserProfile } from './user';
+import type { Deck, GameMode } from './deck';
 
 /**
  * Round result after simulation
@@ -34,10 +35,14 @@ export type RoundResult = {
 export type GamePhase =
   | { type: 'user-setup' }
   | { type: 'board-management' }
-  | { type: 'opponent-selection' }
-  | { type: 'board-selection'; round: number }
+  | { type: 'game-mode-selection' } // Choose round-by-round or deck mode
+  | { type: 'opponent-selection'; gameMode: GameMode } // Pass game mode
+  | { type: 'deck-management' } // Create/manage decks
+  | { type: 'deck-selection' } // Select deck to play
+  | { type: 'board-selection'; round: number } // Round-by-round mode
   | { type: 'waiting-for-opponent'; round: number }
-  | { type: 'round-results'; round: number; result: RoundResult }
+  | { type: 'round-results'; round: number; result: RoundResult } // Single round result
+  | { type: 'all-rounds-results'; results: RoundResult[] } // All 10 rounds at once
   | { type: 'game-over'; winner: 'player' | 'opponent' | 'tie' };
 
 /**
@@ -52,14 +57,21 @@ export type GameState = {
   user: UserProfile;
   opponent: Opponent | null;
 
+  // Game mode
+  gameMode: GameMode | null; // null until selected
+
   // Game progress
-  currentRound: number; // 1-8
+  currentRound: number; // 1-8 or 1-10 depending on mode
   playerScore: number;
   opponentScore: number;
 
-  // Board selections for current round
+  // Board selections for current round (round-by-round mode)
   playerSelectedBoard: Board | null;
   opponentSelectedBoard: Board | null;
+
+  // Deck selections (deck mode)
+  playerSelectedDeck: Deck | null;
+  opponentSelectedDeck: Deck | null;
 
   // Round history
   roundHistory: RoundResult[];

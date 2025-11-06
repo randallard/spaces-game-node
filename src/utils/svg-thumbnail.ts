@@ -75,7 +75,7 @@ function createBoardSvg(board: Board, rotated: boolean): string {
     if (content === 'piece') {
       svg += drawPiece(x, y, order, rotated);
     } else if (content === 'trap') {
-      svg += drawTrap(x, y, order);
+      svg += drawTrap(x, y, order, rotated);
     }
   });
 
@@ -100,10 +100,10 @@ function drawPiece(x: number, y: number, order: number, isOpponent: boolean): st
 /**
  * Draw trap (X with number)
  */
-function drawTrap(x: number, y: number, order: number): string {
+function drawTrap(x: number, y: number, order: number, isOpponent: boolean): string {
   const startX = x + 5;
   const startY = y + 5;
-  const color = '#f5222d'; // Red for traps
+  const color = isOpponent ? 'rgb(249, 115, 22)' : '#f5222d'; // Orange for opponent, red for player
 
   return `
     <path d="M${startX} ${startY} l30 30 m0 -30 l-30 30" stroke="${color}" stroke-width="4" opacity="0.7"/>

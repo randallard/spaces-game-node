@@ -24,3 +24,6 @@ export type {
   RoundResult,
   UrlPayload,
 } from './game-state';
+
+// Deck types
+export type { Deck, GameMode } from './deck';

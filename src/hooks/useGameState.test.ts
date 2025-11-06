@@ -55,11 +55,14 @@ const initialState: GameState = {
   phase: { type: 'user-setup' },
   user: mockUser,
   opponent: null,
+  gameMode: null,
   currentRound: 1,
   playerScore: 0,
   opponentScore: 0,
   playerSelectedBoard: null,
   opponentSelectedBoard: null,
+  playerSelectedDeck: null,
+  opponentSelectedDeck: null,
   roundHistory: [],
   checksum: '',
 };
@@ -70,17 +73,17 @@ describe('useGameState', () => {
       const { result } = renderHook(() => useGameState(initialState));
 
       act(() => {
-        result.current.setPhase({ type: 'opponent-selection' });
+        result.current.setPhase({ type: 'opponent-selection', gameMode: 'round-by-round' });
       });
 
-      expect(result.current.state.phase).toEqual({ type: 'opponent-selection' });
+      expect(result.current.state.phase).toEqual({ type: 'opponent-selection', gameMode: 'round-by-round' });
     });
 
     it('should preserve other state when updating phase', () => {
       const { result } = renderHook(() => useGameState(initialState));
 
       act(() => {
-        result.current.setPhase({ type: 'opponent-selection' });
+        result.current.setPhase({ type: 'opponent-selection', gameMode: 'round-by-round' });
       });
 
       expect(result.current.state.user).toEqual(mockUser);
@@ -93,7 +96,7 @@ describe('useGameState', () => {
       const { result } = renderHook(() => useGameState(initialState));
 
       act(() => {
-        result.current.selectOpponent(mockCpuOpponent);
+        result.current.selectOpponent(mockCpuOpponent, 'round-by-round');
       });
 
       expect(result.current.state.opponent).toEqual(mockCpuOpponent);
@@ -107,7 +110,7 @@ describe('useGameState', () => {
       const { result } = renderHook(() => useGameState(initialState));
 
       act(() => {
-        result.current.selectOpponent(mockHumanOpponent);
+        result.current.selectOpponent(mockHumanOpponent, 'round-by-round');
       });
 
       expect(result.current.state.opponent).toEqual(mockHumanOpponent);
@@ -413,11 +416,14 @@ describe('useGameState', () => {
         phase: { type: 'game-over', winner: 'player' },
         user: mockUser,
         opponent: mockHumanOpponent,
+        gameMode: null,
         currentRound: 8,
         playerScore: 5,
         opponentScore: 3,
         playerSelectedBoard: mockBoard,
         opponentSelectedBoard: mockBoard,
+        playerSelectedDeck: null,
+        opponentSelectedDeck: null,
         roundHistory: [],
         checksum: 'abc123',
       };
