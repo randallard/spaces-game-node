@@ -593,4 +593,447 @@ describe('RoundResults', () => {
       expect(combinedBoardImage.src).toMatch(/^data:image\/svg\+xml,/);
     });
   });
+
+  describe('Replay functionality', () => {
+    const createReplayableResult = (): RoundResult => ({
+      round: 1,
+      winner: 'player',
+      playerBoard: {
+        id: 'player-board-id',
+        name: 'Player Board',
+        grid: [
+          ['piece', 'empty'],
+          ['piece', 'empty'],
+        ],
+        sequence: [
+          { position: { row: 1, col: 0 }, type: 'piece', order: 1 },
+          { position: { row: 0, col: 0 }, type: 'piece', order: 2 },
+          { position: { row: -1, col: 0 }, type: 'final', order: 3 },
+        ],
+        thumbnail: 'data:image/svg+xml;base64,test',
+        createdAt: Date.now(),
+      },
+      opponentBoard: {
+        id: 'opponent-board-id',
+        name: 'Opponent Board',
+        grid: [
+          ['empty', 'piece'],
+          ['empty', 'empty'],
+        ],
+        sequence: [
+          { position: { row: 0, col: 1 }, type: 'piece', order: 1 },
+        ],
+        thumbnail: 'data:image/svg+xml;base64,test',
+        createdAt: Date.now(),
+      },
+      playerFinalPosition: { row: 0, col: 0 },
+      opponentFinalPosition: { row: 0, col: 1 },
+      playerPoints: 2,
+      opponentPoints: 0,
+      playerOutcome: 'won',
+      simulationDetails: {
+        playerMoves: 2,
+        opponentMoves: 1,
+        playerHitTrap: false,
+        opponentHitTrap: false,
+      },
+    });
+
+    it('should show replay button initially', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      expect(screen.getByText('▶ Replay')).toBeInTheDocument();
+    });
+
+    it('should start replay when replay button clicked', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      const replayButton = screen.getByText('▶ Replay');
+      fireEvent.click(replayButton);
+
+      // Should show stop button during replay
+      expect(screen.getByText('⏹ Stop')).toBeInTheDocument();
+      // Should show initial explanations
+      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Opponent starts with piece at/)).toBeInTheDocument();
+    });
+
+    it('should show next button during replay', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      const replayButton = screen.getByText('▶ Replay');
+      fireEvent.click(replayButton);
+
+      expect(screen.getByText('Next')).toBeInTheDocument();
+    });
+
+    it('should advance step when next button clicked', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Click next to advance
+      const nextButton = screen.getByText('Next');
+      fireEvent.click(nextButton);
+
+      // Should show move explanations
+      expect(screen.getByText(/Player moves to/)).toBeInTheDocument();
+    });
+
+    it('should stop replay when stop button clicked', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Stop replay
+      const stopButton = screen.getByText('⏹ Stop');
+      fireEvent.click(stopButton);
+
+      // Should go back to replay button
+      expect(screen.getByText('▶ Replay')).toBeInTheDocument();
+      expect(screen.queryByText('⏹ Stop')).not.toBeInTheDocument();
+    });
+
+    it('should hide next button after all steps completed', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Click next multiple times to go through all steps
+      const nextButton = screen.getByText('Next');
+      fireEvent.click(nextButton); // Step 1
+      fireEvent.click(nextButton); // Step 2
+
+      // After all steps, next button should be hidden
+      expect(screen.queryByText('Next')).not.toBeInTheDocument();
+    });
+
+    it('should show forward movement explanation', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Advance to second step where player moves forward
+      fireEvent.click(screen.getByText('Next'));
+
+      // Should show forward movement point
+      expect(screen.getByText(/\+1 point \(forward movement\)/)).toBeInTheDocument();
+    });
+
+    it('should show goal reached explanation', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Advance through steps
+      fireEvent.click(screen.getByText('Next')); // Step 1
+      fireEvent.click(screen.getByText('Next')); // Step 2 - goal reached
+
+      // Should show goal reached message
+      expect(screen.getByText(/Player reaches the goal!/)).toBeInTheDocument();
+      expect(screen.getByText(/\+1 point \(goal reached\)/)).toBeInTheDocument();
+    });
+
+    it('should show round end message when goal is reached', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Advance to goal
+      fireEvent.click(screen.getByText('Next'));
+      fireEvent.click(screen.getByText('Next'));
+
+      // Should show round end message
+      expect(screen.getByText(/Round ends - Player reached the goal!/)).toBeInTheDocument();
+    });
+
+    it('should handle replay with trap placement', () => {
+      const resultWithTrap: RoundResult = {
+        round: 1,
+        winner: 'player',
+        playerBoard: {
+          id: 'player-board-id',
+          name: 'Player Board',
+          grid: [
+            ['piece', 'empty'],
+            ['trap', 'empty'],
+          ],
+          sequence: [
+            { position: { row: 1, col: 0 }, type: 'piece', order: 1 },
+            { position: { row: 1, col: 0 }, type: 'trap', order: 2 },
+          ],
+          thumbnail: 'data:image/svg+xml;base64,test',
+          createdAt: Date.now(),
+        },
+        opponentBoard: {
+          id: 'opponent-board-id',
+          name: 'Opponent Board',
+          grid: [['empty', 'piece'], ['empty', 'empty']],
+          sequence: [{ position: { row: 0, col: 1 }, type: 'piece', order: 1 }],
+          thumbnail: 'data:image/svg+xml;base64,test',
+          createdAt: Date.now(),
+        },
+        playerFinalPosition: { row: 1, col: 0 },
+        opponentFinalPosition: { row: 0, col: 1 },
+        playerPoints: 0,
+        opponentPoints: 0,
+        playerOutcome: 'tie',
+        simulationDetails: {
+          playerMoves: 1,
+          opponentMoves: 1,
+          playerHitTrap: false,
+          opponentHitTrap: false,
+        },
+      };
+
+      render(
+        <RoundResults
+          result={resultWithTrap}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={0}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Advance to trap placement
+      fireEvent.click(screen.getByText('Next'));
+
+      // Should show trap placement message
+      expect(screen.getByText(/Player places trap at/)).toBeInTheDocument();
+    });
+
+    it('should accumulate explanations across steps', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Should have initial explanations
+      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+
+      // Advance one step
+      fireEvent.click(screen.getByText('Next'));
+
+      // Should still have initial explanations AND new ones
+      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Player moves to/)).toBeInTheDocument();
+    });
+
+    it('should reset explanations when stopping replay', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+
+      // Advance one step
+      fireEvent.click(screen.getByText('Next'));
+
+      // Stop replay
+      fireEvent.click(screen.getByText('⏹ Stop'));
+
+      // Explanations should be hidden
+      expect(screen.queryByText(/Player starts with piece at/)).not.toBeInTheDocument();
+    });
+
+    it('should allow replaying multiple times', () => {
+      const result = createReplayableResult();
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // First replay
+      fireEvent.click(screen.getByText('▶ Replay'));
+      fireEvent.click(screen.getByText('⏹ Stop'));
+
+      // Second replay should work
+      fireEvent.click(screen.getByText('▶ Replay'));
+      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Replay with simulationDetails', () => {
+    it('should handle round with no simulationDetails', () => {
+      const resultWithoutDetails: RoundResult = {
+        round: 1,
+        winner: 'player',
+        playerBoard: {
+          id: 'player-board-id',
+          name: 'Player Board',
+          grid: [['piece', 'empty'], ['empty', 'empty']],
+          sequence: [{ position: { row: 0, col: 0 }, type: 'piece', order: 1 }],
+          thumbnail: 'data:image/svg+xml;base64,test',
+          createdAt: Date.now(),
+        },
+        opponentBoard: {
+          id: 'opponent-board-id',
+          name: 'Opponent Board',
+          grid: [['empty', 'piece'], ['empty', 'empty']],
+          sequence: [{ position: { row: 0, col: 1 }, type: 'piece', order: 1 }],
+          thumbnail: 'data:image/svg+xml;base64,test',
+          createdAt: Date.now(),
+        },
+        playerFinalPosition: { row: 0, col: 0 },
+        opponentFinalPosition: { row: 0, col: 1 },
+        playerPoints: 0,
+        opponentPoints: 0,
+        playerOutcome: 'tie',
+        // No simulationDetails
+      };
+
+      render(
+        <RoundResults
+          result={resultWithoutDetails}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={0}
+          opponentScore={0}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Start replay - should work without simulationDetails
+      fireEvent.click(screen.getByText('▶ Replay'));
+      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+    });
+  });
 });
