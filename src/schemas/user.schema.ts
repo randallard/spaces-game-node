@@ -21,6 +21,8 @@ export const UserProfileSchema = z.object({
   greeting: z.string().max(200).optional(),
   savedBoards: z.array(BoardSchema).optional(),
   opponents: z.array(OpponentSchema).optional(),
+  playerCreature: z.string().optional(),
+  opponentCreature: z.string().optional(),
 });
 
 export const OpponentStatsMapSchema = z.record(

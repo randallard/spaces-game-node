@@ -86,6 +86,58 @@
   color: #6b7280;
 }
 
+.creatureSection {
+  padding: 1.5rem;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+}
+
+.sectionDescription {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.creatureSelectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.select:hover {
+  border-color: #9ca3af;
+}
+
+@media (max-width: 640px) {
+  .creatureSelectors {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stats {
   padding: 1.5rem;
   background-color: #f9fafb;

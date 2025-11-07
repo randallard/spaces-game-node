@@ -6,6 +6,7 @@ import type { Board } from './board';
 import type { Opponent } from './opponent';
 import type { UserProfile } from './user';
 import type { Deck, GameMode } from './deck';
+import type { CreatureId, OutcomeType } from './creature';
 
 /**
  * Round result after simulation
@@ -26,6 +27,12 @@ export type RoundResult = {
     playerHitTrap: boolean;
     opponentHitTrap: boolean;
   };
+  // Creature graphics info (optional for backward compatibility)
+  playerCreature?: CreatureId;
+  opponentCreature?: CreatureId;
+  playerVisualOutcome?: OutcomeType;
+  opponentVisualOutcome?: OutcomeType;
+  collision?: boolean;
 };
 
 /**

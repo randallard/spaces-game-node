@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <rect width="300" height="300" fill="#f3f4f6"/>
+  <circle cx="150" cy="150" r="80" fill="#ef4444" opacity="0.3"/>
+  <text x="150" y="170" font-size="32" fill="#1f2937" text-anchor="middle" font-family="sans-serif">💥 Collision</text>
+</svg>

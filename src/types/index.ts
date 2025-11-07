@@ -27,3 +27,6 @@ export type {
 
 // Deck types
 export type { Deck, GameMode } from './deck';
+
+// Creature types
+export type { Creature, CreatureId, OutcomeType } from './creature';

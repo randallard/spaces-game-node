@@ -1036,4 +1036,132 @@ describe('RoundResults', () => {
       expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
     });
   });
+
+  describe('Creature outcome graphics', () => {
+    it('should display split creature graphics when result has creature data', () => {
+      const resultWithCreatures: RoundResult = {
+        ...createMockRoundResult('player'),
+        playerCreature: 'square',
+        opponentCreature: 'circle',
+        playerVisualOutcome: 'goal',
+        opponentVisualOutcome: 'trapped',
+        collision: false,
+      };
+
+      render(
+        <RoundResults
+          result={resultWithCreatures}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={5}
+          opponentScore={3}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Should show both creature names
+      expect(screen.getByText(/Alice - Square/)).toBeInTheDocument();
+      expect(screen.getByText(/Bob - Circle/)).toBeInTheDocument();
+
+      // Should show images with correct src
+      const images = screen.getAllByRole('img');
+      const squareImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/square/goal.png')
+      );
+      const circleImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/circle/trapped.png')
+      );
+      expect(squareImage).toBeDefined();
+      expect(circleImage).toBeDefined();
+    });
+
+    it('should display collision graphic when collision occurs', () => {
+      const resultWithCollision: RoundResult = {
+        ...createMockRoundResult('tie'),
+        playerCreature: 'triangle',
+        opponentCreature: 'bug',
+        collision: true,
+      };
+
+      render(
+        <RoundResults
+          result={resultWithCollision}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={3}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Should show collision caption
+      expect(screen.getByText('Collision!')).toBeInTheDocument();
+
+      // Should show collision image
+      const images = screen.getAllByRole('img');
+      const collisionImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/shared/collision.png')
+      );
+      expect(collisionImage).toBeDefined();
+
+      // Should NOT show individual creature names
+      expect(screen.queryByText(/Alice -/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Bob -/)).not.toBeInTheDocument();
+    });
+
+    it('should not display creature graphics when result has no creature data', () => {
+      const result = createMockRoundResult('player');
+
+      render(
+        <RoundResults
+          result={result}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={5}
+          opponentScore={3}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Should not show any creature-related text
+      expect(screen.queryByText(/Square/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Circle/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Collision/)).not.toBeInTheDocument();
+    });
+
+    it('should use default outcome when visual outcome is not specified', () => {
+      const resultWithCreaturesNoOutcome: RoundResult = {
+        ...createMockRoundResult('player'),
+        playerCreature: 'triangle',
+        opponentCreature: 'bug',
+        collision: false,
+      };
+
+      render(
+        <RoundResults
+          result={resultWithCreaturesNoOutcome}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={5}
+          opponentScore={3}
+          onContinue={mockOnContinue}
+        />
+      );
+
+      // Should show creature names
+      expect(screen.getByText(/Triangle/)).toBeInTheDocument();
+      expect(screen.getByText(/Bug/)).toBeInTheDocument();
+
+      // Should default to 'forward' outcome
+      const images = screen.getAllByRole('img');
+      const triangleImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/triangle/forward.png')
+      );
+      const bugImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/bug/forward.png')
+      );
+      expect(triangleImage).toBeDefined();
+      expect(bugImage).toBeDefined();
+    });
+  });
 });

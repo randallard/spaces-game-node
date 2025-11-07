@@ -269,7 +269,12 @@ function App(): React.ReactElement {
 
     // Run all 10 rounds at once
     setTimeout(() => {
-      const results = simulateAllRounds(deck.boards, opponentDeck.boards);
+      const results = simulateAllRounds(
+        deck.boards,
+        opponentDeck.boards,
+        savedUser?.playerCreature,
+        savedUser?.opponentCreature
+      );
       completeAllRounds(results);
     }, 500);
   };
@@ -315,6 +320,15 @@ function App(): React.ReactElement {
     // Run actual game simulation
     setTimeout(() => {
       const result = simulateRound(state.currentRound, board, opponentBoard);
+
+      // Add creature data to result if available
+      if (savedUser?.playerCreature) {
+        result.playerCreature = savedUser.playerCreature;
+      }
+      if (savedUser?.opponentCreature) {
+        result.opponentCreature = savedUser.opponentCreature;
+      }
+
       completeRound(result);
     }, 500); // Shorter delay for better UX
   };

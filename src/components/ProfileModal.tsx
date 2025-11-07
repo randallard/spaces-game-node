@@ -4,7 +4,8 @@
  */
 
 import { useState, useCallback, useRef, type ReactElement } from 'react';
-import type { UserProfile } from '@/types';
+import type { UserProfile, CreatureId } from '@/types';
+import { getAllCreatures } from '@/types/creature';
 import { downloadBackup, loadBackupFromFile, importBackup } from '@/utils/backup';
 import styles from './ProfileModal.module.css';
 
@@ -38,6 +39,22 @@ export function ProfileModal({
   const [isDirty, setIsDirty] = useState(false);
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Get all available creatures
+  const creatures = getAllCreatures();
+
+  // Select random creature by default if user doesn't have one
+  const getRandomCreatureId = (): CreatureId => {
+    const randomIndex = Math.floor(Math.random() * creatures.length);
+    return creatures[randomIndex]!.id;
+  };
+
+  const [playerCreature, setPlayerCreature] = useState<CreatureId>(
+    user.playerCreature || getRandomCreatureId()
+  );
+  const [opponentCreature, setOpponentCreature] = useState<CreatureId>(
+    user.opponentCreature || getRandomCreatureId()
+  );
 
   const validateName = useCallback((value: string): string | null => {
     if (value === '') {
@@ -82,15 +99,17 @@ export function ProfileModal({
         return;
       }
 
-      // Update user with new name
+      // Update user with new name and creatures
       onUpdate({
         ...user,
         name: name.trim(),
+        playerCreature,
+        opponentCreature,
       });
 
       onClose();
     },
-    [name, user, validateName, onUpdate, onClose]
+    [name, user, validateName, onUpdate, onClose, playerCreature, opponentCreature]
   );
 
   const handleBackdropClick = useCallback(
@@ -167,7 +186,10 @@ export function ProfileModal({
   );
 
   const isValid = validateName(name) === null;
-  const hasChanges = name.trim() !== user.name;
+  const hasChanges =
+    name.trim() !== user.name ||
+    playerCreature !== user.playerCreature ||
+    opponentCreature !== user.opponentCreature;
 
   return (
     <div className={styles.backdrop} onClick={handleBackdropClick}>
@@ -203,6 +225,50 @@ export function ProfileModal({
               autoComplete="off"
             />
             {error && <p className={styles.error}>{error}</p>}
+          </div>
+
+          {/* Creature Selection */}
+          <div className={styles.creatures}>
+            <h3 className={styles.creaturesTitle}>Creatures</h3>
+            <p className={styles.creaturesDescription}>
+              Choose creatures for visual flair - purely cosmetic!
+            </p>
+            <div className={styles.creaturesGrid}>
+              <div className={styles.field}>
+                <label htmlFor="player-creature" className={styles.label}>
+                  Your Creature
+                </label>
+                <select
+                  id="player-creature"
+                  value={playerCreature}
+                  onChange={(e) => setPlayerCreature(e.target.value as CreatureId)}
+                  className={styles.select}
+                >
+                  {creatures.map((creature) => (
+                    <option key={creature.id} value={creature.id}>
+                      {creature.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="opponent-creature" className={styles.label}>
+                  Opponent Creature
+                </label>
+                <select
+                  id="opponent-creature"
+                  value={opponentCreature}
+                  onChange={(e) => setOpponentCreature(e.target.value as CreatureId)}
+                  className={styles.select}
+                >
+                  {creatures.map((creature) => (
+                    <option key={creature.id} value={creature.id}>
+                      {creature.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Stats Display */}
