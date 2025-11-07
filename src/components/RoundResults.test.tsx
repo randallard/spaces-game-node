@@ -640,6 +640,8 @@ describe('RoundResults', () => {
         opponentMoves: 1,
         playerHitTrap: false,
         opponentHitTrap: false,
+        playerLastStep: 2, // Player reached goal (final move at index 2)
+        opponentLastStep: 0,
       },
     });
 
@@ -894,6 +896,8 @@ describe('RoundResults', () => {
           opponentMoves: 1,
           playerHitTrap: false,
           opponentHitTrap: false,
+          playerLastStep: 1, // Player executed both piece (0) and trap (1)
+          opponentLastStep: 0,
         },
       };
 

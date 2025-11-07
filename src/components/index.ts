@@ -34,3 +34,6 @@ export type { DeckManagerProps } from './DeckManager';
 
 export { AllRoundsResults } from './AllRoundsResults';
 export type { AllRoundsResultsProps } from './AllRoundsResults';
+
+export { HelpModal } from './HelpModal';
+export type { HelpModalProps } from './HelpModal';

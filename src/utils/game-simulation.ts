@@ -103,6 +103,8 @@ export function simulateRound(
   let opponentHitTrap = false;
   let playerMoves = 0;
   let opponentMoves = 0;
+  let playerLastStep = -1; // Last sequence step executed by player
+  let opponentLastStep = -1; // Last sequence step executed by opponent
 
   // Track trap placements
   const traps: TrapData = {
@@ -130,9 +132,11 @@ export function simulateRound(
         }
         playerPosition = move.position;
         playerMoves++;
+        playerLastStep = step;
       } else if (move.type === 'trap' || cellContent === 'trap') {
         console.log(`Player placed trap at (${move.position.row}, ${move.position.col})`);
         traps.playerTraps.set(positionKey(move.position.row, move.position.col), step);
+        playerLastStep = step;
       } else if (move.type === 'final' || cellContent === 'final') {
         console.log('Player reached goal!');
         playerGoalReached = true;
@@ -140,6 +144,7 @@ export function simulateRound(
         playerScore++;
         console.log(`Player scored goal point! Score now ${playerScore}`);
         playerRoundEnded = true;
+        playerLastStep = step;
       }
     }
 
@@ -158,9 +163,11 @@ export function simulateRound(
         }
         opponentPosition = rotated;
         opponentMoves++;
+        opponentLastStep = step;
       } else if (move.type === 'trap' || cellContent === 'trap') {
         console.log(`Opponent placed trap at (${rotated.row}, ${rotated.col})`);
         traps.opponentTraps.set(positionKey(rotated.row, rotated.col), step);
+        opponentLastStep = step;
       } else if (move.type === 'final' || cellContent === 'final') {
         console.log('Opponent reached goal!');
         opponentGoalReached = true;
@@ -168,6 +175,7 @@ export function simulateRound(
         opponentScore++;
         console.log(`Opponent scored goal point! Score now ${opponentScore}`);
         opponentRoundEnded = true;
+        opponentLastStep = step;
       }
     }
 
@@ -313,6 +321,8 @@ export function simulateRound(
       opponentMoves,
       playerHitTrap,
       opponentHitTrap,
+      playerLastStep,
+      opponentLastStep,
     },
   };
 }

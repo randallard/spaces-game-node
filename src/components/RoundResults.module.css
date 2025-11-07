@@ -100,6 +100,23 @@
   color: #1a1a1a;
 }
 
+.helpIcon {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  margin-left: 0.25rem;
+  transition: color 0.2s;
+  vertical-align: baseline;
+}
+
+.helpIcon:hover {
+  color: #2563eb;
+}
+
 .boardContainer {
   display: flex;
   align-items: center;

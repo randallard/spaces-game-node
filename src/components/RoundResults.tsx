@@ -8,6 +8,7 @@ import type { RoundResult } from '@/types';
 import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
+import { HelpModal } from './HelpModal';
 import styles from './RoundResults.module.css';
 
 export interface RoundResultsProps {
@@ -23,6 +24,8 @@ export interface RoundResultsProps {
   opponentScore: number;
   /** Callback to continue to next round */
   onContinue: () => void;
+  /** Optional custom text for continue button */
+  continueButtonText?: string;
 }
 
 /**
@@ -43,6 +46,7 @@ export function RoundResults({
   playerScore,
   opponentScore,
   onContinue,
+  continueButtonText = 'Continue to Next Round',
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard, playerFinalPosition, opponentFinalPosition } = result;
 
@@ -50,6 +54,9 @@ export function RoundResults({
   const [isReplaying, setIsReplaying] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [explanations, setExplanations] = useState<string[]>([]);
+
+  // Help modal state
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   // Calculate the last step index executed for each player
   const getLastExecutedStepIndex = useCallback((
@@ -76,7 +83,10 @@ export function RoundResults({
     return sequence.length - 1;
   }, []);
 
-  const playerLastStep = result.simulationDetails
+  // Get last executed step from simulation details (if available) or calculate it
+  const playerLastStep = result.simulationDetails?.playerLastStep !== undefined
+    ? result.simulationDetails.playerLastStep
+    : result.simulationDetails
     ? getLastExecutedStepIndex(
         playerBoard.sequence,
         result.simulationDetails.playerMoves,
@@ -84,7 +94,9 @@ export function RoundResults({
       )
     : playerBoard.sequence.length - 1;
 
-  const opponentLastStep = result.simulationDetails
+  const opponentLastStep = result.simulationDetails?.opponentLastStep !== undefined
+    ? result.simulationDetails.opponentLastStep
+    : result.simulationDetails
     ? getLastExecutedStepIndex(
         opponentBoard.sequence,
         result.simulationDetails.opponentMoves,
@@ -98,13 +110,15 @@ export function RoundResults({
   const combinedBoardSvg = useMemo(
     () => {
       if (isReplaying) {
-        // During replay, show only up to current step
-        return generateCombinedBoardSvg(playerBoard, opponentBoard, result, currentStep - 1);
+        // During replay, show only up to current step for both players
+        const playerReplayMax = Math.min(currentStep - 1, playerLastStep);
+        const opponentReplayMax = Math.min(currentStep - 1, opponentLastStep);
+        return generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerReplayMax, opponentReplayMax);
       }
-      // Normal view, show complete result
-      return generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+      // Normal view, show only executed moves (hide opponent moves that weren't executed)
+      return generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerLastStep, opponentLastStep);
     },
-    [playerBoard, opponentBoard, result, currentStep, isReplaying]
+    [playerBoard, opponentBoard, result, currentStep, isReplaying, playerLastStep, opponentLastStep]
   );
 
   // Generate explanation text for a step (with scoring)
@@ -396,7 +410,19 @@ export function RoundResults({
 
       {/* Combined Board Display */}
       <div className={styles.combinedBoard}>
-        <h4 className={styles.boardTitle}>Combined Board View</h4>
+        <h4 className={styles.boardTitle}>
+          Combined Board View{' '}
+          <button
+            className={styles.helpIcon}
+            onClick={(e) => {
+              e.preventDefault();
+              setIsHelpModalOpen(true);
+            }}
+            title="Why are some opponent moves hidden?"
+          >
+            (?)
+          </button>
+        </h4>
         <div className={styles.boardContainer}>
           {isReplaying && currentStep < maxSteps && (
             <button onClick={handleNext} className={styles.nextButton}>
@@ -480,8 +506,11 @@ export function RoundResults({
 
       {/* Continue Button */}
       <button onClick={onContinue} className={styles.continueButton}>
-        Continue to Next Round
+        {continueButtonText}
       </button>
+
+      {/* Help Modal */}
+      <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     </div>
   );
 }

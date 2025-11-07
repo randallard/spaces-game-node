@@ -26,6 +26,8 @@ export type RoundResult = {
     opponentMoves: number;
     playerHitTrap: boolean;
     opponentHitTrap: boolean;
+    playerLastStep: number; // Last sequence step executed by player (-1 if none)
+    opponentLastStep: number; // Last sequence step executed by opponent (-1 if none)
   };
   // Creature graphics info (optional for backward compatibility)
   playerCreature?: CreatureId;
