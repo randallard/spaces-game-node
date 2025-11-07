@@ -78,11 +78,13 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
 
-    expect(svg).toMatch(/^data:image\/svg\+xml,/);
-    expect(svg).toContain('%3Csvg');
-    expect(svg).toContain('%3C%2Fsvg%3E');
+    // Check that dataUri is a valid data URI (now using base64)
+    expect(result_obj.dataUri).toMatch(/^data:image\/svg\+xml;base64,/);
+    // Check that svg contains raw SVG
+    expect(result_obj.svg).toContain('<svg');
+    expect(result_obj.svg).toContain('</svg>');
   });
 
   it('should include player piece (blue)', () => {
@@ -111,11 +113,11 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Player piece is blue (rgb(37, 99, 235))
-    expect(decoded).toContain('rgb(37, 99, 235)');
+    expect(svg).toContain('rgb(37, 99, 235)');
   });
 
   it('should include opponent piece (purple)', () => {
@@ -144,11 +146,11 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Opponent piece is purple (rgb(147, 51, 234))
-    expect(decoded).toContain('rgb(147, 51, 234)');
+    expect(svg).toContain('rgb(147, 51, 234)');
   });
 
   it('should show player trap (red)', () => {
@@ -177,11 +179,11 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Player trap is red (rgb(220, 38, 38))
-    expect(decoded).toContain('rgb(220, 38, 38)');
+    expect(svg).toContain('rgb(220, 38, 38)');
   });
 
   it('should show opponent trap (orange)', () => {
@@ -210,11 +212,11 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Opponent trap is orange (rgb(249, 115, 22))
-    expect(decoded).toContain('rgb(249, 115, 22)');
+    expect(svg).toContain('rgb(249, 115, 22)');
   });
 
   it('should mark collision when both players end at same position', () => {
@@ -244,11 +246,11 @@ describe('generateCombinedBoardSvg', () => {
       { row: 1, col: 1 } // Rotates to (0, 0)
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Collision markers are asterisks in red/orange
-    expect(decoded).toContain('*');
+    expect(svg).toContain('*');
   });
 
   it('should show split circle when both players visit same square', () => {
@@ -277,14 +279,14 @@ describe('generateCombinedBoardSvg', () => {
       { row: 1, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Split circle uses path elements
-    expect(decoded).toContain('<path');
+    expect(svg).toContain('<path');
     // Should contain both colors for split circle
-    expect(decoded).toContain('rgb(37, 99, 235)'); // Blue
-    expect(decoded).toContain('rgb(147, 51, 234)'); // Purple
+    expect(svg).toContain('rgb(37, 99, 235)'); // Blue
+    expect(svg).toContain('rgb(147, 51, 234)'); // Purple
   });
 
   it('should respect maxStep parameter for replay', () => {
@@ -317,20 +319,20 @@ describe('generateCombinedBoardSvg', () => {
     );
 
     // Show only first step
-    const svg1 = generateCombinedBoardSvg(playerBoard, opponentBoard, result, 0);
-    const decoded1 = decodeURIComponent(svg1.replace('data:image/svg+xml,', ''));
+    const result1 = generateCombinedBoardSvg(playerBoard, opponentBoard, result, 0);
+    const svg1 = result1.svg;
 
     // Should show step 1 but not step 2
-    expect(decoded1).toContain('>1<'); // Step 1 text
-    expect(decoded1).not.toContain('>2<'); // Step 2 shouldn't appear
+    expect(svg1).toContain('>1<'); // Step 1 text
+    expect(svg1).not.toContain('>2<'); // Step 2 shouldn't appear
 
     // Show both steps
-    const svg2 = generateCombinedBoardSvg(playerBoard, opponentBoard, result, 1);
-    const decoded2 = decodeURIComponent(svg2.replace('data:image/svg+xml,', ''));
+    const result2 = generateCombinedBoardSvg(playerBoard, opponentBoard, result, 1);
+    const svg2 = result2.svg;
 
     // Should show both steps
-    expect(decoded2).toContain('>1<');
-    expect(decoded2).toContain('>2<');
+    expect(svg2).toContain('>1<');
+    expect(svg2).toContain('>2<');
   });
 
   it('should skip final moves when rendering', () => {
@@ -363,13 +365,13 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Should only show steps 1 and 2 (not the final move which is step 3)
-    expect(decoded).toContain('>1<');
-    expect(decoded).toContain('>2<');
-    expect(decoded).not.toContain('>3<');
+    expect(svg).toContain('>1<');
+    expect(svg).toContain('>2<');
+    expect(svg).not.toContain('>3<');
   });
 
   it('should handle both traps at same position', () => {
@@ -398,15 +400,15 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Should show both trap colors
-    expect(decoded).toContain('rgb(220, 38, 38)'); // Red
-    expect(decoded).toContain('rgb(249, 115, 22)'); // Orange
+    expect(svg).toContain('rgb(220, 38, 38)'); // Red
+    expect(svg).toContain('rgb(249, 115, 22)'); // Orange
     // Both traps should be rotated slightly
-    expect(decoded).toContain('rotate(3');
-    expect(decoded).toContain('rotate(-3');
+    expect(svg).toContain('rotate(3');
+    expect(svg).toContain('rotate(-3');
   });
 
   it('should generate correct viewBox size for different grid sizes', () => {
@@ -435,20 +437,20 @@ describe('generateCombinedBoardSvg', () => {
     // Test with 2x2 grid
     const board2 = createBoardWithSize(2);
     const result2 = createTestResult(board2, board2, { row: 0, col: 0 }, { row: 1, col: 1 });
-    const svg2 = generateCombinedBoardSvg(board2, board2, result2);
-    const decoded2 = decodeURIComponent(svg2.replace('data:image/svg+xml,', ''));
+    const result_obj2 = generateCombinedBoardSvg(board2, board2, result2);
+    const svg2 = result_obj2.svg;
 
     // 2 * 45 + 10 = 100
-    expect(decoded2).toContain('viewBox="0 0 100 100"');
+    expect(svg2).toContain('viewBox="0 0 100 100"');
 
     // Test with 3x3 grid
     const board3 = createBoardWithSize(3);
     const result3 = createTestResult(board3, board3, { row: 0, col: 0 }, { row: 2, col: 2 });
-    const svg3 = generateCombinedBoardSvg(board3, board3, result3);
-    const decoded3 = decodeURIComponent(svg3.replace('data:image/svg+xml,', ''));
+    const result_obj3 = generateCombinedBoardSvg(board3, board3, result3);
+    const svg3 = result_obj3.svg;
 
     // 3 * 45 + 10 = 145
-    expect(decoded3).toContain('viewBox="0 0 145 145"');
+    expect(svg3).toContain('viewBox="0 0 145 145"');
   });
 
   it('should display step numbers starting from 1', () => {
@@ -480,11 +482,11 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
-    const svg = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
-    const decoded = decodeURIComponent(svg.replace('data:image/svg+xml,', ''));
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
 
     // Steps should be displayed as 1, 2 (not 0, 1)
-    expect(decoded).toContain('>1<');
-    expect(decoded).toContain('>2<');
+    expect(svg).toContain('>1<');
+    expect(svg).toContain('>2<');
   });
 });
