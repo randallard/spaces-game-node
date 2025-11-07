@@ -5,7 +5,8 @@
 
 import { useState, useEffect, useCallback, type ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { UserProfile } from '@/types';
+import type { UserProfile, CreatureId } from '@/types';
+import { getAllCreatures } from '@/types/creature';
 import styles from './UserProfile.module.css';
 
 export interface UserProfileProps {
@@ -39,6 +40,22 @@ export function UserProfile({
   const [name, setName] = useState(existingUser?.name || '');
   const [error, setError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+
+  // Get all available creatures
+  const creatures = getAllCreatures();
+
+  // Select random creatures by default
+  const getRandomCreatureId = (): CreatureId => {
+    const randomIndex = Math.floor(Math.random() * creatures.length);
+    return creatures[randomIndex]!.id;
+  };
+
+  const [playerCreature, setPlayerCreature] = useState<CreatureId>(
+    existingUser?.playerCreature || getRandomCreatureId()
+  );
+  const [opponentCreature, setOpponentCreature] = useState<CreatureId>(
+    existingUser?.opponentCreature || getRandomCreatureId()
+  );
 
   // Load existing user name on mount
   useEffect(() => {
@@ -107,6 +124,8 @@ export function UserProfile({
         ? {
             ...existingUser,
             name: name.trim(),
+            playerCreature,
+            opponentCreature,
           }
         : {
             id: uuidv4(),
@@ -118,11 +137,13 @@ export function UserProfile({
               losses: 0,
               ties: 0,
             },
+            playerCreature,
+            opponentCreature,
           };
 
       onUserCreated(user);
     },
-    [name, existingUser, validateName, onUserCreated]
+    [name, existingUser, validateName, onUserCreated, playerCreature, opponentCreature]
   );
 
   const isValid = validateName(name) === null;
@@ -194,6 +215,52 @@ export function UserProfile({
               1-20 characters: letters, numbers, spaces, dash, underscore
             </div>
           )}
+        </div>
+
+        {/* Creature selection */}
+        <div className={styles.creatureSection}>
+          <h3 className={styles.sectionTitle}>Select Creatures</h3>
+          <p className={styles.sectionDescription}>
+            Choose creatures for visual flair - purely cosmetic!
+          </p>
+
+          <div className={styles.creatureSelectors}>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="player-creature" className={styles.label}>
+                Your Creature
+              </label>
+              <select
+                id="player-creature"
+                value={playerCreature}
+                onChange={(e) => setPlayerCreature(e.target.value as CreatureId)}
+                className={styles.select}
+              >
+                {creatures.map((creature) => (
+                  <option key={creature.id} value={creature.id}>
+                    {creature.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label htmlFor="opponent-creature" className={styles.label}>
+                Opponent Creature
+              </label>
+              <select
+                id="opponent-creature"
+                value={opponentCreature}
+                onChange={(e) => setOpponentCreature(e.target.value as CreatureId)}
+                className={styles.select}
+              >
+                {creatures.map((creature) => (
+                  <option key={creature.id} value={creature.id}>
+                    {creature.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Stats display (if editing) */}

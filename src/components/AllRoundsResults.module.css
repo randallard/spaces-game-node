@@ -87,11 +87,50 @@
   gap: 1rem;
 }
 
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .sectionTitle {
   margin: 0;
   font-size: 1.25rem;
   color: #1f2937;
   font-weight: 600;
+}
+
+.viewToggle {
+  display: flex;
+  gap: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+.toggleButton {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.toggleButton:hover {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.toggleButtonActive {
+  background-color: white;
+  color: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .roundsGrid {
@@ -183,6 +222,33 @@
 }
 
 .thumbnail {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.creatureGraphics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.creatureWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.creatureLabel {
+  font-size: 0.625rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-align: center;
+}
+
+.creatureImage {
   width: 100%;
   height: auto;
   border-radius: 6px;

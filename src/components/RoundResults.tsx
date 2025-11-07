@@ -6,6 +6,8 @@
 import { type ReactElement, useMemo, useState, useCallback } from 'react';
 import type { RoundResult } from '@/types';
 import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
+import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
+import { CREATURES } from '@/types/creature';
 import styles from './RoundResults.module.css';
 
 export interface RoundResultsProps {
@@ -317,6 +319,81 @@ export function RoundResults({
         </h3>
       </div>
 
+      {/* Creature Outcome Graphics */}
+      {result.playerCreature && result.opponentCreature && (() => {
+        const playerCreature = CREATURES[result.playerCreature];
+        const opponentCreature = CREATURES[result.opponentCreature];
+
+        if (!playerCreature || !opponentCreature) return null;
+
+        return (
+          <div className={styles.creatureOutcomeSection}>
+            {result.collision ? (
+              // Show single collision graphic
+              <div className={styles.outcomeGraphicSingle}>
+                <img
+                  src={getSharedGraphic('collision')}
+                  alt="Collision! Both creatures crashed into each other"
+                  className={styles.outcomeImage}
+                />
+                <p className={styles.outcomeCaption}>Collision!</p>
+              </div>
+            ) : (
+              // Show split player/opponent graphics
+              <div className={styles.outcomeGraphicSplit}>
+                <div className={styles.outcomeGraphicItem}>
+                  <img
+                    src={getOutcomeGraphic(result.playerCreature, result.playerVisualOutcome ?? 'forward')}
+                    alt={`${playerCreature.name}: ${result.playerVisualOutcome ?? 'forward'}`}
+                    className={styles.outcomeImage}
+                  />
+                  <p className={styles.outcomeCaption}>
+                    {playerName} - {playerCreature.name}
+                  </p>
+                </div>
+                <div className={styles.outcomeGraphicItem}>
+                  <img
+                    src={getOutcomeGraphic(result.opponentCreature, result.opponentVisualOutcome ?? 'forward')}
+                    alt={`${opponentCreature.name}: ${result.opponentVisualOutcome ?? 'forward'}`}
+                    className={styles.outcomeImage}
+                  />
+                  <p className={styles.outcomeCaption}>
+                    {opponentName} - {opponentCreature.name}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Round Scores Display */}
+      <div className={styles.roundScoreSection}>
+        <div className={styles.roundScoreHeader}>
+          <h4 className={styles.roundScoreTitle}>Round Score</h4>
+          {!isReplaying ? (
+            <button onClick={handleReplay} className={styles.replayButton}>
+              ▶ Replay
+            </button>
+          ) : (
+            <button onClick={handleStopReplay} className={styles.replayButton}>
+              ⏹ Stop
+            </button>
+          )}
+        </div>
+        <div className={styles.scoreDisplay}>
+          <div className={styles.scoreItem}>
+            <span className={styles.scoreName}>{playerName}</span>
+            <span className={styles.scoreValue}>{result.playerPoints ?? 0}</span>
+          </div>
+          <span className={styles.scoreDivider}>-</span>
+          <div className={styles.scoreItem}>
+            <span className={styles.scoreName}>{opponentName}</span>
+            <span className={styles.scoreValue}>{result.opponentPoints ?? 0}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Combined Board Display */}
       <div className={styles.combinedBoard}>
         <h4 className={styles.boardTitle}>Combined Board View</h4>
@@ -381,33 +458,6 @@ export function RoundResults({
             <span className={styles.detailValue}>
               ({opponentFinalPosition.row}, {opponentFinalPosition.col})
             </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Round Scores Display */}
-      <div className={styles.roundScoreSection}>
-        <div className={styles.roundScoreHeader}>
-          <h4 className={styles.roundScoreTitle}>Round Score</h4>
-          {!isReplaying ? (
-            <button onClick={handleReplay} className={styles.replayButton}>
-              ▶ Replay
-            </button>
-          ) : (
-            <button onClick={handleStopReplay} className={styles.replayButton}>
-              ⏹ Stop
-            </button>
-          )}
-        </div>
-        <div className={styles.scoreDisplay}>
-          <div className={styles.scoreItem}>
-            <span className={styles.scoreName}>{playerName}</span>
-            <span className={styles.scoreValue}>{result.playerPoints ?? 0}</span>
-          </div>
-          <span className={styles.scoreDivider}>-</span>
-          <div className={styles.scoreItem}>
-            <span className={styles.scoreName}>{opponentName}</span>
-            <span className={styles.scoreValue}>{result.opponentPoints ?? 0}</span>
           </div>
         </div>
       </div>

@@ -7,6 +7,8 @@ import { type ReactElement, useState } from 'react';
 import type { RoundResult } from '@/types';
 import { RoundResults } from './RoundResults';
 import { generateOpponentThumbnail } from '@/utils/svg-thumbnail';
+import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
+import { CREATURES } from '@/types/creature';
 import styles from './AllRoundsResults.module.css';
 
 export interface AllRoundsResultsProps {
@@ -47,6 +49,7 @@ export function AllRoundsResults({
   onPlayAgain,
 }: AllRoundsResultsProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
 
   // Calculate running totals for each round
   const runningTotals = results.reduce(
@@ -130,7 +133,32 @@ export function AllRoundsResults({
 
       {/* Rounds Grid */}
       <div className={styles.roundsSection}>
-        <h4 className={styles.sectionTitle}>All Rounds (Click to view details)</h4>
+        <div className={styles.sectionHeader}>
+          <h4 className={styles.sectionTitle}>All Rounds (Click to view details)</h4>
+          <div className={styles.viewToggle}>
+            <button
+              className={`${styles.toggleButton} ${viewMode === 'thumbnails' ? styles.toggleButtonActive : ''}`}
+              onClick={() => setViewMode('thumbnails')}
+              title="Show board thumbnails"
+            >
+              Boards
+            </button>
+            <button
+              className={`${styles.toggleButton} ${viewMode === 'creatures' ? styles.toggleButtonActive : ''}`}
+              onClick={() => setViewMode('creatures')}
+              title="Show creature outcome graphics"
+            >
+              Creatures
+            </button>
+            <button
+              className={`${styles.toggleButton} ${viewMode === 'both' ? styles.toggleButtonActive : ''}`}
+              onClick={() => setViewMode('both')}
+              title="Show both boards and creatures"
+            >
+              Both
+            </button>
+          </div>
+        </div>
         <div className={styles.roundsGrid}>
           {results.map((result) => {
             const roundWinner = result.winner;
@@ -158,25 +186,68 @@ export function AllRoundsResults({
                   </span>
                 </div>
 
-                {/* Board Thumbnails */}
-                <div className={styles.boardThumbnails}>
-                  <div className={styles.thumbnailWrapper}>
-                    <span className={styles.thumbnailLabel}>{playerName}</span>
-                    <img
-                      src={result.playerBoard.thumbnail}
-                      alt={result.playerBoard.name}
-                      className={styles.thumbnail}
-                    />
+                {/* Board Thumbnails - shown when viewMode is 'thumbnails' or 'both' */}
+                {(viewMode === 'thumbnails' || viewMode === 'both') && (
+                  <div className={styles.boardThumbnails}>
+                    <div className={styles.thumbnailWrapper}>
+                      <span className={styles.thumbnailLabel}>{playerName}</span>
+                      <img
+                        src={result.playerBoard.thumbnail}
+                        alt={result.playerBoard.name}
+                        className={styles.thumbnail}
+                      />
+                    </div>
+                    <div className={styles.thumbnailWrapper}>
+                      <span className={styles.thumbnailLabel}>{opponentName}</span>
+                      <img
+                        src={generateOpponentThumbnail(result.opponentBoard)}
+                        alt={result.opponentBoard.name}
+                        className={styles.thumbnail}
+                      />
+                    </div>
                   </div>
-                  <div className={styles.thumbnailWrapper}>
-                    <span className={styles.thumbnailLabel}>{opponentName}</span>
-                    <img
-                      src={generateOpponentThumbnail(result.opponentBoard)}
-                      alt={result.opponentBoard.name}
-                      className={styles.thumbnail}
-                    />
-                  </div>
-                </div>
+                )}
+
+                {/* Creature Graphics - shown when viewMode is 'creatures' or 'both' */}
+                {(viewMode === 'creatures' || viewMode === 'both') && result.playerCreature && result.opponentCreature && (() => {
+                  const playerCreature = CREATURES[result.playerCreature];
+                  const opponentCreature = CREATURES[result.opponentCreature];
+
+                  if (!playerCreature || !opponentCreature) return null;
+
+                  return (
+                    <div className={styles.creatureGraphics}>
+                      {result.collision ? (
+                        <div className={styles.creatureWrapper}>
+                          <img
+                            src={getSharedGraphic('collision')}
+                            alt="Collision!"
+                            className={styles.creatureImage}
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <div className={styles.creatureWrapper}>
+                            <span className={styles.creatureLabel}>{playerName}</span>
+                            <img
+                              src={getOutcomeGraphic(result.playerCreature, result.playerVisualOutcome ?? 'forward')}
+                              alt={`${playerCreature.name}: ${result.playerVisualOutcome ?? 'forward'}`}
+                              className={styles.creatureImage}
+                            />
+                          </div>
+                          <div className={styles.creatureWrapper}>
+                            <span className={styles.creatureLabel}>{opponentName}</span>
+                            <img
+                              src={getOutcomeGraphic(result.opponentCreature, result.opponentVisualOutcome ?? 'forward')}
+                              alt={`${opponentCreature.name}: ${result.opponentVisualOutcome ?? 'forward'}`}
+                              className={styles.creatureImage}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Points */}
                 <div className={styles.roundPoints}>

@@ -129,6 +129,52 @@
   margin: 0;
 }
 
+.select {
+  padding: var(--spacing-md);
+  border: 2px solid var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.select:hover {
+  border-color: var(--text-secondary);
+}
+
+/* Creatures Section */
+.creatures {
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--bg-tertiary);
+}
+
+.creaturesTitle {
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.creaturesDescription {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.creaturesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
 /* Stats Section */
 .stats {
   background-color: var(--bg-primary);
@@ -272,6 +318,10 @@
   }
 
   .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .creaturesGrid {
     grid-template-columns: 1fr;
   }
 

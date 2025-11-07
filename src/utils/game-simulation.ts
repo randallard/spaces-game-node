@@ -11,7 +11,17 @@
  * - Round ends on: collision, goal reached, trap hit, or sequences complete
  */
 
-import type { Board, RoundResult, Position } from '@/types';
+import type { Board, RoundResult, Position, CreatureId } from '@/types';
+import { getAllCreatures } from '@/types/creature';
+
+/**
+ * Get a random creature ID from available creatures
+ */
+function getRandomCreature(): CreatureId {
+  const creatures = getAllCreatures();
+  const randomIndex = Math.floor(Math.random() * creatures.length);
+  return creatures[randomIndex]!.id;
+}
 
 /**
  * Rotate position 180 degrees for opponent's perspective
@@ -254,6 +264,29 @@ export function simulateRound(
   console.log(`Player goal reached: ${playerGoalReached}`);
   console.log(`Opponent goal reached: ${opponentGoalReached}`);
 
+  // Determine visual outcomes based on what happened
+  // Priority: goal > trapped > forward > stuck
+  const playerVisualOutcome = playerGoalReached
+    ? 'goal'
+    : playerHitTrap
+      ? 'trapped'
+      : playerMoves > 0
+        ? 'forward'
+        : 'stuck';
+
+  const opponentVisualOutcome = opponentGoalReached
+    ? 'goal'
+    : opponentHitTrap
+      ? 'trapped'
+      : opponentMoves > 0
+        ? 'forward'
+        : 'stuck';
+
+  // Check for collision (both at same position)
+  const collision =
+    finalPlayerPosition.row === finalOpponentPosition.row &&
+    finalPlayerPosition.col === finalOpponentPosition.col;
+
   return {
     round,
     winner,
@@ -264,6 +297,9 @@ export function simulateRound(
     playerPoints: playerScore,
     opponentPoints: opponentScore,
     playerOutcome,
+    playerVisualOutcome,
+    opponentVisualOutcome,
+    collision,
     simulationDetails: {
       playerMoves,
       opponentMoves,
@@ -290,13 +326,19 @@ export function simulateRound(
  */
 export function simulateAllRounds(
   playerBoards: Board[],
-  opponentBoards: Board[]
+  opponentBoards: Board[],
+  playerCreature?: CreatureId,
+  opponentCreature?: CreatureId
 ): RoundResult[] {
   if (playerBoards.length !== 10 || opponentBoards.length !== 10) {
     throw new Error('Both decks must have exactly 10 boards');
   }
 
   console.log('\n====== Starting Deck vs Deck (10 Rounds) ======');
+
+  // Use provided creatures or select random ones
+  const finalPlayerCreature = playerCreature || getRandomCreature();
+  const finalOpponentCreature = opponentCreature || getRandomCreature();
 
   const results: RoundResult[] = [];
 
@@ -305,6 +347,11 @@ export function simulateAllRounds(
     const opponentBoard = opponentBoards[round - 1]!;
 
     const result = simulateRound(round, playerBoard, opponentBoard);
+
+    // Assign creatures to the result
+    result.playerCreature = finalPlayerCreature;
+    result.opponentCreature = finalOpponentCreature;
+
     results.push(result);
   }
 

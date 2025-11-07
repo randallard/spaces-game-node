@@ -4,6 +4,7 @@
 
 import type { Board } from './board';
 import type { Opponent } from './opponent';
+import type { CreatureId } from './creature';
 
 export type UserStats = {
   totalGames: number;
@@ -20,6 +21,8 @@ export type UserProfile = {
   greeting?: string | undefined; // Optional for legacy compatibility
   savedBoards?: Board[] | undefined; // Optional - stored separately
   opponents?: Opponent[] | undefined; // Optional - stored separately
+  playerCreature?: CreatureId | undefined; // Creature for player
+  opponentCreature?: CreatureId | undefined; // Creature for opponent
 };
 
 /**

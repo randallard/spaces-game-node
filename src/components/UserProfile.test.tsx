@@ -292,17 +292,19 @@ describe('UserProfile', () => {
       fireEvent.click(submitButton);
 
       expect(mockOnUserCreated).toHaveBeenCalledTimes(1);
-      expect(mockOnUserCreated).toHaveBeenCalledWith({
-        id: 'test-id',
-        name: 'UpdatedName',
-        createdAt: 12345,
-        stats: {
-          totalGames: 5,
-          wins: 3,
-          losses: 1,
-          ties: 1,
-        },
-      });
+      expect(mockOnUserCreated).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'test-id',
+          name: 'UpdatedName',
+          createdAt: 12345,
+          stats: {
+            totalGames: 5,
+            wins: 3,
+            losses: 1,
+            ties: 1,
+          },
+        })
+      );
     });
 
     it('should preserve all user data except name', () => {
