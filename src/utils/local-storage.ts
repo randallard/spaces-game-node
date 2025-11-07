@@ -3,11 +3,22 @@
  */
 
 import type { z } from 'zod';
+import { migrateUserProfile, migrateGameState, migrateBoards, migrateDecks } from './data-migrations';
 
 const STORAGE_KEYS = {
   USER_PROFILE: 'spaces-game-user-profile',
   GAME_STATE: 'spaces-game-state',
 } as const;
+
+/**
+ * Migration functions mapped to storage keys
+ */
+const MIGRATIONS: Record<string, ((data: any) => any) | undefined> = {
+  [STORAGE_KEYS.USER_PROFILE]: migrateUserProfile,
+  [STORAGE_KEYS.GAME_STATE]: migrateGameState,
+  'spaces-game-boards': migrateBoards,
+  'spaces-game-decks': migrateDecks,
+};
 
 /**
  * Save data to LocalStorage with JSON serialization
@@ -24,6 +35,7 @@ export function saveToLocalStorage<T>(key: string, data: T): void {
 /**
  * Load data from LocalStorage with Zod validation
  * Returns null if key doesn't exist or validation fails
+ * Applies migrations before validation
  */
 export function loadFromLocalStorage<T>(
   key: string,
@@ -35,7 +47,18 @@ export function loadFromLocalStorage<T>(
       return null;
     }
 
-    const data: unknown = JSON.parse(json);
+    let data: unknown = JSON.parse(json);
+
+    // Apply migration if available for this key
+    const migrationFn = MIGRATIONS[key];
+    if (migrationFn) {
+      data = migrationFn(data);
+
+      // Save migrated data back to localStorage
+      // This ensures we don't need to migrate again on next load
+      saveToLocalStorage(key, data);
+    }
+
     const result = schema.safeParse(data);
 
     if (!result.success) {

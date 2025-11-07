@@ -15,10 +15,13 @@ export type BoardMove = {
   order: number; // Sequence order (1, 2, 3, etc.)
 };
 
+export type BoardSize = 2 | 3;
+
 export type Board = {
   id: string; // UUID
   name: string;
-  grid: CellContent[][]; // 2x2 grid
+  boardSize: BoardSize; // Grid size (2x2 or 3x3)
+  grid: CellContent[][]; // NxN grid
   sequence: BoardMove[]; // Ordered list of moves
   thumbnail: string; // SVG data URI
   createdAt: number; // timestamp

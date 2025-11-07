@@ -13,6 +13,7 @@ export interface UseGameStateReturn {
   state: GameState;
   setPhase: (phase: GamePhase) => void;
   setGameMode: (mode: GameMode) => void;
+  setBoardSize: (size: 2 | 3) => void;
   selectOpponent: (opponent: Opponent, gameMode: GameMode) => void;
   selectPlayerBoard: (board: Board) => void;
   selectOpponentBoard: (board: Board) => void;
@@ -70,6 +71,17 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
     setState((prev) => ({
       ...prev,
       gameMode: mode,
+      checksum: '', // Checksum managed externally
+    }));
+  }, []);
+
+  /**
+   * Set board size for the current game
+   */
+  const setBoardSize = useCallback((size: 2 | 3): void => {
+    setState((prev) => ({
+      ...prev,
+      boardSize: size,
       checksum: '', // Checksum managed externally
     }));
   }, []);
@@ -229,6 +241,7 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
       user: prev.user, // Preserve user profile
       opponent: null,
       gameMode: null,
+      boardSize: null,
       currentRound: 1,
       playerScore: 0,
       opponentScore: 0,
@@ -252,6 +265,7 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
     state,
     setPhase,
     setGameMode,
+    setBoardSize,
     selectOpponent,
     selectPlayerBoard,
     selectOpponentBoard,

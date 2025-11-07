@@ -39,6 +39,7 @@ const mockHumanOpponent: Opponent = {
 const mockBoard: Board = {
   id: 'board-1',
   name: 'Test Board',
+  boardSize: 2,
   grid: [
     ['piece', 'empty'],
     ['empty', 'trap'],
@@ -56,6 +57,7 @@ const initialState: GameState = {
   user: mockUser,
   opponent: null,
   gameMode: null,
+  boardSize: null,
   currentRound: 1,
   playerScore: 0,
   opponentScore: 0,
@@ -417,6 +419,7 @@ describe('useGameState', () => {
         user: mockUser,
         opponent: mockHumanOpponent,
         gameMode: null,
+        boardSize: null,
         currentRound: 8,
         playerScore: 5,
         opponentScore: 3,

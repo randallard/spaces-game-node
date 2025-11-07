@@ -11,6 +11,7 @@ import type { RoundResult, UserStats } from '@/types';
 const createMockBoard = (name: string): import('@/types').Board => ({
   id: `board-${name}`,
   name,
+  boardSize: 2,
   grid: [['empty', 'empty'], ['empty', 'empty']],
   sequence: [{ position: { row: 0, col: 0 }, type: 'piece', order: 1 }],
   thumbnail: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',

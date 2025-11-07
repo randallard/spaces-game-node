@@ -62,10 +62,15 @@ const mockUser: UserProfile = {
 const mockBoard: Board = {
   id: '550e8400-e29b-41d4-a716-446655440001',
   name: 'Test Board',
-  grid: [['piece', 'empty'], ['empty', 'empty']],
+  boardSize: 2,
+  grid: [
+    ['piece', 'empty'],
+    ['piece', 'empty'],
+  ],
   sequence: [
-    { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
-    { position: { row: 0, col: 1 }, type: 'final', order: 2 },
+    { position: { row: 1, col: 0 }, type: 'piece', order: 1 },
+    { position: { row: 0, col: 0 }, type: 'piece', order: 2 },
+    { position: { row: -1, col: 0 }, type: 'final', order: 3 },
   ],
   thumbnail: 'data:image/svg+xml;base64,test',
   createdAt: 1234567890,

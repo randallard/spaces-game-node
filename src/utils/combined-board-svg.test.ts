@@ -14,6 +14,7 @@ const createTestBoard = (
 ): Board => ({
   id: `board-${name}`,
   name,
+  boardSize: 2,
   grid,
   sequence: sequence.map((s, index) => ({
     position: { row: s.row, col: s.col },
@@ -421,6 +422,7 @@ describe('generateCombinedBoardSvg', () => {
       return {
         id: 'test',
         name: 'Test',
+        boardSize: size as 2 | 3,
         grid,
         sequence: [{ position: { row: 0, col: 0 }, type: 'piece', order: 1 }],
         thumbnail: 'test',

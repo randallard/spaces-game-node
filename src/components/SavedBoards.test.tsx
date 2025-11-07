@@ -15,6 +15,7 @@ describe('SavedBoards', () => {
   const createMockBoard = (id: string, name: string): Board => ({
     id,
     name,
+    boardSize: 2,
     grid: [
       ['piece', 'empty'],
       ['empty', 'empty'],
@@ -63,6 +64,13 @@ describe('SavedBoards', () => {
 
       const createButton = screen.getByText('Create Your First Board');
       fireEvent.click(createButton);
+
+      // Should show size selection
+      expect(screen.getByText('Select Board Size')).toBeInTheDocument();
+
+      // Select 2x2 board size
+      const size2x2Button = screen.getByText('2x2');
+      fireEvent.click(size2x2Button);
 
       // Should show board creator (look for "Choose a starting square")
       expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
@@ -254,6 +262,13 @@ describe('SavedBoards', () => {
       const createButton = screen.getByText('+ Create New Board');
       fireEvent.click(createButton);
 
+      // Should show size selection
+      expect(screen.getByText('Select Board Size')).toBeInTheDocument();
+
+      // Select 2x2 board size
+      const size2x2Button = screen.getByText('2x2');
+      fireEvent.click(size2x2Button);
+
       expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
     });
 
@@ -291,6 +306,10 @@ describe('SavedBoards', () => {
       const createButton = screen.getByText('Create Your First Board');
       fireEvent.click(createButton);
 
+      // Select 2x2 board size
+      const size2x2Button = screen.getByText('2x2');
+      fireEvent.click(size2x2Button);
+
       // Create a simple board: start -> move to row 0 -> final
       const startButtons = screen.getAllByText('Start');
       fireEvent.click(startButtons[0]!);
@@ -316,6 +335,10 @@ describe('SavedBoards', () => {
       // Open creator
       const createButton = screen.getByText('+ Create New Board');
       fireEvent.click(createButton);
+
+      // Select 2x2 board size
+      const size2x2Button = screen.getByText('2x2');
+      fireEvent.click(size2x2Button);
 
       expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
 
@@ -395,9 +418,15 @@ describe('SavedBoards', () => {
       // Start in list view
       expect(screen.getByText('Board 1')).toBeInTheDocument();
 
-      // Switch to create view
+      // Switch to size selection
       const createButton = screen.getByText('+ Create New Board');
       fireEvent.click(createButton);
+      expect(screen.getByText('Select Board Size')).toBeInTheDocument();
+
+      // Select 2x2 board size
+      const size2x2Button = screen.getByText('2x2');
+      fireEvent.click(size2x2Button);
+
       expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
 
       // Switch back to list view

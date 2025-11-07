@@ -95,6 +95,7 @@ describe('selectRandomBoard', () => {
     {
       id: '1',
       name: 'Board 1',
+      boardSize: 2,
       grid: [
         ['piece', 'empty'],
         ['empty', 'empty'],
@@ -106,6 +107,7 @@ describe('selectRandomBoard', () => {
     {
       id: '2',
       name: 'Board 2',
+      boardSize: 2,
       grid: [
         ['empty', 'piece'],
         ['empty', 'empty'],
@@ -117,6 +119,7 @@ describe('selectRandomBoard', () => {
     {
       id: '3',
       name: 'Board 3',
+      boardSize: 2,
       grid: [
         ['empty', 'empty'],
         ['piece', 'empty'],

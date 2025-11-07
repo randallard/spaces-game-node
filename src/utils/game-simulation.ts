@@ -136,6 +136,7 @@ export function simulateRound(
       } else if (move.type === 'final' || cellContent === 'final') {
         console.log('Player reached goal!');
         playerGoalReached = true;
+        playerPosition = move.position; // Update position to goal (off-board)
         playerScore++;
         console.log(`Player scored goal point! Score now ${playerScore}`);
         playerRoundEnded = true;
@@ -163,14 +164,17 @@ export function simulateRound(
       } else if (move.type === 'final' || cellContent === 'final') {
         console.log('Opponent reached goal!');
         opponentGoalReached = true;
+        opponentPosition = rotated; // Update position to goal (off-board)
         opponentScore++;
         console.log(`Opponent scored goal point! Score now ${opponentScore}`);
         opponentRoundEnded = true;
       }
     }
 
-    // Check for collision (only if both positions are set)
+    // Check for collision (only if both positions are set and neither has left the board)
     if (
+      !playerGoalReached &&
+      !opponentGoalReached &&
       playerPosition !== null &&
       opponentPosition !== null &&
       playerPosition.row === opponentPosition.row &&
@@ -371,6 +375,9 @@ export function isBoardPlayable(board: Board): boolean {
     return false;
   }
 
+  const size = board.grid.length;
+  const maxIndex = size - 1;
+
   // All sequence positions must be valid
   for (const move of board.sequence) {
     const row = move.position.row;
@@ -384,8 +391,8 @@ export function isBoardPlayable(board: Board): boolean {
       continue; // Don't check grid content for final moves
     }
 
-    // Check bounds (2x2 grid)
-    if (row < 0 || row > 1 || col < 0 || col > 1) {
+    // Check bounds (dynamic grid size)
+    if (row < 0 || row > maxIndex || col < 0 || col > maxIndex) {
       return false;
     }
 

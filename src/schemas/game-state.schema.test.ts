@@ -71,6 +71,7 @@ describe('RoundResultSchema', () => {
   const validBoard = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'Test Board',
+    boardSize: 2 as const,
     grid: [
       ['piece', 'empty'],
       ['empty', 'empty'],
@@ -159,6 +160,7 @@ describe('GameStateSchema', () => {
     opponentSelectedBoard: null,
     roundHistory: [],
   gameMode: null,
+  boardSize: null,
   playerSelectedDeck: null,
   opponentSelectedDeck: null,
     checksum: 'abc123',
@@ -224,6 +226,7 @@ describe('UrlPayloadSchema', () => {
     opponentSelectedBoard: null,
     roundHistory: [],
   gameMode: null,
+  boardSize: null,
   playerSelectedDeck: null,
   opponentSelectedDeck: null,
     checksum: 'abc123',

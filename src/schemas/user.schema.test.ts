@@ -43,7 +43,7 @@ describe('UserProfileSchema', () => {
     ).toThrow();
   });
 
-  it('should accept profile with boards and opponents', () => {
+  it('should accept profile with 2x2 boards and opponents', () => {
     const profile = {
       id: '223e4567-e89b-12d3-a456-426614174000',
       name: 'Jane',
@@ -59,6 +59,7 @@ describe('UserProfileSchema', () => {
         {
           id: '123e4567-e89b-12d3-a456-426614174000',
           name: 'Board 1',
+          boardSize: 2,
           grid: [
             ['piece', 'empty'],
             ['empty', 'empty'],
@@ -79,6 +80,41 @@ describe('UserProfileSchema', () => {
           losses: 0,
         },
       ],
+    };
+    expect(() => UserProfileSchema.parse(profile)).not.toThrow();
+  });
+
+  it('should accept profile with 3x3 boards', () => {
+    const profile = {
+      id: '323e4567-e89b-12d3-a456-426614174000',
+      name: 'Alex',
+      createdAt: Date.now(),
+      stats: {
+        totalGames: 2,
+        wins: 1,
+        losses: 1,
+        ties: 0,
+      },
+      greeting: 'Hey!',
+      savedBoards: [
+        {
+          id: '223e4567-e89b-12d3-a456-426614174000',
+          name: '3x3 Board',
+          boardSize: 3,
+          grid: [
+            ['empty', 'trap', 'empty'],
+            ['empty', 'piece', 'empty'],
+            ['empty', 'empty', 'empty'],
+          ],
+          sequence: [
+            { position: { row: 1, col: 1 }, type: 'piece' as const, order: 1 },
+            { position: { row: 0, col: 1 }, type: 'trap' as const, order: 2 },
+          ],
+          thumbnail: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+          createdAt: Date.now(),
+        },
+      ],
+      opponents: [],
     };
     expect(() => UserProfileSchema.parse(profile)).not.toThrow();
   });
