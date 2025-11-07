@@ -269,22 +269,26 @@ export function simulateRound(
   console.log(`Opponent goal reached: ${opponentGoalReached}`);
 
   // Determine visual outcomes based on what happened
-  // Priority: goal > trapped > forward > stuck
+  // Priority: goal > trapped > stuck (if opponent reached goal) > forward > stuck
   const playerVisualOutcome = playerGoalReached
     ? 'goal'
     : playerHitTrap
       ? 'trapped'
-      : playerMoves > 0
-        ? 'forward'
-        : 'stuck';
+      : opponentGoalReached
+        ? 'stuck'
+        : playerMoves > 0
+          ? 'forward'
+          : 'stuck';
 
   const opponentVisualOutcome = opponentGoalReached
     ? 'goal'
     : opponentHitTrap
       ? 'trapped'
-      : opponentMoves > 0
-        ? 'forward'
-        : 'stuck';
+      : playerGoalReached
+        ? 'stuck'
+        : opponentMoves > 0
+          ? 'forward'
+          : 'stuck';
 
   // Check for collision (both at same position)
   const collision =
