@@ -419,7 +419,7 @@ describe('AllRoundsResults', () => {
       expect(screen.getByText('All Rounds (Click to view details)')).toBeInTheDocument();
     });
 
-    it('should close modal when continue button clicked', () => {
+    it('should close modal when clicking back button on last round', () => {
       const results = [createMockResult(1, 'player', 2, 0)];
 
       render(
@@ -438,11 +438,45 @@ describe('AllRoundsResults', () => {
       const roundCard = screen.getByText('Round 1').closest('button');
       fireEvent.click(roundCard!);
 
-      // Click continue button in RoundResults
-      const continueButton = screen.getByText('Continue to Next Round');
-      fireEvent.click(continueButton);
+      // Click back button (since this is the last/only round)
+      const backButton = screen.getByText('Back to All Rounds');
+      fireEvent.click(backButton);
 
       // Should close modal
+      expect(screen.queryByText('Round 1 Complete')).not.toBeInTheDocument();
+    });
+
+    it('should advance to next round when continue button clicked', () => {
+      const results = [
+        createMockResult(1, 'player', 2, 0),
+        createMockResult(2, 'opponent', 0, 3),
+      ];
+
+      render(
+        <AllRoundsResults
+          results={results}
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={3}
+          winner="opponent"
+          onPlayAgain={mockOnPlayAgain}
+        />
+      );
+
+      // Open modal for round 1
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+
+      // Should show round 1
+      expect(screen.getByText('Round 1 Complete')).toBeInTheDocument();
+
+      // Click continue to advance to round 2
+      const continueButton = screen.getByText('Continue to Round 2');
+      fireEvent.click(continueButton);
+
+      // Should now show round 2
+      expect(screen.getByText('Round 2 Complete')).toBeInTheDocument();
       expect(screen.queryByText('Round 1 Complete')).not.toBeInTheDocument();
     });
 

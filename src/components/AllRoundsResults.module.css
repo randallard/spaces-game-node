@@ -102,6 +102,23 @@
   font-weight: 600;
 }
 
+.helpLink {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.helpLink:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
 .viewToggle {
   display: flex;
   gap: 0.5rem;

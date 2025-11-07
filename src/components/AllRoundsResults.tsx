@@ -6,6 +6,7 @@
 import { type ReactElement, useState } from 'react';
 import type { RoundResult } from '@/types';
 import { RoundResults } from './RoundResults';
+import { HelpModal } from './HelpModal';
 import { generateOpponentThumbnail } from '@/utils/svg-thumbnail';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
@@ -50,6 +51,7 @@ export function AllRoundsResults({
 }: AllRoundsResultsProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   // Calculate running totals for each round
   const runningTotals = results.reduce(
@@ -76,6 +78,17 @@ export function AllRoundsResults({
     return "It's a Tie!";
   };
 
+  // Handle continuing to next round in modal
+  const handleContinueFromRound = () => {
+    if (selectedRound !== null && selectedRound < results.length) {
+      // Advance to next round
+      setSelectedRound(selectedRound + 1);
+    } else {
+      // Last round, close modal
+      setSelectedRound(null);
+    }
+  };
+
   // If a round is selected, show the RoundResults component
   if (selectedRound !== null) {
     const result = results[selectedRound - 1];
@@ -100,7 +113,12 @@ export function AllRoundsResults({
             opponentName={opponentName}
             playerScore={runningTotal.player}
             opponentScore={runningTotal.opponent}
-            onContinue={() => setSelectedRound(null)}
+            onContinue={handleContinueFromRound}
+            continueButtonText={
+              selectedRound === results.length
+                ? 'Back to All Rounds'
+                : `Continue to Round ${selectedRound + 1}`
+            }
           />
         </div>
       </div>
@@ -134,7 +152,18 @@ export function AllRoundsResults({
       {/* Rounds Grid */}
       <div className={styles.roundsSection}>
         <div className={styles.sectionHeader}>
-          <h4 className={styles.sectionTitle}>All Rounds (Click to view details)</h4>
+          <h4 className={styles.sectionTitle}>
+            All Rounds (Click to view details){' '}
+            <button
+              className={styles.helpLink}
+              onClick={(e) => {
+                e.preventDefault();
+                setIsHelpModalOpen(true);
+              }}
+            >
+              (shown opponent moves...)
+            </button>
+          </h4>
           <div className={styles.viewToggle}>
             <button
               className={`${styles.toggleButton} ${viewMode === 'thumbnails' ? styles.toggleButtonActive : ''}`}
@@ -200,7 +229,10 @@ export function AllRoundsResults({
                     <div className={styles.thumbnailWrapper}>
                       <span className={styles.thumbnailLabel}>{opponentName}</span>
                       <img
-                        src={generateOpponentThumbnail(result.opponentBoard)}
+                        src={generateOpponentThumbnail(
+                          result.opponentBoard,
+                          result.simulationDetails?.opponentLastStep
+                        )}
                         alt={result.opponentBoard.name}
                         className={styles.thumbnail}
                       />
@@ -273,6 +305,9 @@ export function AllRoundsResults({
           Play Again
         </button>
       </div>
+
+      {/* Help Modal */}
+      <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     </div>
   );
 }

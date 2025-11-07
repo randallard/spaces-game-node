@@ -46,6 +46,8 @@ const createTestResult = (
     opponentMoves: opponentBoard.sequence.filter((m) => m.type === 'piece').length,
     playerHitTrap: false,
     opponentHitTrap: false,
+    playerLastStep: playerBoard.sequence.length - 1,
+    opponentLastStep: opponentBoard.sequence.length - 1,
   },
 });
 

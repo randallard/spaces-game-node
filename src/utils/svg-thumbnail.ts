@@ -15,15 +15,15 @@ export function generateBoardThumbnail(board: Board): string {
 /**
  * Generate SVG thumbnail for opponent's board (180-degree rotated)
  */
-export function generateOpponentThumbnail(board: Board): string {
-  const svg = createBoardSvg(board, true);
+export function generateOpponentThumbnail(board: Board, maxStep?: number): string {
+  const svg = createBoardSvg(board, true, maxStep);
   return createDataUri(svg);
 }
 
 /**
  * Create SVG string for board
  */
-function createBoardSvg(board: Board, rotated: boolean): string {
+function createBoardSvg(board: Board, rotated: boolean, maxStep?: number): string {
   const size = board.grid.length;
   const cellSize = 45;
   const viewBoxSize = size * cellSize + 10;
@@ -45,7 +45,12 @@ function createBoardSvg(board: Board, rotated: boolean): string {
   // NOTE: Skip 'final' moves - they're goal markers, not rendered on grid
   const positionMap = new Map<string, { move: typeof board.sequence[0]; order: number }>();
 
-  board.sequence.forEach((move) => {
+  board.sequence.forEach((move, index) => {
+    // Skip moves beyond maxStep if specified
+    if (maxStep !== undefined && index > maxStep) {
+      return;
+    }
+
     // Skip final moves (goal reached marker)
     if (move.type === 'final') {
       return;
