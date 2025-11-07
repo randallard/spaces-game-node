@@ -116,6 +116,7 @@ function buildGridData(
  * @param result - Round result data
  * @param playerMaxStep - Optional maximum step to show for player (for replay animation)
  * @param opponentMaxStep - Optional maximum step to show for opponent (for replay animation)
+ * @returns Object with both raw SVG string and data URI
  */
 export function generateCombinedBoardSvg(
   playerBoard: Board,
@@ -123,12 +124,40 @@ export function generateCombinedBoardSvg(
   result: RoundResult,
   playerMaxStep?: number,
   opponentMaxStep?: number
-): string {
+): { svg: string; dataUri: string } {
+  // Defensive check: ensure boards exist and have valid data
+  const emptySvg = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+  if (!playerBoard || !playerBoard.grid || !playerBoard.sequence) {
+    console.error('[generateCombinedBoardSvg] Invalid playerBoard:', playerBoard);
+    return { svg: emptySvg, dataUri: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg"%3E%3C/svg%3E' };
+  }
+
+  if (!opponentBoard || !opponentBoard.grid || !opponentBoard.sequence) {
+    console.error('[generateCombinedBoardSvg] Invalid opponentBoard:', opponentBoard);
+    return { svg: emptySvg, dataUri: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg"%3E%3C/svg%3E' };
+  }
+
   const size = playerBoard.grid.length;
   const cellSize = 45;
   const viewBoxSize = size * cellSize + 10;
 
+  console.log('[generateCombinedBoardSvg] Board size:', size);
+  console.log('[generateCombinedBoardSvg] Player board:', playerBoard.name, 'Sequence length:', playerBoard.sequence.length);
+  console.log('[generateCombinedBoardSvg] Opponent board:', opponentBoard.name, 'Sequence length:', opponentBoard.sequence.length);
+
   const grid = buildGridData(playerBoard, opponentBoard, result, playerMaxStep, opponentMaxStep);
+
+  console.log('[generateCombinedBoardSvg] Grid data built, checking for pieces...');
+  let totalPlayerVisits = 0;
+  let totalOpponentVisits = 0;
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size; j++) {
+      const square = grid[i]![j]!;
+      totalPlayerVisits += square.playerVisits.length;
+      totalOpponentVisits += square.opponentVisits.length;
+    }
+  }
+  console.log('[generateCombinedBoardSvg] Total player visits:', totalPlayerVisits, 'Total opponent visits:', totalOpponentVisits);
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}">`;
   svg += `<rect width="${viewBoxSize}" height="${viewBoxSize}" fill="rgb(30, 41, 59)"/>`;
@@ -240,7 +269,27 @@ export function generateCombinedBoardSvg(
 
   svg += '</g></svg>';
 
-  // Create data URI
-  const encoded = encodeURIComponent(svg);
-  return `data:image/svg+xml,${encoded}`;
+  console.log('[generateCombinedBoardSvg] SVG generated, length:', svg.length, 'First 200 chars:', svg.substring(0, 200));
+
+  // Create data URI using base64 encoding (better cross-browser compatibility)
+  // Use modern TextEncoder API for proper UTF-8 handling
+  let dataUri: string;
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(svg);
+    let binaryString = '';
+    for (let i = 0; i < data.length; i++) {
+      binaryString += String.fromCharCode(data[i]!);
+    }
+    const base64 = btoa(binaryString);
+    dataUri = `data:image/svg+xml;base64,${base64}`;
+    console.log('[generateCombinedBoardSvg] Data URI length:', dataUri.length);
+  } catch (error) {
+    console.error('[generateCombinedBoardSvg] Error encoding SVG:', error);
+    // Fallback to simple URL encoding
+    const encoded = encodeURIComponent(svg);
+    dataUri = `data:image/svg+xml,${encoded}`;
+  }
+
+  return { svg, dataUri };
 }
