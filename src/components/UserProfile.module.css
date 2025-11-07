@@ -12,6 +12,105 @@
   color: #1a1a1a;
 }
 
+/* Intro Section */
+.introSection {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0.75rem;
+  color: white;
+}
+
+.tagline {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.diagramContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.diagram {
+  display: inline-block;
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.diagramRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.diagramSquare {
+  width: 60px;
+  height: 60px;
+  background-color: rgb(51, 65, 85);
+  border: 2px solid rgb(30, 41, 59);
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-weight: bold;
+}
+
+.diagramGoal {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.diagramPiece {
+  font-size: 2rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.diagramStep {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.diagramTrap {
+  font-size: 2rem;
+  color: rgb(220, 38, 38);
+  font-weight: bold;
+}
+
+.diagramLabels {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 0.75rem;
+  gap: 0.5rem;
+}
+
+.diagramLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+}
+
 .form {
   display: flex;
   flex-direction: column;

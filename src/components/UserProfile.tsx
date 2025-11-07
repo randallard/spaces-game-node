@@ -161,6 +161,62 @@ export function UserProfile({
         {existingUser ? 'Edit Profile' : 'Create Your Profile'}
       </h2>
 
+      {!existingUser && (
+        <div className={styles.introSection}>
+          <p className={styles.tagline}>
+            Program your bot to make it to the other side before the opponent!
+          </p>
+          <p className={styles.tagline}>
+            Create a path, set a trap, win the day!
+          </p>
+
+          <div className={styles.diagramContainer}>
+            <div className={styles.diagram}>
+              <div className={styles.diagramRow}>
+                <div className={styles.diagramSquare}>
+                  <span className={styles.diagramGoal}>GOAL</span>
+                </div>
+                <div className={styles.diagramSquare}>
+                  <span className={styles.diagramGoal}>GOAL</span>
+                </div>
+              </div>
+              <div className={styles.diagramRow}>
+                <div className={styles.diagramSquare}>
+                  <span className={styles.diagramPiece} style={{ color: 'rgb(37, 99, 235)' }}>●</span>
+                  <span className={styles.diagramStep}>2</span>
+                </div>
+                <div className={styles.diagramSquare}>
+                  <span className={styles.diagramPiece} style={{ color: 'rgb(147, 51, 234)' }}>●</span>
+                  <span className={styles.diagramStep}>2</span>
+                </div>
+              </div>
+              <div className={styles.diagramRow}>
+                <div className={styles.diagramSquare}>
+                  <span className={styles.diagramTrap}>✗</span>
+                </div>
+                <div className={styles.diagramSquare}>
+                  <span className={styles.diagramTrap}>✗</span>
+                </div>
+              </div>
+              <div className={styles.diagramRow}>
+                <div className={styles.diagramSquare}>
+                  <span className={styles.diagramPiece} style={{ color: 'rgb(37, 99, 235)' }}>●</span>
+                  <span className={styles.diagramStep}>1</span>
+                </div>
+                <div className={styles.diagramSquare}>
+                  <span className={styles.diagramPiece} style={{ color: 'rgb(147, 51, 234)' }}>●</span>
+                  <span className={styles.diagramStep}>1</span>
+                </div>
+              </div>
+              <div className={styles.diagramLabels}>
+                <span className={styles.diagramLabel} style={{ color: 'rgb(37, 99, 235)' }}>You</span>
+                <span className={styles.diagramLabel} style={{ color: 'rgb(147, 51, 234)' }}>Opponent</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.fieldGroup}>
           <label htmlFor="user-name" className={styles.label}>
