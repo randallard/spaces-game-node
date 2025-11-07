@@ -3,6 +3,7 @@ import styles from './App.module.css';
 import { useGameState } from '@/hooks/useGameState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-simulation';
+import { initializeDefaultCpuData } from '@/utils/default-cpu-data';
 import {
   UserProfile,
   OpponentManager,
@@ -17,6 +18,7 @@ import {
 } from '@/components';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
+import { CPU_OPPONENT_ID } from '@/constants/game-rules';
 
 // Create initial empty user for game state initialization
 const createEmptyUser = (): UserProfileType => ({
@@ -86,6 +88,46 @@ function App(): React.ReactElement {
     DeckSchema.array(),
     []
   );
+
+  // Separate storage for CPU boards and decks (hidden from player)
+  const [cpuBoards, setCpuBoards] = useLocalStorage<Board[] | null>(
+    'spaces-game-cpu-boards',
+    BoardSchema.array(),
+    []
+  );
+
+  const [cpuDecks, setCpuDecks] = useLocalStorage<Deck[] | null>(
+    'spaces-game-cpu-decks',
+    DeckSchema.array(),
+    []
+  );
+
+  // Initialize default CPU data on first load
+  useEffect(() => {
+    // Check if CPU opponent already exists
+    const cpuExists = savedOpponents?.some(o => o.id === CPU_OPPONENT_ID);
+
+    if (!cpuExists) {
+      console.log('[APP] Initializing default CPU opponent and boards');
+      const defaultData = initializeDefaultCpuData();
+
+      // Add CPU opponent
+      setSavedOpponents([...(savedOpponents || []), defaultData.opponent]);
+
+      // Add CPU boards to separate storage (hidden from player)
+      setCpuBoards([
+        ...defaultData.boards2x2,
+        ...defaultData.boards3x3,
+      ]);
+
+      // Add CPU decks to separate storage (hidden from player)
+      setCpuDecks([
+        defaultData.deck2x2,
+        defaultData.deck3x3,
+      ]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount - we intentionally don't include savedOpponents/cpuBoards/cpuDecks
 
   // Initialize game state with saved user or null
   const [initialState] = useState<GameState>(() =>
@@ -230,34 +272,42 @@ function App(): React.ReactElement {
     selectPlayerDeck(deck);
 
     // Opponent selects a deck
-    // Filter boards by the selected board size
-    const boards = (savedBoards || []).filter(b => b.boardSize === state.boardSize);
     let opponentDeck: Deck;
 
     if (state.opponent?.type === 'cpu') {
-      // CPU creates a random deck from available boards of same size
-      const opponentBoards: Board[] = [];
+      // Check if CPU has a default deck for this board size
+      const cpuDeckName = `CPU ${state.boardSize}×${state.boardSize} Deck`;
+      console.log('[handleDeckSelect] Board size:', state.boardSize);
+      console.log('[handleDeckSelect] Looking for CPU deck:', cpuDeckName);
+      console.log('[handleDeckSelect] CPU deck name char codes:', Array.from(cpuDeckName).map(c => c.charCodeAt(0)));
+      console.log('[handleDeckSelect] Available CPU decks:', cpuDecks);
+      console.log('[handleDeckSelect] Available CPU deck names and char codes:',
+        cpuDecks?.map(d => ({
+          name: d.name,
+          charCodes: Array.from(d.name).map(c => c.charCodeAt(0)),
+          boardCount: d.boards.length,
+          boardSize: d.boards[0]?.boardSize
+        }))
+      );
 
-      if (boards.length === 0) {
-        // No boards available of this size - use player's deck
-        opponentDeck = deck;
+      const cpuDefaultDeck = (cpuDecks || []).find(
+        d => d.name === cpuDeckName && d.boards.length === 10
+      );
+
+      if (cpuDefaultDeck) {
+        // Use the default CPU deck (from hidden storage)
+        console.log('[handleDeckSelect] Using CPU deck:', cpuDefaultDeck.name);
+        opponentDeck = cpuDefaultDeck;
       } else {
-        // Randomly select 10 boards (with possible reuse)
-        for (let i = 0; i < 10; i++) {
-          const randomBoard = boards[Math.floor(Math.random() * boards.length)]!;
-          opponentBoards.push(randomBoard);
-        }
-
-        opponentDeck = {
-          id: `cpu-deck-${Date.now()}`,
-          name: `${state.opponent.name}'s Deck`,
-          boards: opponentBoards,
-          createdAt: Date.now(),
-        };
+        // Fallback: use player's deck if CPU deck not found
+        console.warn('[handleDeckSelect] CPU deck not found, falling back to player deck');
+        console.warn('[handleDeckSelect] cpuDecks array:', cpuDecks);
+        opponentDeck = deck;
       }
     } else {
       // Human opponent - would normally choose via URL sharing
-      // For now, create random deck from available boards of same size
+      // For now, create random deck from available player boards of same size
+      const boards = (savedBoards || []).filter(b => b.boardSize === state.boardSize);
       const opponentBoards: Board[] = [];
 
       if (boards.length === 0) {
@@ -302,28 +352,32 @@ function App(): React.ReactElement {
     selectPlayerBoard(board);
 
     // Opponent selects a board (CPU chooses random, human would choose via URL)
-    // Filter boards by the selected board size
-    const boards = (savedBoards || []).filter(b => b.boardSize === state.boardSize);
     let opponentBoard: Board = board; // Fallback to same board
 
     if (state.opponent?.type === 'cpu') {
-      // CPU selects random board from same size
-      if (boards.length > 1) {
-        opponentBoard = boards[Math.floor(Math.random() * boards.length)] || board;
-      } else if (boards.length === 1) {
-        opponentBoard = boards[0] || board;
+      // Use CPU's hidden boards (separate storage)
+      const cpuBoardsForSize = (cpuBoards || []).filter(b => b.boardSize === state.boardSize);
+
+      // CPU selects random board from its hidden storage
+      if (cpuBoardsForSize.length > 0) {
+        const randomIndex = Math.floor(Math.random() * cpuBoardsForSize.length);
+        opponentBoard = cpuBoardsForSize[randomIndex] || board;
+      } else {
+        // Fallback: use player's board if CPU boards not found
+        opponentBoard = board;
       }
 
       // Ensure opponent board is playable
       if (!isBoardPlayable(opponentBoard)) {
-        // Find first playable board of same size or use player's board
-        const playableBoard = boards.find(b => isBoardPlayable(b));
+        // Try to find another playable CPU board
+        const playableBoard = cpuBoardsForSize.find(b => isBoardPlayable(b));
         opponentBoard = playableBoard || board;
       }
     } else {
       // Human opponent - would normally choose via URL sharing
-      // For now, select random board of same size as placeholder
-      if (boards.length > 1) {
+      // For now, select random board from player's boards of same size
+      const boards = (savedBoards || []).filter(b => b.boardSize === state.boardSize);
+      if (boards.length > 0) {
         opponentBoard = boards[Math.floor(Math.random() * boards.length)] || board;
       }
     }
@@ -384,7 +438,7 @@ function App(): React.ReactElement {
         return (
           <div className={styles.boardManagement}>
             <div className={styles.managementHeader}>
-              <h1>Hello, {state.user.name}!</h1>
+              <h1>Hello, {state.user.name}!!!</h1>
               <button
                 className={styles.editProfileLink}
                 onClick={() => setIsProfileModalOpen(true)}

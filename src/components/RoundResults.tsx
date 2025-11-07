@@ -107,16 +107,26 @@ export function RoundResults({
   const maxSteps = Math.max(playerLastStep, opponentLastStep) + 1;
 
   // Generate combined board SVG (either full or up to current step during replay)
-  const combinedBoardSvg = useMemo(
+  const combinedBoardSvgData = useMemo(
     () => {
+      console.log('[RoundResults] Generating combined board SVG...', {
+        isReplaying,
+        playerBoard: playerBoard?.name,
+        opponentBoard: opponentBoard?.name,
+      });
+
       if (isReplaying) {
         // During replay, show only up to current step for both players
         const playerReplayMax = Math.min(currentStep - 1, playerLastStep);
         const opponentReplayMax = Math.min(currentStep - 1, opponentLastStep);
-        return generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerReplayMax, opponentReplayMax);
+        const data = generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerReplayMax, opponentReplayMax);
+        console.log('[RoundResults] Generated SVG (replay):', data.svg.substring(0, 100));
+        return data;
       }
       // Normal view, show only executed moves (hide opponent moves that weren't executed)
-      return generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerLastStep, opponentLastStep);
+      const data = generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerLastStep, opponentLastStep);
+      console.log('[RoundResults] Generated SVG (normal):', data.svg.substring(0, 100));
+      return data;
     },
     [playerBoard, opponentBoard, result, currentStep, isReplaying, playerLastStep, opponentLastStep]
   );
@@ -429,13 +439,10 @@ export function RoundResults({
               Next
             </button>
           )}
-          <div className={styles.boardThumbnail}>
-            <img
-              src={combinedBoardSvg}
-              alt="Combined board showing both players"
-              className={styles.thumbnailImage}
-            />
-          </div>
+          <div
+            className={styles.boardThumbnail}
+            dangerouslySetInnerHTML={{ __html: combinedBoardSvgData.svg }}
+          />
         </div>
         {isReplaying && (
           <div className={styles.explanations}>
