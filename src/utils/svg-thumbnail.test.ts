@@ -15,6 +15,7 @@ describe('generateBoardThumbnail', () => {
   const mockBoard: Board = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'Test Board',
+    boardSize: 2,
     grid: [
       ['piece', 'empty'],
       ['trap', 'empty'],
@@ -72,6 +73,7 @@ describe('generateBoardThumbnail', () => {
     const emptyBoard: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Empty',
+      boardSize: 2,
       grid: [
         ['empty', 'empty'],
         ['empty', 'empty'],
@@ -90,6 +92,7 @@ describe('generateOpponentThumbnail', () => {
   const mockBoard: Board = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'Test Board',
+    boardSize: 2,
     grid: [
       ['piece', 'empty'],
       ['empty', 'empty'],

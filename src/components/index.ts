@@ -14,6 +14,9 @@ export type { BoardCreatorProps } from './BoardCreator';
 export { SavedBoards } from './SavedBoards';
 export type { SavedBoardsProps } from './SavedBoards';
 
+export { BoardSizeSelector } from './BoardSizeSelector';
+export type { BoardSizeSelectorProps } from './BoardSizeSelector';
+
 export { RoundResults } from './RoundResults';
 export type { RoundResultsProps } from './RoundResults';
 

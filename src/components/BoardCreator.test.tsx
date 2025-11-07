@@ -192,6 +192,7 @@ describe('BoardCreator', () => {
         {
           id: '1',
           name: 'Board 1',
+          boardSize: 2,
           grid: [['piece', 'empty'], ['empty', 'empty']],
           sequence: [],
           thumbnail: '',

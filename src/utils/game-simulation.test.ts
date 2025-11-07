@@ -10,10 +10,12 @@ import type { Board } from '@/types';
 const createTestBoard = (
   name: string,
   grid: Array<Array<'empty' | 'piece' | 'trap' | 'final'>>,
-  sequence: Array<{ row: number; col: number; type: 'piece' | 'trap' | 'final' }>
+  sequence: Array<{ row: number; col: number; type: 'piece' | 'trap' | 'final' }>,
+  boardSize: 2 | 3 = 2
 ): Board => ({
   id: `board-${name}`,
   name,
+  boardSize,
   grid,
   sequence: sequence.map((s, index) => ({
     position: { row: s.row, col: s.col },
@@ -124,12 +126,13 @@ describe('simulateRound', () => {
     const playerBoard = createTestBoard(
       'Player with Final',
       [
-        ['final', 'empty'],
+        ['piece', 'empty'],
         ['piece', 'empty'],
       ],
       [
         { row: 1, col: 0, type: 'piece' },
-        { row: 0, col: 0, type: 'final' },
+        { row: 0, col: 0, type: 'piece' },
+        { row: -1, col: 0, type: 'final' },
       ]
     );
 
@@ -144,13 +147,14 @@ describe('simulateRound', () => {
 
     const result = simulateRound(1, playerBoard, opponentBoard);
 
-    // Player starts at (1,0) and moves to (1,0) = no change, no forward movement
-    // Then reaches final = +1 goal point
-    expect(result.playerFinalPosition).toEqual({ row: 1, col: 0 });
+    // Player moves from (1,0) to (0,0) = 1 forward move, then reaches goal at (-1,0)
+    // Final position should be off the board at (-1, 0)
+    expect(result.playerFinalPosition).toEqual({ row: -1, col: 0 });
+    expect(result.playerVisualOutcome).toBe('goal');
     expect(result.simulationDetails).toBeDefined();
-    expect(result.simulationDetails?.playerMoves).toBe(1);
-    // Player scores: 0 forward moves + 1 goal = 1 point
-    expect(result.playerPoints).toBe(1);
+    expect(result.simulationDetails?.playerMoves).toBe(2);
+    // Player scores: 1 forward move + 1 goal = 2 points
+    expect(result.playerPoints).toBe(2);
   });
 
   it('should handle tie when both players perform equally', () => {
@@ -328,6 +332,7 @@ describe('isBoardPlayable', () => {
     const board: Board = {
       id: 'invalid',
       name: 'Invalid',
+      boardSize: 2,
       grid: [
         ['piece', 'empty'],
         ['empty', 'empty'],
@@ -350,6 +355,7 @@ describe('isBoardPlayable', () => {
     const board: Board = {
       id: 'empty-cell',
       name: 'Empty Cell',
+      boardSize: 2,
       grid: [
         ['piece', 'empty'],
         ['empty', 'empty'],
@@ -389,6 +395,7 @@ describe('isBoardPlayable', () => {
     const board: Board = {
       id: 'with-final',
       name: 'With Final Move',
+      boardSize: 2,
       grid: [
         ['piece', 'empty'],
         ['piece', 'empty'],
@@ -421,6 +428,7 @@ describe('isBoardPlayable', () => {
     const board: Board = {
       id: 'bad-final',
       name: 'Bad Final Move',
+      boardSize: 2,
       grid: [
         ['piece', 'empty'],
         ['empty', 'empty'],
@@ -644,6 +652,506 @@ describe('simulateAllRounds', () => {
     results.forEach((result) => {
       expect(result.winner).toBe('player');
       expect(result.playerPoints).toBeGreaterThan(result.opponentPoints ?? 0);
+    });
+  });
+});
+
+describe('3x3 Board Tests', () => {
+  describe('simulateRound with 3x3 boards', () => {
+    it('should simulate a basic 3x3 round with two pieces', () => {
+      const playerBoard = createTestBoard(
+        'Player 3x3 Basic',
+        [
+          ['empty', 'empty', 'empty'],
+          ['empty', 'piece', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+        [{ row: 1, col: 1, type: 'piece' }],
+        3
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent 3x3 Basic',
+        [
+          ['empty', 'empty', 'piece'],
+          ['empty', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+        [{ row: 0, col: 2, type: 'piece' }],
+        3
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      expect(result.round).toBe(1);
+      expect(result.winner).toBeOneOf(['player', 'opponent', 'tie']);
+      expect(result.playerFinalPosition).toEqual({ row: 1, col: 1 });
+      // Opponent position is rotated: (0,2) becomes (2,0) in 3x3 grid
+      expect(result.opponentFinalPosition).toEqual({ row: 2, col: 0 });
+    });
+
+    it('should detect trap hits in 3x3 board', () => {
+      const playerBoard = createTestBoard(
+        'Player 3x3 with movement',
+        [
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+        ],
+        [
+          { row: 2, col: 0, type: 'piece' },
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 0, type: 'piece' },
+        ],
+        3
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent 3x3 with trap',
+        [
+          ['empty', 'empty', 'trap'],
+          ['empty', 'empty', 'empty'],
+          ['empty', 'empty', 'piece'],
+        ],
+        [
+          { row: 0, col: 2, type: 'trap' }, // Rotates to (2,0) - trap placed at step 0 where player starts!
+          { row: 2, col: 2, type: 'piece' }, // Rotates to (0,0) - opponent starts here at step 1
+          { row: 1, col: 2, type: 'piece' }, // Rotates to (1,0) - opponent moves forward (row 0→1), scores 1 point
+        ],
+        3
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      expect(result.playerVisualOutcome).toBe('trapped');
+      expect(result.winner).toBe('opponent'); // Player hits trap at step 0, opponent scores 1 point at step 2
+    });
+
+    it('should handle 3x3 collision detection', () => {
+      const playerBoard = createTestBoard(
+        'Player 3x3 collision',
+        [
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+        [
+          { row: 2, col: 0, type: 'piece' },
+          { row: 1, col: 0, type: 'piece' },
+        ],
+        3
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent 3x3 collision',
+        [
+          ['empty', 'empty', 'piece'],
+          ['empty', 'empty', 'piece'],
+          ['empty', 'empty', 'empty'],
+        ],
+        [
+          { row: 0, col: 2, type: 'piece' }, // Rotates to (2,0)
+          { row: 1, col: 2, type: 'piece' }, // Rotates to (1,0)
+        ],
+        3
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      expect(['player', 'opponent', 'tie']).toContain(result.winner);
+      expect(result.simulationDetails).toBeDefined();
+    });
+
+    it('should score forward movement correctly in 3x3', () => {
+      const playerBoard = createTestBoard(
+        'Player 3x3 forward',
+        [
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+        ],
+        [
+          { row: 2, col: 0, type: 'piece' },
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 0, type: 'piece' },
+        ],
+        3
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent 3x3 no movement',
+        [
+          ['empty', 'empty', 'empty'],
+          ['empty', 'piece', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+        [{ row: 1, col: 1, type: 'piece' }], // Rotates to (1,1) - no collision with player
+        3
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      // Player moves forward 2 times (from row 2 to row 0)
+      expect(result.playerPoints).toBeGreaterThanOrEqual(2);
+      expect(result.winner).toBe('player');
+    });
+
+    it('should handle reaching goal in 3x3 board', () => {
+      const playerBoard = createTestBoard(
+        'Player 3x3 goal',
+        [
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+        ],
+        [
+          { row: 2, col: 0, type: 'piece' },
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 0, type: 'piece' },
+          { row: -1, col: 0, type: 'final' },
+        ],
+        3
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent 3x3 basic',
+        [
+          ['empty', 'empty', 'empty'],
+          ['empty', 'piece', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+        [{ row: 1, col: 1, type: 'piece' }], // Rotates to (1,1) - no collision
+        3
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      expect(result.playerVisualOutcome).toBe('goal');
+      expect(result.winner).toBe('player');
+      expect(result.playerPoints).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should handle complex 3x3 board with multiple traps', () => {
+      const playerBoard = createTestBoard(
+        'Player 3x3 complex',
+        [
+          ['empty', 'piece', 'empty'],
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+        ],
+        [
+          { row: 2, col: 0, type: 'piece' },
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 1, type: 'piece' },
+        ],
+        3
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent 3x3 with traps',
+        [
+          ['trap', 'empty', 'trap'],
+          ['empty', 'piece', 'empty'],
+          ['empty', 'trap', 'empty'],
+        ],
+        [
+          { row: 1, col: 1, type: 'piece' },
+          { row: 0, col: 0, type: 'trap' },
+          { row: 0, col: 2, type: 'trap' },
+          { row: 2, col: 1, type: 'trap' },
+        ],
+        3
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      expect(result.round).toBe(1);
+      expect(result.winner).toBeOneOf(['player', 'opponent', 'tie']);
+      expect(result.simulationDetails).toBeDefined();
+    });
+  });
+
+  describe('isBoardPlayable with 3x3 boards', () => {
+    it('should return true for valid 3x3 board', () => {
+      const board = createTestBoard(
+        'Valid 3x3',
+        [
+          ['empty', 'trap', 'empty'],
+          ['empty', 'piece', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+        [
+          { row: 1, col: 1, type: 'piece' },
+          { row: 0, col: 1, type: 'trap' },
+        ],
+        3
+      );
+
+      expect(isBoardPlayable(board)).toBe(true);
+    });
+
+    it('should return false for 3x3 board with empty sequence', () => {
+      const board = createTestBoard('Empty 3x3', [
+        ['empty', 'empty', 'empty'],
+        ['empty', 'empty', 'empty'],
+        ['empty', 'empty', 'empty'],
+      ], [], 3);
+
+      expect(isBoardPlayable(board)).toBe(false);
+    });
+
+    it('should return false for 3x3 board with out-of-bounds position', () => {
+      const board: Board = {
+        id: 'invalid-3x3',
+        name: 'Invalid 3x3',
+        boardSize: 3,
+        grid: [
+          ['piece', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+        sequence: [
+          { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+          { position: { row: 3, col: 1 }, type: 'piece', order: 2 }, // Out of bounds
+        ],
+        thumbnail: 'data:image/svg+xml;base64,test',
+        createdAt: Date.now(),
+      };
+
+      expect(isBoardPlayable(board)).toBe(false);
+    });
+
+    it('should return true for 3x3 board with final move at row -1', () => {
+      const board = createTestBoard(
+        'Valid 3x3 with goal',
+        [
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+        ],
+        [
+          { row: 2, col: 0, type: 'piece' },
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 0, type: 'piece' },
+          { row: -1, col: 0, type: 'final' },
+        ],
+        3
+      );
+
+      expect(isBoardPlayable(board)).toBe(true);
+    });
+  });
+
+  describe('simulateAllRounds with 3x3 boards', () => {
+    it('should simulate 10 rounds with 3x3 boards', () => {
+      const playerBoards: Board[] = [];
+      const opponentBoards: Board[] = [];
+
+      for (let i = 0; i < 10; i++) {
+        playerBoards.push(
+          createTestBoard(
+            `Player 3x3 ${i + 1}`,
+            [
+              ['piece', 'empty', 'empty'],
+              ['piece', 'empty', 'empty'],
+              ['piece', 'empty', 'empty'],
+            ],
+            [
+              { row: 2, col: 0, type: 'piece' },
+              { row: 1, col: 0, type: 'piece' },
+              { row: 0, col: 0, type: 'piece' },
+            ],
+            3
+          )
+        );
+
+        opponentBoards.push(
+          createTestBoard(
+            `Opponent 3x3 ${i + 1}`,
+            [
+              ['empty', 'empty', 'piece'],
+              ['empty', 'empty', 'empty'],
+              ['empty', 'empty', 'empty'],
+            ],
+            [{ row: 0, col: 2, type: 'piece' }],
+            3
+          )
+        );
+      }
+
+      const results = simulateAllRounds(playerBoards, opponentBoards);
+
+      expect(results).toHaveLength(10);
+      results.forEach((result, i) => {
+        expect(result.round).toBe(i + 1);
+        expect(result.winner).toBeOneOf(['player', 'opponent', 'tie']);
+      });
+    });
+  });
+
+  describe('Goal and Collision Edge Cases', () => {
+    it('should not detect collision when player reaches goal and opponent moves to former position (3x3)', () => {
+      // This is the exact scenario from the bug report
+      const playerBoard = createTestBoard(
+        'Player Goal',
+        [
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+        ],
+        [
+          { row: 2, col: 0, type: 'piece' },
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 0, type: 'piece' },
+          { row: -1, col: 0, type: 'final' },
+        ],
+        3
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent to Same Square',
+        [
+          ['piece', 'piece', 'empty'],
+          ['empty', 'piece', 'empty'],
+          ['empty', 'empty', 'piece'],
+        ],
+        [
+          { row: 0, col: 1, type: 'piece' }, // Rotates to (2, 1) - no collision at start
+          { row: 0, col: 0, type: 'piece' }, // Rotates to (2, 2) - still no collision
+        ],
+        3
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      // Player should have reached goal with 3 points (2 forward + 1 goal)
+      expect(result.playerPoints).toBe(3);
+      expect(result.playerVisualOutcome).toBe('goal');
+      expect(result.playerFinalPosition).toEqual({ row: -1, col: 0 });
+
+      // Opponent should be at (2, 2) with 0 points (no forward movement on 3x3)
+      expect(result.opponentPoints).toBe(0);
+      expect(result.opponentVisualOutcome).not.toBe('goal');
+      expect(result.opponentFinalPosition.row).toBe(2);
+      expect(result.opponentFinalPosition.col).toBe(2);
+
+      // NO collision should be detected
+      expect(result.collision).toBe(false);
+
+      // Player should win
+      expect(result.winner).toBe('player');
+    });
+
+    it('should not detect collision when opponent reaches goal and player moves to former position', () => {
+      const playerBoard = createTestBoard(
+        'Player Basic',
+        [
+          ['piece', 'empty'],
+          ['piece', 'empty'],
+        ],
+        [
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 0, type: 'piece' },
+        ]
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent Goal',
+        [
+          ['piece', 'empty'],
+          ['piece', 'empty'],
+        ],
+        [
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 0, type: 'piece' },
+          { row: -1, col: 0, type: 'final' }, // Opponent reaches goal (rotated to row 2)
+        ]
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      // Opponent should have reached goal
+      expect(result.opponentVisualOutcome).toBe('goal');
+      expect(result.opponentFinalPosition.row).toBe(2); // Rotated from -1
+
+      // Player should be at (0, 0)
+      expect(result.playerFinalPosition).toEqual({ row: 0, col: 0 });
+
+      // NO collision should be detected
+      expect(result.collision).toBe(false);
+    });
+
+    it('should detect collision when both players are on the board at same position', () => {
+      const playerBoard = createTestBoard(
+        'Player',
+        [
+          ['piece', 'empty'],
+          ['empty', 'empty'],
+        ],
+        [{ row: 0, col: 0, type: 'piece' }]
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent',
+        [
+          ['empty', 'empty'],
+          ['empty', 'piece'],
+        ],
+        [{ row: 1, col: 1, type: 'piece' }] // Rotates to (0, 0) for 2x2 board
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      // Collision should be detected at (0, 0)
+      expect(result.collision).toBe(true);
+      expect(result.playerFinalPosition).toEqual({ row: 0, col: 0 });
+      expect(result.opponentFinalPosition).toEqual({ row: 0, col: 0 });
+
+      // Both should have 0 points after collision penalty
+      expect(result.playerPoints).toBe(0);
+      expect(result.opponentPoints).toBe(0);
+    });
+
+    it('should allow both players to reach goal without collision', () => {
+      const playerBoard = createTestBoard(
+        'Player Goal',
+        [
+          ['piece', 'empty'],
+          ['piece', 'empty'],
+        ],
+        [
+          { row: 1, col: 0, type: 'piece' },
+          { row: 0, col: 0, type: 'piece' },
+          { row: -1, col: 0, type: 'final' },
+        ]
+      );
+
+      const opponentBoard = createTestBoard(
+        'Opponent Goal',
+        [
+          ['empty', 'piece'],
+          ['empty', 'piece'],
+        ],
+        [
+          { row: 1, col: 1, type: 'piece' },
+          { row: 0, col: 1, type: 'piece' },
+          { row: -1, col: 1, type: 'final' },
+        ]
+      );
+
+      const result = simulateRound(1, playerBoard, opponentBoard);
+
+      // Both should have reached goal
+      expect(result.playerVisualOutcome).toBe('goal');
+      expect(result.opponentVisualOutcome).toBe('goal');
+
+      // NO collision
+      expect(result.collision).toBe(false);
+
+      // Player should have 2 points (1 forward + 1 goal)
+      expect(result.playerPoints).toBe(2);
+      // Opponent should have 2 points (1 forward + 1 goal)
+      expect(result.opponentPoints).toBe(2);
     });
   });
 });

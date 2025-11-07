@@ -19,34 +19,34 @@ describe('creature-graphics', () => {
   describe('getOutcomeGraphic', () => {
     it('should return correct path for creature goal outcome', () => {
       const result = getOutcomeGraphic('square', 'goal');
-      expect(result).toBe('/creatures/square/goal.png');
+      expect(result).toBe('/creatures/square/goal.svg');
     });
 
     it('should return correct path for creature trapped outcome', () => {
       const result = getOutcomeGraphic('circle', 'trapped');
-      expect(result).toBe('/creatures/circle/trapped.png');
+      expect(result).toBe('/creatures/circle/trapped.svg');
     });
 
     it('should return correct path for creature forward outcome', () => {
       const result = getOutcomeGraphic('triangle', 'forward');
-      expect(result).toBe('/creatures/triangle/forward.png');
+      expect(result).toBe('/creatures/triangle/forward.svg');
     });
 
     it('should return correct path for creature stuck outcome', () => {
       const result = getOutcomeGraphic('bug', 'stuck');
-      expect(result).toBe('/creatures/bug/stuck.png');
+      expect(result).toBe('/creatures/bug/stuck.svg');
     });
 
     it('should handle custom creature IDs', () => {
       const result = getOutcomeGraphic('custom-racer' as CreatureId, 'goal');
-      expect(result).toBe('/creatures/custom-racer/goal.png');
+      expect(result).toBe('/creatures/custom-racer/goal.svg');
     });
 
-    it('should always use png extension', () => {
+    it('should always use svg extension', () => {
       const outcomes: OutcomeType[] = ['goal', 'trapped', 'forward', 'stuck'];
       outcomes.forEach((outcome) => {
         const result = getOutcomeGraphic('square', outcome);
-        expect(result).toMatch(/\.png$/);
+        expect(result).toMatch(/\.svg$/);
       });
     });
   });
@@ -54,17 +54,17 @@ describe('creature-graphics', () => {
   describe('getSharedGraphic', () => {
     it('should return correct path for collision event', () => {
       const result = getSharedGraphic('collision');
-      expect(result).toBe('/creatures/shared/collision.png');
+      expect(result).toBe('/creatures/shared/collision.svg');
     });
 
     it('should return correct path for double-trap event', () => {
       const result = getSharedGraphic('double-trap');
-      expect(result).toBe('/creatures/shared/double-trap.png');
+      expect(result).toBe('/creatures/shared/double-trap.svg');
     });
 
     it('should return correct path for double-goal event', () => {
       const result = getSharedGraphic('double-goal');
-      expect(result).toBe('/creatures/shared/double-goal.png');
+      expect(result).toBe('/creatures/shared/double-goal.svg');
     });
 
     it('should always place shared graphics in shared directory', () => {
@@ -79,20 +79,20 @@ describe('creature-graphics', () => {
   describe('getDefaultGraphic', () => {
     it('should return correct path for creature default graphic', () => {
       const result = getDefaultGraphic('square');
-      expect(result).toBe('/creatures/square/default.png');
+      expect(result).toBe('/creatures/square/default.svg');
     });
 
     it('should return correct path for different creatures', () => {
       const creatures: CreatureId[] = ['square', 'circle', 'triangle', 'bug'];
       creatures.forEach((creature) => {
         const result = getDefaultGraphic(creature);
-        expect(result).toBe(`/creatures/${creature}/default.png`);
+        expect(result).toBe(`/creatures/${creature}/default.svg`);
       });
     });
 
     it('should handle custom creature IDs', () => {
       const result = getDefaultGraphic('robot-walker' as CreatureId);
-      expect(result).toBe('/creatures/robot-walker/default.png');
+      expect(result).toBe('/creatures/robot-walker/default.svg');
     });
   });
 
@@ -295,7 +295,7 @@ describe('creature-graphics', () => {
   describe('getFallbackGraphic', () => {
     it('should return shared default graphic path', () => {
       const result = getFallbackGraphic();
-      expect(result).toBe('/creatures/shared/default.png');
+      expect(result).toBe('/creatures/shared/default.svg');
     });
 
     it('should always return the same fallback path', () => {
@@ -338,7 +338,7 @@ describe('creature-graphics', () => {
       });
     });
 
-    it('should use png extension for all graphics', () => {
+    it('should use svg extension for all graphics', () => {
       const paths = [
         getOutcomeGraphic('square', 'goal'),
         getSharedGraphic('collision'),
@@ -347,7 +347,7 @@ describe('creature-graphics', () => {
       ];
 
       paths.forEach((path) => {
-        expect(path).toMatch(/\.png$/);
+        expect(path).toMatch(/\.svg$/);
       });
     });
   });
@@ -363,8 +363,8 @@ describe('creature-graphics', () => {
       const opponentGraphic = getOutcomeGraphic(opponentCreature, opponentOutcome);
       const altText = getOutcomeAltText('Square', playerOutcome, 'Circle', opponentOutcome, false);
 
-      expect(playerGraphic).toBe('/creatures/square/goal.png');
-      expect(opponentGraphic).toBe('/creatures/circle/trapped.png');
+      expect(playerGraphic).toBe('/creatures/square/goal.svg');
+      expect(opponentGraphic).toBe('/creatures/circle/trapped.svg');
       expect(altText).toBe('Square reached the goal, Circle was trapped');
     });
 
@@ -372,7 +372,7 @@ describe('creature-graphics', () => {
       const collisionGraphic = getSharedGraphic('collision');
       const altText = getOutcomeAltText('Triangle', 'goal', 'Bug', 'goal', true);
 
-      expect(collisionGraphic).toBe('/creatures/shared/collision.png');
+      expect(collisionGraphic).toBe('/creatures/shared/collision.svg');
       expect(altText).toBe('Triangle and Bug collided!');
     });
 
@@ -380,8 +380,8 @@ describe('creature-graphics', () => {
       const fallback = getFallbackGraphic();
       const defaultGraphic = getDefaultGraphic('unknown-creature' as CreatureId);
 
-      expect(fallback).toBe('/creatures/shared/default.png');
-      expect(defaultGraphic).toBe('/creatures/unknown-creature/default.png');
+      expect(fallback).toBe('/creatures/shared/default.svg');
+      expect(defaultGraphic).toBe('/creatures/unknown-creature/default.svg');
     });
   });
 });

@@ -18,6 +18,8 @@ const mockUser: UserProfile = {
     losses: 3,
     ties: 2,
   },
+  playerCreature: 'square',
+  opponentCreature: 'circle',
 };
 
 describe('ProfileModal', () => {
@@ -397,6 +399,8 @@ describe('ProfileModal', () => {
         name: 'NewName',
         createdAt: mockUser.createdAt,
         stats: mockUser.stats, // Stats should be preserved
+        playerCreature: mockUser.playerCreature,
+        opponentCreature: mockUser.opponentCreature,
       });
     });
 

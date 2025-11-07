@@ -7,6 +7,7 @@ import {
   UserProfile,
   OpponentManager,
   SavedBoards,
+  BoardSizeSelector,
   RoundResults,
   GameOver,
   ProfileModal,
@@ -42,6 +43,7 @@ const createInitialState = (user: UserProfileType | null): GameState => {
     user: user || createEmptyUser(),
     opponent: null,
     gameMode: null,
+    boardSize: null,
     currentRound: 1,
     playerScore: 0,
     opponentScore: 0,
@@ -95,6 +97,7 @@ function App(): React.ReactElement {
     state,
     setPhase,
     setGameMode,
+    setBoardSize,
     selectPlayerBoard,
     selectOpponentBoard,
     selectPlayerDeck,
@@ -136,18 +139,25 @@ function App(): React.ReactElement {
 
   // Handle game mode selection
   const handleGameModeSelect = (mode: GameMode) => {
-    // If we already have an opponent selected, go directly to next phase
-    if (state.opponent) {
-      loadState({
-        ...state,
-        gameMode: mode,
-        phase: mode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 },
-        currentRound: 1,
-      });
-    } else {
-      // No opponent yet, go to opponent selection
-      setGameMode(mode);
-      setPhase({ type: 'opponent-selection', gameMode: mode });
+    // After selecting game mode, go to board size selection
+    setGameMode(mode);
+    setPhase({ type: 'board-size-selection', gameMode: mode });
+  };
+
+  // Handle board size selection
+  const handleBoardSizeSelect = (size: 2 | 3) => {
+    setBoardSize(size);
+    // After selecting board size, check if opponent is already selected
+    if (state.phase.type === 'board-size-selection') {
+      const gameMode = state.phase.gameMode;
+
+      // If opponent already selected, skip opponent selection and go to next phase
+      if (state.opponent) {
+        setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
+      } else {
+        // No opponent selected yet, go to opponent selection
+        setPhase({ type: 'opponent-selection', gameMode });
+      }
     }
   };
 
@@ -168,6 +178,7 @@ function App(): React.ReactElement {
       ...state,
       opponent,
       gameMode,
+      // boardSize should already be set at this point
       phase: gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 },
       currentRound: 1,
     });
@@ -219,15 +230,16 @@ function App(): React.ReactElement {
     selectPlayerDeck(deck);
 
     // Opponent selects a deck
-    const boards = savedBoards || [];
+    // Filter boards by the selected board size
+    const boards = (savedBoards || []).filter(b => b.boardSize === state.boardSize);
     let opponentDeck: Deck;
 
     if (state.opponent?.type === 'cpu') {
-      // CPU creates a random deck from available boards
+      // CPU creates a random deck from available boards of same size
       const opponentBoards: Board[] = [];
 
       if (boards.length === 0) {
-        // No boards available - use player's deck
+        // No boards available of this size - use player's deck
         opponentDeck = deck;
       } else {
         // Randomly select 10 boards (with possible reuse)
@@ -245,7 +257,7 @@ function App(): React.ReactElement {
       }
     } else {
       // Human opponent - would normally choose via URL sharing
-      // For now, create random deck from available boards
+      // For now, create random deck from available boards of same size
       const opponentBoards: Board[] = [];
 
       if (boards.length === 0) {
@@ -290,11 +302,12 @@ function App(): React.ReactElement {
     selectPlayerBoard(board);
 
     // Opponent selects a board (CPU chooses random, human would choose via URL)
-    const boards = savedBoards || [];
+    // Filter boards by the selected board size
+    const boards = (savedBoards || []).filter(b => b.boardSize === state.boardSize);
     let opponentBoard: Board = board; // Fallback to same board
 
     if (state.opponent?.type === 'cpu') {
-      // CPU selects random board
+      // CPU selects random board from same size
       if (boards.length > 1) {
         opponentBoard = boards[Math.floor(Math.random() * boards.length)] || board;
       } else if (boards.length === 1) {
@@ -303,13 +316,13 @@ function App(): React.ReactElement {
 
       // Ensure opponent board is playable
       if (!isBoardPlayable(opponentBoard)) {
-        // Find first playable board or use player's board
+        // Find first playable board of same size or use player's board
         const playableBoard = boards.find(b => isBoardPlayable(b));
         opponentBoard = playableBoard || board;
       }
     } else {
       // Human opponent - would normally choose via URL sharing
-      // For now, select random board as placeholder
+      // For now, select random board of same size as placeholder
       if (boards.length > 1) {
         opponentBoard = boards[Math.floor(Math.random() * boards.length)] || board;
       }
@@ -518,6 +531,14 @@ function App(): React.ReactElement {
           </div>
         );
 
+      case 'board-size-selection':
+        return (
+          <BoardSizeSelector
+            onSizeSelected={handleBoardSizeSelect}
+            onBack={() => setPhase({ type: 'game-mode-selection' })}
+          />
+        );
+
       case 'opponent-selection':
         return (
           <OpponentManager
@@ -553,11 +574,22 @@ function App(): React.ReactElement {
           />
         );
 
-      case 'deck-selection':
+      case 'deck-selection': {
+        // Filter boards and decks by selected board size
+        const filteredBoards = state.boardSize
+          ? (savedBoards || []).filter(board => board.boardSize === state.boardSize)
+          : (savedBoards || []);
+
+        const filteredDecks = state.boardSize
+          ? (savedDecks || []).filter(deck =>
+              deck.boards.length > 0 && deck.boards[0]?.boardSize === state.boardSize
+            )
+          : (savedDecks || []);
+
         if (showDeckCreator) {
           return (
             <DeckCreator
-              availableBoards={savedBoards || []}
+              availableBoards={filteredBoards}
               onDeckSaved={handleDeckSave}
               onCancel={() => {
                 setShowDeckCreator(false);
@@ -569,7 +601,7 @@ function App(): React.ReactElement {
         }
         return (
           <DeckManager
-            decks={savedDecks || []}
+            decks={filteredDecks}
             onDeckSelected={handleDeckSelect}
             onCreateDeck={() => setShowDeckCreator(true)}
             onEditDeck={handleDeckEdit}
@@ -577,8 +609,14 @@ function App(): React.ReactElement {
             userName={state.user.name}
           />
         );
+      }
 
-      case 'board-selection':
+      case 'board-selection': {
+        // Filter boards by selected board size
+        const filteredBoards = state.boardSize
+          ? (savedBoards || []).filter(board => board.boardSize === state.boardSize)
+          : (savedBoards || []);
+
         return (
           <div>
             <div style={{ marginBottom: '2rem' }}>
@@ -587,9 +625,14 @@ function App(): React.ReactElement {
                 Score: {state.user.name} {state.playerScore} - {state.opponent?.name}{' '}
                 {state.opponentScore}
               </p>
+              {state.boardSize && (
+                <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                  Board Size: {state.boardSize}×{state.boardSize}
+                </p>
+              )}
             </div>
             <SavedBoards
-              boards={savedBoards || []}
+              boards={filteredBoards}
               onBoardSelected={handleBoardSelect}
               onBoardSaved={handleBoardSave}
               onBoardDeleted={handleBoardDelete}
@@ -599,6 +642,7 @@ function App(): React.ReactElement {
             />
           </div>
         );
+      }
 
       case 'round-results':
         if (!state.phase.result) return null;

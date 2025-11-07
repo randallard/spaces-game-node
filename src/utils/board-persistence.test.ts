@@ -12,6 +12,7 @@ describe('Board persistence to localStorage', () => {
   const mockBoard: Board = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'Test Board',
+    boardSize: 2,
     grid: [
       ['piece', 'empty'],
       ['empty', 'empty'],
@@ -172,6 +173,7 @@ describe('Board persistence to localStorage', () => {
       ...mockBoard,
       id: '223e4567-e89b-12d3-a456-426614174000',
       name: 'Test Board 2',
+      boardSize: 2,
     };
 
     act(() => {

@@ -5,7 +5,7 @@
 
 import { useState, useCallback, type ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Board, CellContent, BoardMove, Position } from '@/types';
+import type { Board, CellContent, BoardMove, Position, BoardSize } from '@/types';
 import { validateBoard } from '@/utils/board-validation';
 import { generateBoardThumbnail } from '@/utils/svg-thumbnail';
 import styles from './BoardCreator.module.css';
@@ -17,6 +17,8 @@ export interface BoardCreatorProps {
   onCancel: () => void;
   /** Existing boards (to generate name) */
   existingBoards?: Board[];
+  /** Board size (2x2 or 3x3) */
+  boardSize?: BoardSize;
 }
 
 type CreationPhase = 'choosing-start' | 'building';
@@ -37,12 +39,15 @@ export function BoardCreator({
   onBoardSaved,
   onCancel,
   existingBoards = [],
+  boardSize = 2,
 }: BoardCreatorProps): ReactElement {
+  // Create initial empty grid based on board size
+  const createEmptyGrid = useCallback((size: number): CellContent[][] => {
+    return Array(size).fill(null).map(() => Array(size).fill('empty'));
+  }, []);
+
   const [phase, setPhase] = useState<CreationPhase>('choosing-start');
-  const [grid, setGrid] = useState<CellContent[][]>([
-    ['empty', 'empty'],
-    ['empty', 'empty'],
-  ]);
+  const [grid, setGrid] = useState<CellContent[][]>(() => createEmptyGrid(boardSize));
   const [sequence, setSequence] = useState<BoardMove[]>([]);
   const [piecePosition, setPiecePosition] = useState<Position | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -62,27 +67,25 @@ export function BoardCreator({
     for (const dir of directions) {
       const newRow = pos.row + dir.row;
       const newCol = pos.col + dir.col;
-      if (newRow >= 0 && newRow < 2 && newCol >= 0 && newCol < 2) {
+      if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
         adjacent.push({ row: newRow, col: newCol });
       }
     }
 
     return adjacent;
-  }, []);
+  }, [boardSize]);
 
   /**
    * Handle choosing starting position (bottom row only)
    */
   const handleChooseStart = useCallback((row: number, col: number): void => {
-    if (row !== 1) return; // Only allow bottom row
+    const bottomRow = boardSize - 1;
+    if (row !== bottomRow) return; // Only allow bottom row
 
     const position: Position = { row, col };
 
     // Place piece on grid
-    const newGrid: CellContent[][] = [
-      ['empty', 'empty'],
-      ['empty', 'empty'],
-    ];
+    const newGrid = createEmptyGrid(boardSize);
     newGrid[row]![col] = 'piece';
     setGrid(newGrid);
 
@@ -96,7 +99,7 @@ export function BoardCreator({
     setPiecePosition(position);
     setPhase('building');
     setErrors([]);
-  }, []);
+  }, [boardSize, createEmptyGrid]);
 
   /**
    * Handle moving piece to adjacent square
@@ -190,6 +193,7 @@ export function BoardCreator({
     const board: Board = {
       id: uuidv4(),
       name: boardName,
+      boardSize,
       grid: finalGrid,
       sequence: finalSequence,
       thumbnail: '', // Will be set after validation
@@ -219,14 +223,11 @@ export function BoardCreator({
    */
   const handleRestart = useCallback((): void => {
     setPhase('choosing-start');
-    setGrid([
-      ['empty', 'empty'],
-      ['empty', 'empty'],
-    ]);
+    setGrid(createEmptyGrid(boardSize));
     setSequence([]);
     setPiecePosition(null);
     setErrors([]);
-  }, []);
+  }, [boardSize, createEmptyGrid]);
 
   // Get adjacent positions (for Move/Trap buttons)
   // Filter out positions with traps (can't place Move/Trap buttons there)
@@ -260,13 +261,17 @@ export function BoardCreator({
       )}
 
       {/* Grid */}
-      <div className={styles.grid}>
+      <div
+        className={styles.grid}
+        style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)` }}
+      >
         {grid.map((row, rowIdx) =>
           row.map((cell, colIdx) => {
             const isAdjacent = adjacentPositions.some(
               (p) => p.row === rowIdx && p.col === colIdx
             );
-            const isStartChoice = phase === 'choosing-start' && rowIdx === 1;
+            const bottomRow = boardSize - 1;
+            const isStartChoice = phase === 'choosing-start' && rowIdx === bottomRow;
             const isEmpty = cell === 'empty';
 
             return (

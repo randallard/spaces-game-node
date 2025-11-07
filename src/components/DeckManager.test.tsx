@@ -16,6 +16,7 @@ describe('DeckManager', () => {
   const createMockBoard = (id: string, name: string): Board => ({
     id,
     name,
+    boardSize: 2,
     grid: [
       ['piece', 'empty'],
       ['empty', 'empty'],

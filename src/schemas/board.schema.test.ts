@@ -39,11 +39,27 @@ describe('PositionSchema', () => {
     });
   });
 
+  it('should accept valid positions in 3x3 grid', () => {
+    expect(PositionSchema.parse({ row: 0, col: 0 })).toEqual({
+      row: 0,
+      col: 0,
+    });
+    expect(PositionSchema.parse({ row: 2, col: 2 })).toEqual({
+      row: 2,
+      col: 2,
+    });
+    expect(PositionSchema.parse({ row: 1, col: 2 })).toEqual({
+      row: 1,
+      col: 2,
+    });
+  });
+
   it('should reject out of bounds positions', () => {
-    // row -1 is now valid (for final moves off the board)
+    // row -1 is valid (for final moves off the board)
+    // Max valid position is row/col 2 (for 3x3 boards), so test with 3+
     expect(() => PositionSchema.parse({ row: -2, col: 0 })).toThrow();
-    expect(() => PositionSchema.parse({ row: 0, col: 2 })).toThrow();
-    expect(() => PositionSchema.parse({ row: 2, col: 0 })).toThrow();
+    expect(() => PositionSchema.parse({ row: 0, col: 3 })).toThrow();
+    expect(() => PositionSchema.parse({ row: 3, col: 0 })).toThrow();
   });
 
   it('should accept row -1 for final moves', () => {
@@ -101,6 +117,7 @@ describe('BoardSchema', () => {
   const validBoard: Board = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'Test Board',
+    boardSize: 2,
     grid: [
       ['piece', 'empty'],
       ['trap', 'empty'],
@@ -113,8 +130,31 @@ describe('BoardSchema', () => {
     createdAt: Date.now(),
   };
 
-  it('should accept a valid board', () => {
+  const valid3x3Board: Board = {
+    id: '223e4567-e89b-12d3-a456-426614174000',
+    name: 'Test 3x3 Board',
+    boardSize: 3,
+    grid: [
+      ['empty', 'trap', 'empty'],
+      ['empty', 'piece', 'trap'],
+      ['trap', 'empty', 'empty'],
+    ],
+    sequence: [
+      { position: { row: 1, col: 1 }, type: 'piece', order: 1 },
+      { position: { row: 0, col: 1 }, type: 'trap', order: 2 },
+      { position: { row: 1, col: 2 }, type: 'trap', order: 3 },
+      { position: { row: 2, col: 0 }, type: 'trap', order: 4 },
+    ],
+    thumbnail: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+    createdAt: Date.now(),
+  };
+
+  it('should accept a valid 2x2 board', () => {
     expect(() => BoardSchema.parse(validBoard)).not.toThrow();
+  });
+
+  it('should accept a valid 3x3 board', () => {
+    expect(() => BoardSchema.parse(valid3x3Board)).not.toThrow();
   });
 
   it('should reject board with invalid UUID', () => {
@@ -133,11 +173,34 @@ describe('BoardSchema', () => {
     ).toThrow();
   });
 
-  it('should reject board with invalid grid size', () => {
+  it('should reject 2x2 board with invalid grid size', () => {
     expect(() =>
       BoardSchema.parse({
         ...validBoard,
         grid: [['empty', 'empty', 'empty']], // 1x3 instead of 2x2
+      })
+    ).toThrow();
+  });
+
+  it('should reject 3x3 board with invalid grid size', () => {
+    expect(() =>
+      BoardSchema.parse({
+        ...valid3x3Board,
+        grid: [
+          ['empty', 'empty'], // 2x2 instead of 3x3
+          ['empty', 'empty'],
+        ],
+      })
+    ).toThrow();
+  });
+
+  it('should reject 3x3 board with positions out of bounds', () => {
+    expect(() =>
+      BoardSchema.parse({
+        ...valid3x3Board,
+        sequence: [
+          { position: { row: 3, col: 1 }, type: 'piece', order: 1 }, // row 3 is out of bounds for 3x3
+        ],
       })
     ).toThrow();
   });
@@ -156,10 +219,11 @@ describe('BoardSchema', () => {
 });
 
 describe('validateBoardHasOnePiece', () => {
-  it('should return true for board with exactly one piece', () => {
+  it('should return true for 2x2 board with exactly one piece', () => {
     const board: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
+      boardSize: 2,
       grid: [
         ['piece', 'empty'],
         ['empty', 'empty'],
@@ -171,10 +235,28 @@ describe('validateBoardHasOnePiece', () => {
     expect(validateBoardHasOnePiece(board)).toBe(true);
   });
 
+  it('should return true for 3x3 board with exactly one piece', () => {
+    const board: Board = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      name: 'Test',
+      boardSize: 3,
+      grid: [
+        ['empty', 'empty', 'empty'],
+        ['empty', 'piece', 'empty'],
+        ['empty', 'empty', 'empty'],
+      ],
+      sequence: [{ position: { row: 1, col: 1 }, type: 'piece', order: 1 }],
+      thumbnail: '',
+      createdAt: Date.now(),
+    };
+    expect(validateBoardHasOnePiece(board)).toBe(true);
+  });
+
   it('should return false for board with no pieces', () => {
     const board: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
+      boardSize: 2,
       grid: [
         ['empty', 'empty'],
         ['empty', 'empty'],
@@ -190,6 +272,7 @@ describe('validateBoardHasOnePiece', () => {
     const board: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
+      boardSize: 2,
       grid: [
         ['piece', 'piece'],
         ['empty', 'empty'],
@@ -203,10 +286,11 @@ describe('validateBoardHasOnePiece', () => {
 });
 
 describe('validateBoardTrapCount', () => {
-  it('should return true for board with 0-3 traps', () => {
+  it('should return true for 2x2 board with 0-3 traps', () => {
     const baseBoard: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
+      boardSize: 2,
       grid: [
         ['empty', 'empty'],
         ['empty', 'empty'],
@@ -242,10 +326,54 @@ describe('validateBoardTrapCount', () => {
     ).toBe(true);
   });
 
+  it('should return true for 3x3 board with 0-3 traps', () => {
+    const base3x3Board: Board = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      name: 'Test',
+      boardSize: 3,
+      grid: [
+        ['empty', 'empty', 'empty'],
+        ['empty', 'empty', 'empty'],
+        ['empty', 'empty', 'empty'],
+      ],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    };
+
+    // 0 traps
+    expect(validateBoardTrapCount(base3x3Board)).toBe(true);
+
+    // 1 trap
+    expect(
+      validateBoardTrapCount({
+        ...base3x3Board,
+        grid: [
+          ['trap', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+      })
+    ).toBe(true);
+
+    // 3 traps
+    expect(
+      validateBoardTrapCount({
+        ...base3x3Board,
+        grid: [
+          ['trap', 'trap', 'empty'],
+          ['trap', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
+        ],
+      })
+    ).toBe(true);
+  });
+
   it('should return false for board with more than 3 traps', () => {
     const board: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
+      boardSize: 2,
       grid: [
         ['trap', 'trap'],
         ['trap', 'trap'],

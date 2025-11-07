@@ -38,6 +38,10 @@ export const GamePhaseSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('board-management') }),
   z.object({ type: z.literal('game-mode-selection') }),
   z.object({
+    type: z.literal('board-size-selection'),
+    gameMode: GameModeSchema,
+  }),
+  z.object({
     type: z.literal('opponent-selection'),
     gameMode: GameModeSchema,
   }),
@@ -71,6 +75,7 @@ export const GameStateSchema = z.object({
   user: UserProfileSchema,
   opponent: OpponentSchema.nullable(),
   gameMode: GameModeSchema.nullable(),
+  boardSize: z.union([z.literal(2), z.literal(3)]).nullable(),
   currentRound: z.number().int().min(0).max(10), // Support 10 rounds for deck mode
   playerScore: z.number().int().min(0),
   opponentScore: z.number().int().min(0),

@@ -43,6 +43,7 @@ export type GamePhase =
   | { type: 'user-setup' }
   | { type: 'board-management' }
   | { type: 'game-mode-selection' } // Choose round-by-round or deck mode
+  | { type: 'board-size-selection'; gameMode: GameMode } // Choose 2x2 or 3x3
   | { type: 'opponent-selection'; gameMode: GameMode } // Pass game mode
   | { type: 'deck-management' } // Create/manage decks
   | { type: 'deck-selection' } // Select deck to play
@@ -66,6 +67,9 @@ export type GameState = {
 
   // Game mode
   gameMode: GameMode | null; // null until selected
+
+  // Board size for this game (2x2 or 3x3)
+  boardSize: 2 | 3 | null; // null until selected
 
   // Game progress
   currentRound: number; // 1-8 or 1-10 depending on mode

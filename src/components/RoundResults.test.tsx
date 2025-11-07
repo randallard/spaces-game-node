@@ -17,6 +17,7 @@ const createMockRoundResult = (
   playerBoard: {
     id: 'player-board-id',
     name: 'Player Board',
+    boardSize: 2,
     grid: [['empty', 'empty'], ['empty', 'empty']],
     sequence: [{ position: { row: 0, col: 0 }, type: 'piece', order: 1 }],
     thumbnail: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
@@ -25,6 +26,7 @@ const createMockRoundResult = (
   opponentBoard: {
     id: 'opponent-board-id',
     name: 'Opponent Board',
+    boardSize: 2,
     grid: [['empty', 'empty'], ['empty', 'empty']],
     sequence: [{ position: { row: 0, col: 0 }, type: 'piece', order: 1 }],
     thumbnail: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
@@ -601,6 +603,7 @@ describe('RoundResults', () => {
       playerBoard: {
         id: 'player-board-id',
         name: 'Player Board',
+        boardSize: 2,
         grid: [
           ['piece', 'empty'],
           ['piece', 'empty'],
@@ -616,6 +619,7 @@ describe('RoundResults', () => {
       opponentBoard: {
         id: 'opponent-board-id',
         name: 'Opponent Board',
+        boardSize: 2,
         grid: [
           ['empty', 'piece'],
           ['empty', 'empty'],
@@ -859,6 +863,7 @@ describe('RoundResults', () => {
         playerBoard: {
           id: 'player-board-id',
           name: 'Player Board',
+          boardSize: 2,
           grid: [
             ['piece', 'empty'],
             ['trap', 'empty'],
@@ -873,6 +878,7 @@ describe('RoundResults', () => {
         opponentBoard: {
           id: 'opponent-board-id',
           name: 'Opponent Board',
+          boardSize: 2,
           grid: [['empty', 'piece'], ['empty', 'empty']],
           sequence: [{ position: { row: 0, col: 1 }, type: 'piece', order: 1 }],
           thumbnail: 'data:image/svg+xml;base64,test',
@@ -999,6 +1005,7 @@ describe('RoundResults', () => {
         playerBoard: {
           id: 'player-board-id',
           name: 'Player Board',
+          boardSize: 2,
           grid: [['piece', 'empty'], ['empty', 'empty']],
           sequence: [{ position: { row: 0, col: 0 }, type: 'piece', order: 1 }],
           thumbnail: 'data:image/svg+xml;base64,test',
@@ -1007,6 +1014,7 @@ describe('RoundResults', () => {
         opponentBoard: {
           id: 'opponent-board-id',
           name: 'Opponent Board',
+          boardSize: 2,
           grid: [['empty', 'piece'], ['empty', 'empty']],
           sequence: [{ position: { row: 0, col: 1 }, type: 'piece', order: 1 }],
           thumbnail: 'data:image/svg+xml;base64,test',
@@ -1066,10 +1074,10 @@ describe('RoundResults', () => {
       // Should show images with correct src
       const images = screen.getAllByRole('img');
       const squareImage = images.find((img) =>
-        img.getAttribute('src')?.includes('/creatures/square/goal.png')
+        img.getAttribute('src')?.includes('/creatures/square/goal.svg')
       );
       const circleImage = images.find((img) =>
-        img.getAttribute('src')?.includes('/creatures/circle/trapped.png')
+        img.getAttribute('src')?.includes('/creatures/circle/trapped.svg')
       );
       expect(squareImage).toBeDefined();
       expect(circleImage).toBeDefined();
@@ -1100,7 +1108,7 @@ describe('RoundResults', () => {
       // Should show collision image
       const images = screen.getAllByRole('img');
       const collisionImage = images.find((img) =>
-        img.getAttribute('src')?.includes('/creatures/shared/collision.png')
+        img.getAttribute('src')?.includes('/creatures/shared/collision.svg')
       );
       expect(collisionImage).toBeDefined();
 
@@ -1155,10 +1163,10 @@ describe('RoundResults', () => {
       // Should default to 'forward' outcome
       const images = screen.getAllByRole('img');
       const triangleImage = images.find((img) =>
-        img.getAttribute('src')?.includes('/creatures/triangle/forward.png')
+        img.getAttribute('src')?.includes('/creatures/triangle/forward.svg')
       );
       const bugImage = images.find((img) =>
-        img.getAttribute('src')?.includes('/creatures/bug/forward.png')
+        img.getAttribute('src')?.includes('/creatures/bug/forward.svg')
       );
       expect(triangleImage).toBeDefined();
       expect(bugImage).toBeDefined();

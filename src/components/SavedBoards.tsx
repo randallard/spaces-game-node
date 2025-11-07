@@ -4,7 +4,7 @@
  */
 
 import { useState, type ReactElement } from 'react';
-import type { Board } from '@/types';
+import type { Board, BoardSize } from '@/types';
 import { BoardCreator } from './BoardCreator';
 import styles from './SavedBoards.module.css';
 
@@ -25,7 +25,7 @@ export interface SavedBoardsProps {
   opponentName: string;
 }
 
-type ViewMode = 'list' | 'create';
+type ViewMode = 'list' | 'select-size' | 'create';
 
 /**
  * Saved boards component with list and create views.
@@ -48,11 +48,20 @@ export function SavedBoards({
   opponentName,
 }: SavedBoardsProps): ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedBoardSize, setSelectedBoardSize] = useState<BoardSize>(2);
 
   /**
    * Handle create new board
    */
   const handleCreateNew = (): void => {
+    setViewMode('select-size');
+  };
+
+  /**
+   * Handle board size selected
+   */
+  const handleSizeSelected = (size: BoardSize): void => {
+    setSelectedBoardSize(size);
     setViewMode('create');
   };
 
@@ -80,6 +89,36 @@ export function SavedBoards({
     }
   };
 
+  // Show board size selection
+  if (viewMode === 'select-size') {
+    return (
+      <div className={styles.container}>
+        <div className={styles.sizeSelection}>
+          <h2 className={styles.sizeSelectionTitle}>Select Board Size</h2>
+          <div className={styles.sizeOptions}>
+            <button
+              onClick={() => handleSizeSelected(2)}
+              className={styles.sizeOption}
+            >
+              <div className={styles.sizeOptionLabel}>2x2</div>
+              <div className={styles.sizeOptionDescription}>Classic board size</div>
+            </button>
+            <button
+              onClick={() => handleSizeSelected(3)}
+              className={styles.sizeOption}
+            >
+              <div className={styles.sizeOptionLabel}>3x3</div>
+              <div className={styles.sizeOptionDescription}>Larger board with more strategy</div>
+            </button>
+          </div>
+          <button onClick={handleCancel} className={styles.cancelButton}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Show board creator
   if (viewMode === 'create') {
     return (
@@ -87,6 +126,7 @@ export function SavedBoards({
         onBoardSaved={handleBoardSaved}
         onCancel={handleCancel}
         existingBoards={boards}
+        boardSize={selectedBoardSize}
       />
     );
   }
