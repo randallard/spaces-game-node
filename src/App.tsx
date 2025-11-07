@@ -277,31 +277,16 @@ function App(): React.ReactElement {
     if (state.opponent?.type === 'cpu') {
       // Check if CPU has a default deck for this board size
       const cpuDeckName = `CPU ${state.boardSize}×${state.boardSize} Deck`;
-      console.log('[handleDeckSelect] Board size:', state.boardSize);
-      console.log('[handleDeckSelect] Looking for CPU deck:', cpuDeckName);
-      console.log('[handleDeckSelect] CPU deck name char codes:', Array.from(cpuDeckName).map(c => c.charCodeAt(0)));
-      console.log('[handleDeckSelect] Available CPU decks:', cpuDecks);
-      console.log('[handleDeckSelect] Available CPU deck names and char codes:',
-        cpuDecks?.map(d => ({
-          name: d.name,
-          charCodes: Array.from(d.name).map(c => c.charCodeAt(0)),
-          boardCount: d.boards.length,
-          boardSize: d.boards[0]?.boardSize
-        }))
-      );
-
       const cpuDefaultDeck = (cpuDecks || []).find(
         d => d.name === cpuDeckName && d.boards.length === 10
       );
 
       if (cpuDefaultDeck) {
         // Use the default CPU deck (from hidden storage)
-        console.log('[handleDeckSelect] Using CPU deck:', cpuDefaultDeck.name);
         opponentDeck = cpuDefaultDeck;
       } else {
         // Fallback: use player's deck if CPU deck not found
         console.warn('[handleDeckSelect] CPU deck not found, falling back to player deck');
-        console.warn('[handleDeckSelect] cpuDecks array:', cpuDecks);
         opponentDeck = deck;
       }
     } else {
@@ -438,7 +423,7 @@ function App(): React.ReactElement {
         return (
           <div className={styles.boardManagement}>
             <div className={styles.managementHeader}>
-              <h1>Hello, {state.user.name}!!!</h1>
+              <h1>Hello, {state.user.name}!</h1>
               <button
                 className={styles.editProfileLink}
                 onClick={() => setIsProfileModalOpen(true)}
