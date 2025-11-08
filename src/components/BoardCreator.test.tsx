@@ -27,7 +27,11 @@ describe('BoardCreator', () => {
       render(<BoardCreator {...defaultProps} />);
 
       expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
-      expect(screen.queryByText('Final Move')).not.toBeInTheDocument();
+
+      // Final Move button should be visible but disabled from the start
+      const finalMoveButton = screen.getByText('Final Move');
+      expect(finalMoveButton).toBeInTheDocument();
+      expect(finalMoveButton).toBeDisabled();
     });
 
     it('should show Start buttons only on bottom row', () => {
@@ -136,7 +140,7 @@ describe('BoardCreator', () => {
       expect(screen.getByText('✖')).toBeInTheDocument();
     });
 
-    it('should show Final Move button when piece reaches row 0', () => {
+    it('should show Final Move button enabled when piece reaches row 0', () => {
       render(<BoardCreator {...defaultProps} />);
 
       // Start at bottom-left (1,0)
@@ -147,19 +151,25 @@ describe('BoardCreator', () => {
       const moveButtons = screen.getAllByText('Move');
       fireEvent.click(moveButtons[0]!);
 
-      // Should show Final Move button
-      expect(screen.getByText('Final Move')).toBeInTheDocument();
+      // Should show Final Move button and be enabled
+      const finalMoveButton = screen.getByText('Final Move');
+      expect(finalMoveButton).toBeInTheDocument();
+      expect(finalMoveButton).not.toBeDisabled();
+      expect(finalMoveButton).toHaveAttribute('title', 'Complete the board');
     });
 
-    it('should not show Final Move button when piece is not at row 0', () => {
+    it('should show Final Move button as disabled when piece is not at row 0', () => {
       render(<BoardCreator {...defaultProps} />);
 
       // Start at bottom-left (1,0)
       const startButtons = screen.getAllByText('Start');
       fireEvent.click(startButtons[0]!);
 
-      // Should not show Final Move button yet
-      expect(screen.queryByText('Final Move')).not.toBeInTheDocument();
+      // Should show Final Move button but disabled
+      const finalMoveButton = screen.getByText('Final Move');
+      expect(finalMoveButton).toBeInTheDocument();
+      expect(finalMoveButton).toBeDisabled();
+      expect(finalMoveButton).toHaveAttribute('title', 'Move your piece to the top row first');
     });
   });
 
