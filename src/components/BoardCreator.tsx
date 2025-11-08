@@ -249,16 +249,16 @@ export function BoardCreator({
 
   return (
     <div className={styles.container}>
-      {/* Final Move Button (shows when piece at row 0) */}
-      {canFinish && phase === 'building' && (
-        <button
-          onClick={handleFinalMove}
-          className={styles.finalMoveButton}
-          aria-label="Complete board with final move"
-        >
-          Final Move
-        </button>
-      )}
+      {/* Final Move Button (always visible, disabled until piece reaches row 0) */}
+      <button
+        onClick={handleFinalMove}
+        className={styles.finalMoveButton}
+        aria-label="Complete board with final move"
+        disabled={!canFinish}
+        title={!canFinish ? 'Move your piece to the top row first' : 'Complete the board'}
+      >
+        Final Move
+      </button>
 
       {/* Grid */}
       <div
