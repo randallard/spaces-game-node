@@ -3,7 +3,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { CPU_OPPONENT_ID, CPU_OPPONENT_NAME } from '@/constants/game-rules';
+import { CPU_OPPONENT_ID, CPU_OPPONENT_NAME, CPU_TOUGHER_OPPONENT_ID } from '@/constants/game-rules';
 import type { Opponent, Board } from '@/types';
 
 /**
@@ -50,7 +50,11 @@ export function createHumanOpponent(name: string): Opponent {
  * Check if opponent is CPU
  */
 export function isCpuOpponent(opponent: Opponent): boolean {
-  return opponent.type === 'cpu' || opponent.id === CPU_OPPONENT_ID;
+  return (
+    opponent.type === 'cpu' ||
+    opponent.id === CPU_OPPONENT_ID ||
+    opponent.id === CPU_TOUGHER_OPPONENT_ID
+  );
 }
 
 /**

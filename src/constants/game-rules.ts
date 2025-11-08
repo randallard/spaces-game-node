@@ -22,3 +22,6 @@ export const OPPONENT_TYPE = {
 
 export const CPU_OPPONENT_ID = 'cpu-opponent';
 export const CPU_OPPONENT_NAME = 'CPU';
+
+export const CPU_TOUGHER_OPPONENT_ID = 'cpu-tougher-opponent';
+export const CPU_TOUGHER_OPPONENT_NAME = 'CPU Tougher';
