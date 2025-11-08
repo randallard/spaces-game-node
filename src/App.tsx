@@ -3,7 +3,7 @@ import styles from './App.module.css';
 import { useGameState } from '@/hooks/useGameState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-simulation';
-import { initializeDefaultCpuData } from '@/utils/default-cpu-data';
+import { initializeDefaultCpuData, initializeCpuTougherData } from '@/utils/default-cpu-data';
 import {
   UserProfile,
   OpponentManager,
@@ -18,7 +18,7 @@ import {
 } from '@/components';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
-import { CPU_OPPONENT_ID } from '@/constants/game-rules';
+import { CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID } from '@/constants/game-rules';
 
 // Create initial empty user for game state initialization
 const createEmptyUser = (): UserProfileType => ({
@@ -104,27 +104,78 @@ function App(): React.ReactElement {
 
   // Initialize default CPU data on first load
   useEffect(() => {
-    // Check if CPU opponent already exists
+    // Check if CPU opponents already exist
     const cpuExists = savedOpponents?.some(o => o.id === CPU_OPPONENT_ID);
+    const cpuTougherExists = savedOpponents?.some(o => o.id === CPU_TOUGHER_OPPONENT_ID);
 
-    if (!cpuExists) {
-      console.log('[APP] Initializing default CPU opponent and boards');
+    // Check if CPU decks exist with proper names
+    const cpuDeck2x2Exists = cpuDecks?.some(d => d.name === 'CPU 2×2 Deck');
+    const cpuDeck3x3Exists = cpuDecks?.some(d => d.name === 'CPU 3×3 Deck');
+    const cpuTougherDeck2x2Exists = cpuDecks?.some(d => d.name === 'CPU Tougher 2×2 Deck');
+    const cpuTougherDeck3x3Exists = cpuDecks?.some(d => d.name === 'CPU Tougher 3×3 Deck');
+
+    const newOpponents: Opponent[] = [];
+    const newCpuBoards: Board[] = [];
+    let updatedCpuDecks = cpuDecks || [];
+
+    // Initialize regular CPU opponent if it doesn't exist OR if decks are missing
+    if (!cpuExists || !cpuDeck2x2Exists || !cpuDeck3x3Exists) {
+      console.log('[APP] Initializing default CPU opponent, boards, and decks');
       const defaultData = initializeDefaultCpuData();
 
-      // Add CPU opponent
-      setSavedOpponents([...(savedOpponents || []), defaultData.opponent]);
+      if (!cpuExists) {
+        newOpponents.push(defaultData.opponent);
+      }
+      newCpuBoards.push(...defaultData.boards2x2, ...defaultData.boards3x3);
 
-      // Add CPU boards to separate storage (hidden from player)
-      setCpuBoards([
-        ...defaultData.boards2x2,
-        ...defaultData.boards3x3,
-      ]);
+      // Remove old CPU decks and add new ones
+      if (!cpuDeck2x2Exists || !cpuDeck3x3Exists) {
+        console.log('[APP] Adding CPU decks:', defaultData.deck2x2.name, defaultData.deck3x3.name);
+        updatedCpuDecks = updatedCpuDecks.filter(
+          d => d.name !== 'CPU 2×2 Deck' && d.name !== 'CPU 3×3 Deck'
+        );
+        updatedCpuDecks.push(defaultData.deck2x2, defaultData.deck3x3);
+      }
+    }
 
-      // Add CPU decks to separate storage (hidden from player)
-      setCpuDecks([
-        defaultData.deck2x2,
-        defaultData.deck3x3,
-      ]);
+    // Initialize CPU Tougher opponent if it doesn't exist OR if decks are missing
+    if (!cpuTougherExists || !cpuTougherDeck2x2Exists || !cpuTougherDeck3x3Exists) {
+      console.log('[APP] Initializing CPU Tougher opponent, boards, and decks');
+      const tougherData = initializeCpuTougherData();
+
+      if (!cpuTougherExists) {
+        newOpponents.push(tougherData.opponent);
+      }
+      newCpuBoards.push(...tougherData.boards2x2, ...tougherData.boards3x3);
+
+      // Remove old CPU Tougher decks and add new ones
+      if (!cpuTougherDeck2x2Exists || !cpuTougherDeck3x3Exists) {
+        console.log('[APP] Adding CPU Tougher decks:', tougherData.deck2x2.name, tougherData.deck3x3.name);
+        updatedCpuDecks = updatedCpuDecks.filter(
+          d => d.name !== 'CPU Tougher 2×2 Deck' && d.name !== 'CPU Tougher 3×3 Deck'
+        );
+        updatedCpuDecks.push(tougherData.deck2x2, tougherData.deck3x3);
+      }
+    }
+
+    // Add any new opponents
+    if (newOpponents.length > 0) {
+      setSavedOpponents([...(savedOpponents || []), ...newOpponents]);
+    }
+
+    // Add any new CPU boards (but don't re-add if they already exist)
+    if (newCpuBoards.length > 0) {
+      const existingBoardIds = new Set((cpuBoards || []).map(b => b.id));
+      const uniqueNewBoards = newCpuBoards.filter(b => !existingBoardIds.has(b.id));
+      if (uniqueNewBoards.length > 0) {
+        setCpuBoards([...(cpuBoards || []), ...uniqueNewBoards]);
+      }
+    }
+
+    // Update CPU decks if any were added
+    if (updatedCpuDecks.length !== (cpuDecks || []).length) {
+      console.log('[APP] Updating CPU decks storage with', updatedCpuDecks.length, 'decks');
+      setCpuDecks(updatedCpuDecks);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount - we intentionally don't include savedOpponents/cpuBoards/cpuDecks
@@ -275,18 +326,25 @@ function App(): React.ReactElement {
     let opponentDeck: Deck;
 
     if (state.opponent?.type === 'cpu') {
-      // Check if CPU has a default deck for this board size
-      const cpuDeckName = `CPU ${state.boardSize}×${state.boardSize} Deck`;
+      // Match deck to specific CPU opponent by name
+      // Deck names are like "CPU 2×2 Deck" or "CPU Tougher 2×2 Deck"
+      const expectedDeckName = `${state.opponent.name} ${state.boardSize}×${state.boardSize} Deck`;
+
+      console.log(`[handleDeckSelect] Looking for deck: "${expectedDeckName}"`);
+      console.log(`[handleDeckSelect] Available CPU decks:`, (cpuDecks || []).map(d => ({ name: d.name, boards: d.boards.length })));
+
       const cpuDefaultDeck = (cpuDecks || []).find(
-        d => d.name === cpuDeckName && d.boards.length === 10
+        d => d.name === expectedDeckName && d.boards.length === 10
       );
 
       if (cpuDefaultDeck) {
-        // Use the default CPU deck (from hidden storage)
+        // Use the opponent-specific CPU deck (from hidden storage)
+        console.log(`[handleDeckSelect] Found ${state.opponent.name} deck with ${cpuDefaultDeck.boards.length} boards`);
         opponentDeck = cpuDefaultDeck;
       } else {
-        // Fallback: use player's deck if CPU deck not found
-        console.warn('[handleDeckSelect] CPU deck not found, falling back to player deck');
+        // Fallback: log error and use player's deck
+        console.error(`[handleDeckSelect] ${state.opponent.name} deck not found for size ${state.boardSize}×${state.boardSize}`);
+        console.error(`[handleDeckSelect] cpuDecks is:`, cpuDecks);
         opponentDeck = deck;
       }
     } else {
@@ -340,22 +398,26 @@ function App(): React.ReactElement {
     let opponentBoard: Board = board; // Fallback to same board
 
     if (state.opponent?.type === 'cpu') {
-      // Use CPU's hidden boards (separate storage)
-      const cpuBoardsForSize = (cpuBoards || []).filter(b => b.boardSize === state.boardSize);
+      // Filter boards by opponent name and size
+      // Board names start with opponent name (e.g., "CPU Left Column" or "CPU Tougher Board 1")
+      const opponentBoardsForSize = (cpuBoards || []).filter(
+        b => b.boardSize === state.boardSize && b.name.startsWith(state.opponent!.name)
+      );
 
-      // CPU selects random board from its hidden storage
-      if (cpuBoardsForSize.length > 0) {
-        const randomIndex = Math.floor(Math.random() * cpuBoardsForSize.length);
-        opponentBoard = cpuBoardsForSize[randomIndex] || board;
+      // CPU selects random board from its own boards
+      if (opponentBoardsForSize.length > 0) {
+        const randomIndex = Math.floor(Math.random() * opponentBoardsForSize.length);
+        opponentBoard = opponentBoardsForSize[randomIndex] || board;
       } else {
-        // Fallback: use player's board if CPU boards not found
+        // Fallback: log error and use player's board
+        console.error(`[handleBoardSelect] ${state.opponent.name} boards not found for size ${state.boardSize}×${state.boardSize}`);
         opponentBoard = board;
       }
 
       // Ensure opponent board is playable
       if (!isBoardPlayable(opponentBoard)) {
-        // Try to find another playable CPU board
-        const playableBoard = cpuBoardsForSize.find(b => isBoardPlayable(b));
+        // Try to find another playable board from this opponent
+        const playableBoard = opponentBoardsForSize.find(b => isBoardPlayable(b));
         opponentBoard = playableBoard || board;
       }
     } else {
