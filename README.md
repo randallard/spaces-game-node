@@ -101,9 +101,12 @@ spaces-game-node/
 │   ├── hooks/                   # Custom React hooks
 │   ├── utils/                   # Utility functions
 │   ├── constants/               # Constants and config
+│   ├── creatures/               # Creature metadata
 │   └── test/                    # Test setup
+├── public/
+│   └── creatures/               # Creature graphics (SVG/PNG)
+├── docs/                        # Documentation
 ├── planning/                    # Planning documents
-├── public/                      # Static assets
 └── index.html                   # HTML entry point
 ```
 
@@ -118,6 +121,11 @@ This project follows patterns from [kings-cooking](https://github.com/randallard
 - **CSS Modules**: Scoped component styles
 
 See `planning/MIGRATION_PLAN.md` for detailed architecture decisions.
+
+## Documentation
+
+- [Adding Creatures](docs/ADDING_CREATURES.md) - Guide for adding new creature graphics
+- [Minimal Board Encoding](docs/MINIMAL_BOARD_ENCODING.md) - URL compression format
 
 ## License
 
