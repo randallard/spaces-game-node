@@ -363,7 +363,7 @@ describe('UserProfile', () => {
     it('should handle maxLength attribute', () => {
       render(<UserProfile onUserCreated={mockOnUserCreated} />);
 
-      const input = screen.getByLabelText('Your name');
+      const input = screen.getByLabelText('Your name') as HTMLInputElement;
       expect(input.maxLength).toBe(20);
     });
 

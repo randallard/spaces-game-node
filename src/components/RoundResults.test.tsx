@@ -1404,7 +1404,7 @@ describe('RoundResults', () => {
         opponentFinalPosition: { row: 0, col: 1 },
         playerPoints: 0,
         opponentPoints: 2,
-        playerOutcome: 'forward',
+        playerOutcome: 'lost',
       };
 
       render(
@@ -1456,21 +1456,14 @@ describe('RoundResults', () => {
         opponentFinalPosition: { row: 0, col: 1 },
         playerPoints: 2,
         opponentPoints: 0,
-        playerOutcome: 'goal',
+        playerOutcome: 'won',
         simulationDetails: {
-          playerMoves: [
-            { position: { row: 1, col: 0 }, action: 'move' },
-            { position: { row: 0, col: 0 }, action: 'move', pointsEarned: 1 },
-            { position: { row: -1, col: 0 }, action: 'goal', pointsEarned: 1 },
-          ],
-          opponentMoves: [
-            { position: { row: 0, col: 1 }, action: 'move' },
-          ],
-          playerTraps: [],
-          opponentTraps: [],
+          playerMoves: 3,
+          opponentMoves: 1,
+          playerHitTrap: false,
+          opponentHitTrap: false,
           playerLastStep: 2,
           opponentLastStep: 0,
-          endReason: 'goal',
         },
       };
 

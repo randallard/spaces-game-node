@@ -170,7 +170,7 @@ describe('OpponentManager', () => {
 
       fireEvent.click(screen.getByLabelText('Play against human opponent'));
 
-      const input = screen.getByLabelText('Opponent Name');
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
       expect(input.value).toBe('');
     });
 
@@ -470,7 +470,7 @@ describe('OpponentManager', () => {
 
       fireEvent.click(screen.getByLabelText('Play against human opponent'));
 
-      const input = screen.getByLabelText('Opponent Name');
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
       expect(input.maxLength).toBe(20);
     });
   });
