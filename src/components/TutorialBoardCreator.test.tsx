@@ -147,7 +147,7 @@ describe('TutorialBoardCreator', () => {
 
       // Move to top row
       const moveButtons = screen.getAllByText('Move');
-      const upButton = moveButtons.find(btn => {
+      const upButton = moveButtons.find(() => {
         // Find the move button that goes up
         return true; // In a 2x2 grid, any adjacent move from bottom will be valid
       });
@@ -156,7 +156,7 @@ describe('TutorialBoardCreator', () => {
         fireEvent.click(upButton);
 
         // Check if final move can be enabled
-        const finalMoveButton = screen.getByText('Final Move');
+        screen.getByText('Final Move');
         // It might be enabled now if we reached row 0
       }
     });
@@ -199,7 +199,7 @@ describe('TutorialBoardCreator', () => {
 
       // Try to move onto the trap - should show trapped instruction
       // (The UI should prevent this or show error)
-      const moveButtons = screen.queryAllByText('Move');
+      screen.queryAllByText('Move');
       // After placing trap, move buttons on that cell should not appear
     });
   });
@@ -283,8 +283,11 @@ describe('TutorialBoardCreator', () => {
         fireEvent.click(finalMoveButton);
 
         if (mockOnBoardComplete.mock.calls.length > 0) {
-          const [board, hasTraps] = mockOnBoardComplete.mock.calls[0];
-          expect(hasTraps).toBe(true);
+          const call = mockOnBoardComplete.mock.calls[0];
+          if (call) {
+            const [, hasTraps] = call;
+            expect(hasTraps).toBe(true);
+          }
         }
       }
     });
@@ -439,16 +442,19 @@ describe('TutorialBoardCreator', () => {
         fireEvent.click(finalMoveButton);
 
         if (mockOnBoardComplete.mock.calls.length > 0) {
-          const [board] = mockOnBoardComplete.mock.calls[0];
-          expect(board).toMatchObject({
-            name: 'My First Board',
-            boardSize: 2,
-          });
-          expect(board.id).toBeDefined();
-          expect(board.grid).toBeDefined();
-          expect(board.sequence).toBeDefined();
-          expect(board.thumbnail).toBeDefined();
-          expect(board.createdAt).toBeDefined();
+          const call = mockOnBoardComplete.mock.calls[0];
+          if (call) {
+            const [board] = call;
+            expect(board).toMatchObject({
+              name: 'My First Board',
+              boardSize: 2,
+            });
+            expect(board.id).toBeDefined();
+            expect(board.grid).toBeDefined();
+            expect(board.sequence).toBeDefined();
+            expect(board.thumbnail).toBeDefined();
+            expect(board.createdAt).toBeDefined();
+          }
         }
       }
     });

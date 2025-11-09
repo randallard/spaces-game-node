@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { TutorialNameEntry } from './TutorialNameEntry';
 import type { Board } from '@/types';
 
@@ -231,7 +231,7 @@ describe('TutorialNameEntry', () => {
     fireEvent.submit(form!);
 
     expect(mockOnContinue).toHaveBeenCalledTimes(1);
-    const user = mockOnContinue.mock.calls[0][0];
+    const user = mockOnContinue.mock.calls[0]?.[0];
     expect(user).toMatchObject({
       name: 'Alice',
       stats: {
@@ -263,8 +263,8 @@ describe('TutorialNameEntry', () => {
     const submitButton = screen.getByText('Continue');
     fireEvent.click(submitButton);
 
-    const user = mockOnContinue.mock.calls[0][0];
-    expect(user.name).toBe('Alice');
+    const user = mockOnContinue.mock.calls[0]?.[0];
+    expect(user?.name).toBe('Alice');
   });
 
   it('should not submit form when name is invalid', () => {
