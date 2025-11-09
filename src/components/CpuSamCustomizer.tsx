@@ -65,7 +65,7 @@ export function CpuSamCustomizer({
           <select
             id="cpu-sam-creature"
             value={creature}
-            onChange={(e) => setCreature(e.target.value as CreatureId)}
+            onChange={(e) => setCreature(e.target.value)}
             className={styles.select}
           >
             {creatures.map((c) => (

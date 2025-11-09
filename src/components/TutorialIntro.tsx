@@ -81,7 +81,7 @@ export function TutorialIntro({ onNext, onSkip }: TutorialIntroProps): ReactElem
             <select
               id="player-creature"
               value={playerCreature}
-              onChange={(e) => setPlayerCreature(e.target.value as CreatureId)}
+              onChange={(e) => setPlayerCreature(e.target.value)}
               className={styles.select}
             >
               {creatures.map((creature) => (

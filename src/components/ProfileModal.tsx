@@ -249,7 +249,7 @@ export function ProfileModal({
                 <select
                   id="player-creature"
                   value={playerCreature}
-                  onChange={(e) => setPlayerCreature(e.target.value as CreatureId)}
+                  onChange={(e) => setPlayerCreature(e.target.value)}
                   className={styles.select}
                 >
                   {creatures.map((creature) => (
@@ -266,7 +266,7 @@ export function ProfileModal({
                 <select
                   id="opponent-creature"
                   value={opponentCreature}
-                  onChange={(e) => setOpponentCreature(e.target.value as CreatureId)}
+                  onChange={(e) => setOpponentCreature(e.target.value)}
                   className={styles.select}
                 >
                   {creatures.map((creature) => (

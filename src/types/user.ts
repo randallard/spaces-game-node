@@ -14,7 +14,7 @@ export type UserStats = {
 };
 
 export type UserPreferences = {
-  showCompleteRoundResults?: boolean; // Default to false if undefined
+  showCompleteRoundResults?: boolean | undefined; // Default to false if undefined
 };
 
 export type UserProfile = {
@@ -22,7 +22,7 @@ export type UserProfile = {
   name: string;
   createdAt: number;
   stats: UserStats;
-  preferences?: UserPreferences; // Optional preferences
+  preferences?: UserPreferences | undefined; // Optional preferences
   greeting?: string | undefined; // Optional for legacy compatibility
   savedBoards?: Board[] | undefined; // Optional - stored separately
   opponents?: Opponent[] | undefined; // Optional - stored separately

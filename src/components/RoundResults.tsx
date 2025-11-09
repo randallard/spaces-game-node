@@ -29,7 +29,7 @@ export interface RoundResultsProps {
   /** Optional user preference for showing complete results */
   showCompleteResultsByDefault?: boolean;
   /** Optional callback when the show complete results preference changes */
-  onShowCompleteResultsChange?: (value: boolean) => void;
+  onShowCompleteResultsChange?: ((value: boolean) => void) | undefined;
 }
 
 /**
@@ -54,7 +54,7 @@ export function RoundResults({
   showCompleteResultsByDefault = false,
   onShowCompleteResultsChange,
 }: RoundResultsProps): ReactElement {
-  const { winner, playerBoard, opponentBoard, playerFinalPosition, opponentFinalPosition } = result;
+  const { winner, playerBoard, opponentBoard } = result;
 
   // Replay state
   const [isReplaying, setIsReplaying] = useState(true);
@@ -245,7 +245,7 @@ export function RoundResults({
     if (!playerRoundEnded && !opponentRoundEnded) {
       if (newPlayerPosition) {
         // Check if player hit opponent's trap (including traps placed this turn)
-        const hitTrap = opponentTraps.some(trap => positionsMatch(trap, newPlayerPosition!));
+        const hitTrap = opponentTraps.some(trap => positionsMatch(trap, newPlayerPosition));
         if (hitTrap) {
           explanations.push('  -1 point (hit trap!)');
         }
@@ -253,7 +253,7 @@ export function RoundResults({
 
       if (newOpponentPosition) {
         // Check if opponent hit player's trap (including traps placed this turn)
-        const hitTrap = playerTraps.some(trap => positionsMatch(trap, newOpponentPosition!));
+        const hitTrap = playerTraps.some(trap => positionsMatch(trap, newOpponentPosition));
         if (hitTrap) {
           explanations.push('  -1 point (hit trap!)');
         }
