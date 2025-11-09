@@ -103,6 +103,9 @@ export function TutorialNameEntry({
           losses: 0,
           ties: 0,
         },
+        preferences: {
+          explanationStyle: 'lively',
+        },
         playerCreature,
         opponentCreature,
       };

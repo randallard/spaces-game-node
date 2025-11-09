@@ -527,6 +527,18 @@ function App(): React.ReactElement {
     handleProfileUpdate(updatedUser);
   };
 
+  // Handle explanation style preference change
+  const handleExplanationStyleChange = (value: 'lively' | 'technical') => {
+    const updatedUser: UserProfileType = {
+      ...state.user,
+      preferences: {
+        ...state.user.preferences,
+        explanationStyle: value,
+      },
+    };
+    handleProfileUpdate(updatedUser);
+  };
+
   // Tutorial Handlers
 
   // Handle tutorial intro - player selected creature and clicked Next
@@ -705,6 +717,8 @@ function App(): React.ReactElement {
             continueButtonText="Continue"
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
+            explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
+            onExplanationStyleChange={handleExplanationStyleChange}
           />
         );
 
@@ -1045,6 +1059,8 @@ function App(): React.ReactElement {
             onContinue={handleContinue}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
+            explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
+            onExplanationStyleChange={handleExplanationStyleChange}
           />
         );
 
@@ -1072,6 +1088,8 @@ function App(): React.ReactElement {
             onPlayAgain={handlePlayAgain}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
+            explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
+            onExplanationStyleChange={handleExplanationStyleChange}
           />
         );
 
@@ -1088,6 +1106,8 @@ function App(): React.ReactElement {
             onNewGame={handlePlayAgain}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
+            explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
+            onExplanationStyleChange={handleExplanationStyleChange}
           />
         );
 

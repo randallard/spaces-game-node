@@ -35,6 +35,10 @@ export interface GameOverProps {
   showCompleteResultsByDefault?: boolean;
   /** Optional callback when the show complete results preference changes */
   onShowCompleteResultsChange?: (value: boolean) => void;
+  /** Optional user preference for explanation style */
+  explanationStyle?: 'lively' | 'technical';
+  /** Optional callback when the explanation style preference changes */
+  onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
 }
 
 /**
@@ -61,6 +65,8 @@ export function GameOver({
   onShare,
   showCompleteResultsByDefault = false,
   onShowCompleteResultsChange,
+  explanationStyle = 'lively',
+  onExplanationStyleChange,
 }: GameOverProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -142,6 +148,8 @@ export function GameOver({
             }
             showCompleteResultsByDefault={showCompleteResultsByDefault}
             onShowCompleteResultsChange={onShowCompleteResultsChange}
+            explanationStyle={explanationStyle}
+            onExplanationStyleChange={onExplanationStyleChange}
           />
         </div>
       </div>
