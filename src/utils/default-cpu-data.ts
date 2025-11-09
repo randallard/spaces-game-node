@@ -34,7 +34,7 @@ export function createDefault2x2Boards(): Board[] {
   // Board 1: Straight up left column (position 2 → 0 → goal column 0)
   const board1: Board = {
     id: uuidv4(),
-    name: 'CPU Left Column',
+    name: 'CPU Sam Left Column',
     boardSize: 2,
     grid: [
       ['piece', 'empty'], // Row 0: piece at final position
@@ -52,7 +52,7 @@ export function createDefault2x2Boards(): Board[] {
   // Board 2: Straight up right column (position 3 → 1 → goal column 1)
   const board2: Board = {
     id: uuidv4(),
-    name: 'CPU Right Column',
+    name: 'CPU Sam Right Column',
     boardSize: 2,
     grid: [
       ['empty', 'piece'], // Row 0: piece at final position
@@ -67,11 +67,51 @@ export function createDefault2x2Boards(): Board[] {
     createdAt: now + 1,
   };
 
+  // Board 3: Left to right horizontal, then up right column (hits trap at 1,1)
+  const board3: Board = {
+    id: uuidv4(),
+    name: 'CPU Sam Left-Right',
+    boardSize: 2,
+    grid: [
+      ['empty', 'piece'], // Row 0: piece at final position
+      ['piece', 'piece'], // Row 1: piece at start and middle positions
+    ],
+    sequence: [
+      { position: { row: 1, col: 0 }, type: 'piece', order: 1 }, // Start at (1,0)
+      { position: { row: 1, col: 1 }, type: 'piece', order: 2 }, // Move right to (1,1)
+      { position: { row: 0, col: 1 }, type: 'piece', order: 3 }, // Move up to (0,1)
+      { position: { row: -1, col: 1 }, type: 'final', order: 4 }, // Goal at column 1
+    ],
+    thumbnail: '',
+    createdAt: now + 2,
+  };
+
+  // Board 4: Right to left horizontal, then up left column (hits trap at 1,0)
+  const board4: Board = {
+    id: uuidv4(),
+    name: 'CPU Sam Right-Left',
+    boardSize: 2,
+    grid: [
+      ['piece', 'empty'], // Row 0: piece at final position
+      ['piece', 'piece'], // Row 1: piece at start and middle positions
+    ],
+    sequence: [
+      { position: { row: 1, col: 1 }, type: 'piece', order: 1 }, // Start at (1,1)
+      { position: { row: 1, col: 0 }, type: 'piece', order: 2 }, // Move left to (1,0)
+      { position: { row: 0, col: 0 }, type: 'piece', order: 3 }, // Move up to (0,0)
+      { position: { row: -1, col: 0 }, type: 'final', order: 4 }, // Goal at column 0
+    ],
+    thumbnail: '',
+    createdAt: now + 3,
+  };
+
   // Generate thumbnails
   board1.thumbnail = generateBoardThumbnail(board1);
   board2.thumbnail = generateBoardThumbnail(board2);
+  board3.thumbnail = generateBoardThumbnail(board3);
+  board4.thumbnail = generateBoardThumbnail(board4);
 
-  return [board1, board2];
+  return [board1, board2, board3, board4];
 }
 
 /**
@@ -88,7 +128,7 @@ export function createDefault3x3Boards(): Board[] {
   // Board 1: Straight up left column (position 6 → 3 → 0 → goal column 0)
   const board1: Board = {
     id: uuidv4(),
-    name: 'CPU Left Column',
+    name: 'CPU Sam Left Column',
     boardSize: 3,
     grid: [
       ['piece', 'empty', 'empty'], // Row 0: piece at final position
@@ -108,7 +148,7 @@ export function createDefault3x3Boards(): Board[] {
   // Board 2: Straight up middle column (position 7 → 4 → 1 → goal column 1)
   const board2: Board = {
     id: uuidv4(),
-    name: 'CPU Middle Column',
+    name: 'CPU Sam Middle Column',
     boardSize: 3,
     grid: [
       ['empty', 'piece', 'empty'], // Row 0: piece at final position
@@ -128,7 +168,7 @@ export function createDefault3x3Boards(): Board[] {
   // Board 3: Straight up right column (position 8 → 5 → 2 → goal column 2)
   const board3: Board = {
     id: uuidv4(),
-    name: 'CPU Right Column',
+    name: 'CPU Sam Right Column',
     boardSize: 3,
     grid: [
       ['empty', 'empty', 'piece'], // Row 0: piece at final position
@@ -170,7 +210,7 @@ export function createDefault2x2Deck(boards: Board[]): Deck {
 
   return {
     id: `cpu-deck-2x2-${Date.now()}`,
-    name: 'CPU 2×2 Deck',
+    name: 'CPU Sam 2×2 Deck',
     boards: deckBoards,
     createdAt: Date.now(),
   };
@@ -193,7 +233,7 @@ export function createDefault3x3Deck(boards: Board[]): Deck {
 
   return {
     id: `cpu-deck-3x3-${Date.now()}`,
-    name: 'CPU 3×3 Deck',
+    name: 'CPU Sam 3×3 Deck',
     boards: deckBoards,
     createdAt: Date.now(),
   };

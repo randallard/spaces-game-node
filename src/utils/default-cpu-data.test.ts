@@ -26,9 +26,9 @@ describe('createDefaultCpuOpponent', () => {
 });
 
 describe('createDefault2x2Boards', () => {
-  it('should create 2 boards', () => {
+  it('should create 4 boards', () => {
     const boards = createDefault2x2Boards();
-    expect(boards).toHaveLength(2);
+    expect(boards).toHaveLength(4);
   });
 
   it('should create boards with correct size', () => {
@@ -38,20 +38,34 @@ describe('createDefault2x2Boards', () => {
     });
   });
 
-  it('should create boards with straight column paths', () => {
+  it('should create boards with correct paths', () => {
     const boards = createDefault2x2Boards();
 
-    // Board 1: Left column (2 → 0 → goal)
+    // Board 1: Left column (1,0) → (0,0) → goal
     expect(boards[0]?.sequence).toHaveLength(3);
     expect(boards[0]?.sequence[0]?.position).toEqual({ row: 1, col: 0 });
     expect(boards[0]?.sequence[1]?.position).toEqual({ row: 0, col: 0 });
     expect(boards[0]?.sequence[2]?.position).toEqual({ row: -1, col: 0 });
 
-    // Board 2: Right column (3 → 1 → goal)
+    // Board 2: Right column (1,1) → (0,1) → goal
     expect(boards[1]?.sequence).toHaveLength(3);
     expect(boards[1]?.sequence[0]?.position).toEqual({ row: 1, col: 1 });
     expect(boards[1]?.sequence[1]?.position).toEqual({ row: 0, col: 1 });
     expect(boards[1]?.sequence[2]?.position).toEqual({ row: -1, col: 1 });
+
+    // Board 3: Left-Right (1,0) → (1,1) → (0,1) → goal
+    expect(boards[2]?.sequence).toHaveLength(4);
+    expect(boards[2]?.sequence[0]?.position).toEqual({ row: 1, col: 0 });
+    expect(boards[2]?.sequence[1]?.position).toEqual({ row: 1, col: 1 });
+    expect(boards[2]?.sequence[2]?.position).toEqual({ row: 0, col: 1 });
+    expect(boards[2]?.sequence[3]?.position).toEqual({ row: -1, col: 1 });
+
+    // Board 4: Right-Left (1,1) → (1,0) → (0,0) → goal
+    expect(boards[3]?.sequence).toHaveLength(4);
+    expect(boards[3]?.sequence[0]?.position).toEqual({ row: 1, col: 1 });
+    expect(boards[3]?.sequence[1]?.position).toEqual({ row: 1, col: 0 });
+    expect(boards[3]?.sequence[2]?.position).toEqual({ row: 0, col: 0 });
+    expect(boards[3]?.sequence[3]?.position).toEqual({ row: -1, col: 0 });
   });
 
   it('should create boards with no traps', () => {
@@ -76,6 +90,18 @@ describe('createDefault2x2Boards', () => {
     expect(boards[1]?.grid[0]?.[1]).toBe('piece');
     expect(boards[1]?.grid[1]?.[0]).toBe('empty');
     expect(boards[1]?.grid[1]?.[1]).toBe('piece');
+
+    // Board 3: Left-Right path (bottom-left → bottom-right → top-right)
+    expect(boards[2]?.grid[0]?.[0]).toBe('empty');
+    expect(boards[2]?.grid[0]?.[1]).toBe('piece');
+    expect(boards[2]?.grid[1]?.[0]).toBe('piece');
+    expect(boards[2]?.grid[1]?.[1]).toBe('piece');
+
+    // Board 4: Right-Left path (bottom-right → bottom-left → top-left)
+    expect(boards[3]?.grid[0]?.[0]).toBe('piece');
+    expect(boards[3]?.grid[0]?.[1]).toBe('empty');
+    expect(boards[3]?.grid[1]?.[0]).toBe('piece');
+    expect(boards[3]?.grid[1]?.[1]).toBe('piece');
   });
 
   it('should generate thumbnails', () => {
@@ -190,7 +216,7 @@ describe('createDefault2x2Deck', () => {
     const boards = createDefault2x2Boards();
     const deck = createDefault2x2Deck(boards);
 
-    expect(deck.name).toBe('CPU 2×2 Deck');
+    expect(deck.name).toBe('CPU Sam 2×2 Deck');
   });
 });
 
@@ -217,7 +243,7 @@ describe('createDefault3x3Deck', () => {
     const boards = createDefault3x3Boards();
     const deck = createDefault3x3Deck(boards);
 
-    expect(deck.name).toBe('CPU 3×3 Deck');
+    expect(deck.name).toBe('CPU Sam 3×3 Deck');
   });
 });
 
@@ -235,7 +261,7 @@ describe('initializeDefaultCpuData', () => {
   it('should create correct number of boards', () => {
     const data = initializeDefaultCpuData();
 
-    expect(data.boards2x2).toHaveLength(2);
+    expect(data.boards2x2).toHaveLength(4);
     expect(data.boards3x3).toHaveLength(3);
   });
 
