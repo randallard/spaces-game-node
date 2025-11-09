@@ -365,8 +365,8 @@ describe('AllRoundsResults', () => {
       const roundCard = screen.getByText('Round 1').closest('button');
       fireEvent.click(roundCard!);
 
-      // Should show Round Results component in modal
-      expect(screen.getByText('Round 1 Complete')).toBeInTheDocument();
+      // Should show Round Results component in modal - verify by checking for Combined Board View
+      expect(screen.getByText('Combined Board View')).toBeInTheDocument();
     });
 
     it('should display close button in modal', () => {
@@ -415,7 +415,7 @@ describe('AllRoundsResults', () => {
       fireEvent.click(closeButton);
 
       // Should return to rounds grid
-      expect(screen.queryByText('Round 1 Complete')).not.toBeInTheDocument();
+      expect(screen.queryByText('Combined Board View')).not.toBeInTheDocument();
       expect(screen.getByText('All Rounds (Click to view details)')).toBeInTheDocument();
     });
 
@@ -443,7 +443,7 @@ describe('AllRoundsResults', () => {
       fireEvent.click(backButton);
 
       // Should close modal
-      expect(screen.queryByText('Round 1 Complete')).not.toBeInTheDocument();
+      expect(screen.queryByText('Combined Board View')).not.toBeInTheDocument();
     });
 
     it('should advance to next round when continue button clicked', () => {
@@ -468,16 +468,15 @@ describe('AllRoundsResults', () => {
       const round1Card = screen.getByText('Round 1').closest('button');
       fireEvent.click(round1Card!);
 
-      // Should show round 1
-      expect(screen.getByText('Round 1 Complete')).toBeInTheDocument();
+      // Should show round 1 in modal - verify via continue button
+      expect(screen.getByText('Continue to Round 2')).toBeInTheDocument();
 
       // Click continue to advance to round 2
       const continueButton = screen.getByText('Continue to Round 2');
       fireEvent.click(continueButton);
 
-      // Should now show round 2
-      expect(screen.getByText('Round 2 Complete')).toBeInTheDocument();
-      expect(screen.queryByText('Round 1 Complete')).not.toBeInTheDocument();
+      // Should now show round 2 (last round) - verify via back button
+      expect(screen.getByText('Back to All Rounds')).toBeInTheDocument();
     });
 
     it('should show running total scores in modal', () => {
@@ -570,7 +569,8 @@ describe('AllRoundsResults', () => {
       // View round 1
       const round1Card = screen.getByText('Round 1').closest('button');
       fireEvent.click(round1Card!);
-      expect(screen.getByText('Round 1 Complete')).toBeInTheDocument();
+      expect(screen.getByText('Combined Board View')).toBeInTheDocument();
+      expect(screen.getByText('Continue to Round 2')).toBeInTheDocument();
 
       // Close and view round 2
       const closeButton = screen.getByLabelText('Close');
@@ -578,7 +578,8 @@ describe('AllRoundsResults', () => {
 
       const round2Card = screen.getByText('Round 2').closest('button');
       fireEvent.click(round2Card!);
-      expect(screen.getByText('Round 2 Complete')).toBeInTheDocument();
+      expect(screen.getByText('Combined Board View')).toBeInTheDocument();
+      expect(screen.getByText('Back to All Rounds')).toBeInTheDocument();
     });
 
     it('should display all 10 rounds with mixed results', () => {

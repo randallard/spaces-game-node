@@ -206,8 +206,11 @@ describe('GameOver', () => {
         />
       );
 
-      expect(screen.getByText('8')).toBeInTheDocument();
-      expect(screen.getByText('0')).toBeInTheDocument();
+      // Use getAllByText since scores may appear multiple times
+      const eights = screen.getAllByText('8');
+      expect(eights.length).toBeGreaterThanOrEqual(1);
+      const zeros = screen.getAllByText('0');
+      expect(zeros.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -225,7 +228,7 @@ describe('GameOver', () => {
         />
       );
 
-      expect(screen.getByText('Round-by-Round Results')).toBeInTheDocument();
+      expect(screen.getByText('Round-by-Round Results (Click to review)')).toBeInTheDocument();
     });
 
     it('should display all rounds in history', () => {
@@ -313,7 +316,7 @@ describe('GameOver', () => {
         />
       );
 
-      expect(screen.getByText('Round-by-Round Results')).toBeInTheDocument();
+      expect(screen.getByText('Round-by-Round Results (Click to review)')).toBeInTheDocument();
       expect(screen.queryByText(/Round \d/)).not.toBeInTheDocument();
     });
 
@@ -356,15 +359,19 @@ describe('GameOver', () => {
 
       expect(screen.getByText('Your Statistics')).toBeInTheDocument();
       expect(screen.getByText('Games Played')).toBeInTheDocument();
-      expect(screen.getByText('10')).toBeInTheDocument(); // totalGames
+      // Use getAllByText since values may appear multiple times (e.g., playerPoints is also 10)
+      const tens = screen.getAllByText('10');
+      expect(tens.length).toBeGreaterThanOrEqual(1); // totalGames
       expect(screen.getByText('Wins')).toBeInTheDocument();
-      expect(screen.getByText('6')).toBeInTheDocument(); // wins
+      const sixes = screen.getAllByText('6');
+      expect(sixes.length).toBeGreaterThanOrEqual(1); // wins
       expect(screen.getByText('Losses')).toBeInTheDocument();
       // playerScore is also 3, so use getAllByText
       const threes = screen.getAllByText('3');
       expect(threes.length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Ties')).toBeInTheDocument();
-      expect(screen.getByText('1')).toBeInTheDocument(); // ties
+      const ones = screen.getAllByText('1');
+      expect(ones.length).toBeGreaterThanOrEqual(1); // ties
     });
 
     it('should display stat labels correctly', () => {

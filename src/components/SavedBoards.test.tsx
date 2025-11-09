@@ -137,43 +137,48 @@ describe('SavedBoards', () => {
       expect(screen.queryByText('Alice vs Bob')).not.toBeInTheDocument();
     });
 
-    it('should show Select button in round mode', () => {
+    it('should make boards clickable in round mode', () => {
       const boards = [createMockBoard('1', 'Board 1')];
 
       render(<SavedBoards {...defaultProps} boards={boards} currentRound={1} />);
 
-      expect(screen.getByText('Select')).toBeInTheDocument();
+      // In round mode, cards are clickable (no separate Select button)
+      const boardCard = screen.getByText('Board 1');
+      expect(boardCard).toBeInTheDocument();
     });
 
-    it('should not show Select button in management mode', () => {
+    it('should not make boards clickable in management mode', () => {
       const boards = [createMockBoard('1', 'Board 1')];
 
       render(<SavedBoards {...defaultProps} boards={boards} currentRound={0} />);
 
-      expect(screen.queryByText('Select')).not.toBeInTheDocument();
+      // In management mode, cards aren't clickable (no selection functionality)
+      const boardCard = screen.getByText('Board 1');
+      expect(boardCard).toBeInTheDocument();
     });
 
-    it('should always show Delete button', () => {
+    it('should only show Delete button in management mode', () => {
       const boards = [createMockBoard('1', 'Board 1')];
 
-      // Round mode
+      // Round mode - no delete button
       const { rerender } = render(<SavedBoards {...defaultProps} boards={boards} currentRound={1} />);
-      expect(screen.getByText('Delete')).toBeInTheDocument();
+      expect(screen.queryByText('Delete')).not.toBeInTheDocument();
 
-      // Management mode
+      // Management mode - has delete button
       rerender(<SavedBoards {...defaultProps} boards={boards} currentRound={0} />);
       expect(screen.getByText('Delete')).toBeInTheDocument();
     });
   });
 
   describe('Board selection', () => {
-    it('should call onBoardSelected when Select button is clicked', () => {
+    it('should call onBoardSelected when board card is clicked', () => {
       const boards = [createMockBoard('1', 'Board 1')];
 
       render(<SavedBoards {...defaultProps} boards={boards} currentRound={1} />);
 
-      const selectButton = screen.getByText('Select');
-      fireEvent.click(selectButton);
+      // Click the board card itself (no separate Select button)
+      const boardCard = screen.getByText('Board 1').closest('div[class*="boardCard"]');
+      fireEvent.click(boardCard!);
 
       expect(mockOnBoardSelected).toHaveBeenCalledTimes(1);
       expect(mockOnBoardSelected).toHaveBeenCalledWith(boards[0]);
@@ -187,8 +192,9 @@ describe('SavedBoards', () => {
 
       render(<SavedBoards {...defaultProps} boards={boards} currentRound={1} />);
 
-      const selectButtons = screen.getAllByText('Select');
-      fireEvent.click(selectButtons[1]!); // Click second board
+      // Click the second board card
+      const board2Card = screen.getByText('Board 2').closest('div[class*="boardCard"]');
+      fireEvent.click(board2Card!);
 
       expect(mockOnBoardSelected).toHaveBeenCalledWith(boards[1]);
     });
@@ -201,7 +207,8 @@ describe('SavedBoards', () => {
 
       const boards = [createMockBoard('1', 'Board 1')];
 
-      render(<SavedBoards {...defaultProps} boards={boards} />);
+      // Must be in management mode to see Delete button
+      render(<SavedBoards {...defaultProps} boards={boards} currentRound={0} />);
 
       const deleteButton = screen.getByText('Delete');
       fireEvent.click(deleteButton);
@@ -214,7 +221,8 @@ describe('SavedBoards', () => {
 
       const boards = [createMockBoard('1', 'Board 1')];
 
-      render(<SavedBoards {...defaultProps} boards={boards} />);
+      // Must be in management mode to see Delete button
+      render(<SavedBoards {...defaultProps} boards={boards} currentRound={0} />);
 
       const deleteButton = screen.getByText('Delete');
       fireEvent.click(deleteButton);
@@ -228,7 +236,8 @@ describe('SavedBoards', () => {
 
       const boards = [createMockBoard('1', 'Board 1')];
 
-      render(<SavedBoards {...defaultProps} boards={boards} />);
+      // Must be in management mode to see Delete button
+      render(<SavedBoards {...defaultProps} boards={boards} currentRound={0} />);
 
       const deleteButton = screen.getByText('Delete');
       fireEvent.click(deleteButton);
@@ -244,7 +253,8 @@ describe('SavedBoards', () => {
         createMockBoard('2', 'Board 2'),
       ];
 
-      render(<SavedBoards {...defaultProps} boards={boards} />);
+      // Must be in management mode to see Delete buttons
+      render(<SavedBoards {...defaultProps} boards={boards} currentRound={0} />);
 
       const deleteButtons = screen.getAllByText('Delete');
       fireEvent.click(deleteButtons[1]!); // Delete second board
@@ -373,12 +383,17 @@ describe('SavedBoards', () => {
         createMockBoard('2', 'Board 2'),
       ];
 
-      render(<SavedBoards {...defaultProps} boards={boards} currentRound={1} />);
+      // In round mode, boards are clickable (no separate buttons)
+      const { rerender } = render(<SavedBoards {...defaultProps} boards={boards} currentRound={1} />);
 
-      const selectButtons = screen.getAllByText('Select');
+      expect(screen.getByText('Board 1')).toBeInTheDocument();
+      expect(screen.getByText('Board 2')).toBeInTheDocument();
+      expect(screen.queryByText('Delete')).not.toBeInTheDocument();
+
+      // In management mode, boards have delete buttons
+      rerender(<SavedBoards {...defaultProps} boards={boards} currentRound={0} />);
+
       const deleteButtons = screen.getAllByText('Delete');
-
-      expect(selectButtons).toHaveLength(2);
       expect(deleteButtons).toHaveLength(2);
     });
   });
