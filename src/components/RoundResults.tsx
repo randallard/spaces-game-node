@@ -315,9 +315,9 @@ export function RoundResults({
 
   const getWinnerText = (): string => {
     if (winner === 'player') {
-      return `${playerName} Wins!`;
+      return playerName === 'You' ? 'You Win!' : `${playerName} Wins!`;
     } else if (winner === 'opponent') {
-      return `${opponentName} Wins!`;
+      return opponentName === 'You' ? 'You Win!' : `${opponentName} Wins!`;
     } else {
       return "It's a Tie!";
     }

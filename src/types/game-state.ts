@@ -43,6 +43,10 @@ export type RoundResult = {
  */
 export type GamePhase =
   | { type: 'user-setup' }
+  | { type: 'tutorial-intro' } // Tutorial: Introduction + creature selection
+  | { type: 'tutorial-board-creation'; playerCreature: CreatureId; cpuSamData: { name: string; creature: CreatureId } }
+  | { type: 'tutorial-results'; result: RoundResult; playerBoard: Board }
+  | { type: 'tutorial-name-entry'; playerCreature: CreatureId; opponentCreature: CreatureId; firstBoard: Board }
   | { type: 'board-management' }
   | { type: 'game-mode-selection' } // Choose round-by-round or deck mode
   | { type: 'board-size-selection'; gameMode: GameMode } // Choose 2x2 or 3x3

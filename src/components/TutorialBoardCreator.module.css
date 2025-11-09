@@ -1,0 +1,19 @@
+/* Instruction Banner */
+.instructionBanner {
+  background-color: var(--accent-primary);
+  color: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 640px) {
+  .instructionBanner {
+    font-size: 1rem;
+    padding: var(--spacing-md);
+  }
+}

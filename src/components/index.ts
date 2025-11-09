@@ -37,3 +37,18 @@ export type { AllRoundsResultsProps } from './AllRoundsResults';
 
 export { HelpModal } from './HelpModal';
 export type { HelpModalProps } from './HelpModal';
+
+export { TutorialIntro } from './TutorialIntro';
+export type { TutorialIntroProps } from './TutorialIntro';
+
+export { TutorialBoardCreator } from './TutorialBoardCreator';
+export type { TutorialBoardCreatorProps } from './TutorialBoardCreator';
+
+export { TutorialNameEntry } from './TutorialNameEntry';
+export type { TutorialNameEntryProps } from './TutorialNameEntry';
+
+export { CpuSamCustomizer } from './CpuSamCustomizer';
+export type { CpuSamCustomizerProps } from './CpuSamCustomizer';
+
+export { WelcomeModal } from './WelcomeModal';
+export type { WelcomeModalProps } from './WelcomeModal';

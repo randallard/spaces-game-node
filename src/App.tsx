@@ -15,10 +15,28 @@ import {
   DeckCreator,
   DeckManager,
   AllRoundsResults,
+  TutorialIntro,
+  TutorialBoardCreator,
+  TutorialNameEntry,
+  WelcomeModal,
 } from '@/components';
-import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode } from '@/types';
+import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
-import { CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID } from '@/constants/game-rules';
+import { CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID, CPU_OPPONENT_NAME, CPU_TOUGHER_OPPONENT_NAME } from '@/constants/game-rules';
+
+// Get opponent icon based on opponent type and name
+const getOpponentIcon = (opponent: Opponent): string => {
+  if (opponent.type === 'cpu') {
+    // CPU Tougher gets the strong arm emoji
+    if (opponent.id === CPU_TOUGHER_OPPONENT_ID || opponent.name === CPU_TOUGHER_OPPONENT_NAME) {
+      return '🦾';
+    }
+    // CPU Sam gets the robot emoji
+    return '🤖';
+  }
+  // Human opponents get the person emoji
+  return '👤';
+};
 
 // Create initial empty user for game state initialization
 const createEmptyUser = (): UserProfileType => ({
@@ -36,9 +54,10 @@ const createEmptyUser = (): UserProfileType => ({
 // Initial game state
 const createInitialState = (user: UserProfileType | null): GameState => {
   // If we have a saved user with a name, go to board management
+  // Otherwise start with tutorial
   const phase: GameState['phase'] = user && user.name
     ? { type: 'board-management' }
-    : { type: 'user-setup' };
+    : { type: 'tutorial-intro' };
 
   return {
     phase,
@@ -109,8 +128,8 @@ function App(): React.ReactElement {
     const cpuTougherExists = savedOpponents?.some(o => o.id === CPU_TOUGHER_OPPONENT_ID);
 
     // Check if CPU decks exist with proper names
-    const cpuDeck2x2Exists = cpuDecks?.some(d => d.name === 'CPU 2×2 Deck');
-    const cpuDeck3x3Exists = cpuDecks?.some(d => d.name === 'CPU 3×3 Deck');
+    const cpuDeck2x2Exists = cpuDecks?.some(d => d.name === 'CPU Sam 2×2 Deck');
+    const cpuDeck3x3Exists = cpuDecks?.some(d => d.name === 'CPU Sam 3×3 Deck');
     const cpuTougherDeck2x2Exists = cpuDecks?.some(d => d.name === 'CPU Tougher 2×2 Deck');
     const cpuTougherDeck3x3Exists = cpuDecks?.some(d => d.name === 'CPU Tougher 3×3 Deck');
 
@@ -132,7 +151,7 @@ function App(): React.ReactElement {
       if (!cpuDeck2x2Exists || !cpuDeck3x3Exists) {
         console.log('[APP] Adding CPU decks:', defaultData.deck2x2.name, defaultData.deck3x3.name);
         updatedCpuDecks = updatedCpuDecks.filter(
-          d => d.name !== 'CPU 2×2 Deck' && d.name !== 'CPU 3×3 Deck'
+          d => d.name !== 'CPU Sam 2×2 Deck' && d.name !== 'CPU 3×3 Deck' && d.name !== 'CPU 2×2 Deck'
         );
         updatedCpuDecks.push(defaultData.deck2x2, defaultData.deck3x3);
       }
@@ -208,6 +227,9 @@ function App(): React.ReactElement {
   // Deck creator state
   const [showDeckCreator, setShowDeckCreator] = useState(false);
   const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
+
+  // Welcome modal state (CPU Tougher introduction)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Save user to localStorage when it changes
   useEffect(() => {
@@ -470,9 +492,189 @@ function App(): React.ReactElement {
     });
   };
 
+  // Tutorial Handlers
+
+  // Handle tutorial intro - player selected creature and clicked Next
+  const handleTutorialIntroNext = (playerCreature: CreatureId, cpuSamData: { name: string; creature: CreatureId }) => {
+    setPhase({
+      type: 'tutorial-board-creation',
+      playerCreature,
+      cpuSamData,
+    });
+  };
+
+  // Handle tutorial intro skip - go to normal user setup
+  const handleTutorialSkip = () => {
+    setPhase({ type: 'user-setup' });
+  };
+
+  // Handle tutorial board completion
+  const handleTutorialBoardComplete = (playerBoard: Board, hasTraps: boolean) => {
+    // Get CPU Sam's boards (2x2 only for tutorial)
+    const cpuSam2x2Boards = (cpuBoards || []).filter(
+      b => b.boardSize === 2 && b.name.startsWith(CPU_OPPONENT_NAME)
+    );
+
+    if (cpuSam2x2Boards.length === 0) {
+      console.error('[Tutorial] No CPU Sam 2x2 boards found!');
+      return;
+    }
+
+    // Select appropriate CPU Sam board based on trap usage
+    let selectedCpuBoard: Board;
+
+    if (hasTraps) {
+      // Player set traps - try to find a CPU board that would hit them
+      // IMPORTANT: Opponent's board is rotated 180 degrees during simulation!
+      // Position mapping after rotation (2x2 board):
+      //   Player trap at (0,0) → Opponent needs (1,1) in unrotated board
+      //   Player trap at (0,1) → Opponent needs (1,0) in unrotated board
+      //   Player trap at (1,0) → Opponent needs (0,1) in unrotated board
+      //   Player trap at (1,1) → Opponent needs (0,0) in unrotated board
+
+      const hasTrapAt_0_0 = playerBoard.sequence.some(
+        move => move.type === 'trap' && move.position.row === 0 && move.position.col === 0
+      );
+      const hasTrapAt_0_1 = playerBoard.sequence.some(
+        move => move.type === 'trap' && move.position.row === 0 && move.position.col === 1
+      );
+      const hasTrapAt_1_0 = playerBoard.sequence.some(
+        move => move.type === 'trap' && move.position.row === 1 && move.position.col === 0
+      );
+      const hasTrapAt_1_1 = playerBoard.sequence.some(
+        move => move.type === 'trap' && move.position.row === 1 && move.position.col === 1
+      );
+
+      // Select CPU board based on rotated positions:
+      // Unrotated boards:
+      //   - "Left Column": (1,0) → (0,0) → goal
+      //   - "Right Column": (1,1) → (0,1) → goal
+      //   - "Left-Right": (1,0) → (1,1) → (0,1) → goal
+      //   - "Right-Left": (1,1) → (1,0) → (0,0) → goal
+
+      if (hasTrapAt_0_0) {
+        // Trap at (0,0) → Need (1,1) after rotation → "Left-Right" has (1,1) on step 2
+        selectedCpuBoard = cpuSam2x2Boards.find(b => b.name.includes('Left-Right')) || cpuSam2x2Boards[0]!;
+      } else if (hasTrapAt_0_1) {
+        // Trap at (0,1) → Need (1,0) after rotation → "Right-Left" has (1,0) on step 2
+        selectedCpuBoard = cpuSam2x2Boards.find(b => b.name.includes('Right-Left')) || cpuSam2x2Boards[0]!;
+      } else if (hasTrapAt_1_0) {
+        // Trap at (1,0) → Need (0,1) after rotation → "Right Column" has (0,1) on step 2
+        selectedCpuBoard = cpuSam2x2Boards.find(b => b.name === 'CPU Sam Right Column') || cpuSam2x2Boards[0]!;
+      } else if (hasTrapAt_1_1) {
+        // Trap at (1,1) → Need (0,0) after rotation → "Left Column" has (0,0) on step 2
+        selectedCpuBoard = cpuSam2x2Boards.find(b => b.name === 'CPU Sam Left Column') || cpuSam2x2Boards[0]!;
+      } else {
+        // Trap elsewhere, just pick first one
+        selectedCpuBoard = cpuSam2x2Boards[0]!;
+      }
+    } else {
+      // No traps - pick any board (they all reach goal)
+      selectedCpuBoard = cpuSam2x2Boards[0]!;
+    }
+
+    // Get creatures from current phase
+    const phaseData = state.phase.type === 'tutorial-board-creation' ? state.phase : null;
+    if (!phaseData) return;
+
+    const playerCreature = phaseData.playerCreature;
+    const opponentCreature = phaseData.cpuSamData.creature;
+
+    // Simulate the round
+    const result = simulateRound(1, playerBoard, selectedCpuBoard);
+    result.playerCreature = playerCreature;
+    result.opponentCreature = opponentCreature;
+
+    // Save the board to player's boards
+    handleBoardSave(playerBoard);
+
+    // Transition to tutorial results
+    setPhase({
+      type: 'tutorial-results',
+      result,
+      playerBoard,
+    });
+  };
+
+  // Handle tutorial results continue
+  const handleTutorialResultsContinue = () => {
+    const phaseData = state.phase.type === 'tutorial-results' ? state.phase : null;
+    if (!phaseData) return;
+
+    // Get creature data from the result
+    const playerCreature = phaseData.result.playerCreature;
+    const opponentCreature = phaseData.result.opponentCreature;
+    const firstBoard = phaseData.playerBoard;
+
+    if (!playerCreature || !opponentCreature) return;
+
+    setPhase({
+      type: 'tutorial-name-entry',
+      playerCreature,
+      opponentCreature,
+      firstBoard,
+    });
+  };
+
+  // Handle tutorial name entry continue
+  const handleTutorialNameContinue = (newUser: UserProfileType) => {
+    // Save user to localStorage
+    setSavedUser(newUser);
+
+    // Update game state and transition to board management
+    loadState({
+      ...state,
+      user: newUser,
+      phase: { type: 'board-management' },
+    });
+
+    // Show welcome modal
+    setShowWelcomeModal(true);
+  };
+
   // Render phase-specific content
   const renderPhase = () => {
     switch (state.phase.type) {
+      case 'tutorial-intro':
+        return (
+          <TutorialIntro
+            onNext={handleTutorialIntroNext}
+            onSkip={handleTutorialSkip}
+          />
+        );
+
+      case 'tutorial-board-creation':
+        return (
+          <TutorialBoardCreator
+            cpuSamData={state.phase.cpuSamData}
+            onBoardComplete={handleTutorialBoardComplete}
+          />
+        );
+
+      case 'tutorial-results':
+        if (!state.phase.result) return null;
+        return (
+          <RoundResults
+            result={state.phase.result}
+            playerName="You"
+            opponentName={state.phase.result.opponentBoard?.name.split(' ')[0] + ' ' + state.phase.result.opponentBoard?.name.split(' ')[1] || 'CPU Sam'}
+            playerScore={state.phase.result.playerPoints || 0}
+            opponentScore={state.phase.result.opponentPoints || 0}
+            onContinue={handleTutorialResultsContinue}
+            continueButtonText="Continue"
+          />
+        );
+
+      case 'tutorial-name-entry':
+        return (
+          <TutorialNameEntry
+            playerCreature={state.phase.playerCreature}
+            opponentCreature={state.phase.opponentCreature}
+            firstBoard={state.phase.firstBoard}
+            onContinue={handleTutorialNameContinue}
+          />
+        );
+
       case 'user-setup':
         return (
           <UserProfile
@@ -503,7 +705,7 @@ function App(): React.ReactElement {
                       <div key={opponent.id} className={styles.opponentItem}>
                         <div className={styles.opponentInfo}>
                           <span className={styles.opponentIcon}>
-                            {opponent.type === 'cpu' ? '🤖' : '👤'}
+                            {getOpponentIcon(opponent)}
                           </span>
                           <div className={styles.opponentDetails}>
                             <span className={styles.opponentName}>{opponent.name}</span>
@@ -811,8 +1013,10 @@ function App(): React.ReactElement {
         </div>
         {state.user.name && (
           <div className={styles.headerActions}>
-            {/* Home button - show when not on board-management */}
-            {state.phase.type !== 'board-management' && state.phase.type !== 'user-setup' && (
+            {/* Home button - show when not on board-management or tutorial */}
+            {state.phase.type !== 'board-management' &&
+             state.phase.type !== 'user-setup' &&
+             !state.phase.type.startsWith('tutorial') && (
               <button
                 className={styles.homeButton}
                 onClick={() => setPhase({ type: 'board-management' })}
@@ -840,6 +1044,14 @@ function App(): React.ReactElement {
           user={state.user}
           onUpdate={handleProfileUpdate}
           onClose={() => setIsProfileModalOpen(false)}
+        />
+      )}
+
+      {/* Welcome Modal (CPU Tougher introduction) */}
+      {showWelcomeModal && state.user.name && (
+        <WelcomeModal
+          playerName={state.user.name}
+          onClose={() => setShowWelcomeModal(false)}
         />
       )}
     </div>
