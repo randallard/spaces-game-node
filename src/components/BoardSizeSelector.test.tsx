@@ -36,9 +36,9 @@ describe('BoardSizeSelector', () => {
 
       expect(screen.getByText('2×2')).toBeInTheDocument();
       expect(
-        screen.getByText('Classic size - Quick strategic gameplay')
+        screen.getByText('Quick strategic gameplay')
       ).toBeInTheDocument();
-      expect(screen.getByText('Standard')).toBeInTheDocument();
+      expect(screen.getByText('Classic')).toBeInTheDocument();
     });
 
     it('should render 3x3 option', () => {
@@ -46,9 +46,9 @@ describe('BoardSizeSelector', () => {
 
       expect(screen.getByText('3×3')).toBeInTheDocument();
       expect(
-        screen.getByText('Larger board - More strategic depth and options')
+        screen.getByText('Balanced complexity')
       ).toBeInTheDocument();
-      expect(screen.getByText('Advanced')).toBeInTheDocument();
+      expect(screen.getByText('Standard')).toBeInTheDocument();
     });
   });
 

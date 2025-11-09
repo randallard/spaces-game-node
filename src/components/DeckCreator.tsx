@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Deck, Board } from '@/types';
 import styles from './DeckCreator.module.css';
 
-type SizeFilter = 'all' | 2 | 3;
+type SizeFilter = 'all' | '2-5' | '6-10' | '11-20' | '21+' | number;
 
 export interface DeckCreatorProps {
   /** Available boards to choose from */
@@ -82,6 +82,24 @@ export function DeckCreator({
     if (sizeFilter === 'all') {
       return availableBoards;
     }
+
+    // Handle range filters
+    if (typeof sizeFilter === 'string') {
+      switch (sizeFilter) {
+        case '2-5':
+          return availableBoards.filter((board) => board.boardSize >= 2 && board.boardSize <= 5);
+        case '6-10':
+          return availableBoards.filter((board) => board.boardSize >= 6 && board.boardSize <= 10);
+        case '11-20':
+          return availableBoards.filter((board) => board.boardSize >= 11 && board.boardSize <= 20);
+        case '21+':
+          return availableBoards.filter((board) => board.boardSize >= 21);
+        default:
+          return availableBoards;
+      }
+    }
+
+    // Handle specific size filter
     return availableBoards.filter((board) => board.boardSize === sizeFilter);
   }, [availableBoards, sizeFilter]);
 
@@ -129,16 +147,28 @@ export function DeckCreator({
                 All ({availableBoards.length})
               </button>
               <button
-                onClick={() => setSizeFilter(2)}
-                className={`${styles.filterButton} ${sizeFilter === 2 ? styles.filterButtonActive : ''}`}
+                onClick={() => setSizeFilter('2-5')}
+                className={`${styles.filterButton} ${sizeFilter === '2-5' ? styles.filterButtonActive : ''}`}
               >
-                2x2 ({availableBoards.filter(b => b.boardSize === 2).length})
+                2-5 ({availableBoards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})
               </button>
               <button
-                onClick={() => setSizeFilter(3)}
-                className={`${styles.filterButton} ${sizeFilter === 3 ? styles.filterButtonActive : ''}`}
+                onClick={() => setSizeFilter('6-10')}
+                className={`${styles.filterButton} ${sizeFilter === '6-10' ? styles.filterButtonActive : ''}`}
               >
-                3x3 ({availableBoards.filter(b => b.boardSize === 3).length})
+                6-10 ({availableBoards.filter(b => b.boardSize >= 6 && b.boardSize <= 10).length})
+              </button>
+              <button
+                onClick={() => setSizeFilter('11-20')}
+                className={`${styles.filterButton} ${sizeFilter === '11-20' ? styles.filterButtonActive : ''}`}
+              >
+                11-20 ({availableBoards.filter(b => b.boardSize >= 11 && b.boardSize <= 20).length})
+              </button>
+              <button
+                onClick={() => setSizeFilter('21+')}
+                className={`${styles.filterButton} ${sizeFilter === '21+' ? styles.filterButtonActive : ''}`}
+              >
+                21+ ({availableBoards.filter(b => b.boardSize >= 21).length})
               </button>
             </div>
           </div>

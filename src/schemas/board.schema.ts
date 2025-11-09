@@ -3,15 +3,16 @@
  */
 
 import { z } from 'zod';
+import { MIN_BOARD_SIZE, MAX_BOARD_SIZE } from '@/types';
 
 export const CellContentSchema = z.enum(['empty', 'piece', 'trap', 'final']);
 
-export const BoardSizeSchema = z.union([z.literal(2), z.literal(3)]);
+export const BoardSizeSchema = z.number().int().min(MIN_BOARD_SIZE).max(MAX_BOARD_SIZE);
 
 // Dynamic position schema - will be validated based on board size
 export const PositionSchema = z.object({
-  row: z.number().int().min(-1).max(2), // -1 for final moves, 0-2 for positions
-  col: z.number().int().min(0).max(2),
+  row: z.number().int().min(-1).max(MAX_BOARD_SIZE - 1), // -1 for final moves, 0 to (size-1) for positions
+  col: z.number().int().min(0).max(MAX_BOARD_SIZE - 1),
 });
 
 export const BoardMoveSchema = z.object({

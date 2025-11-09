@@ -12,6 +12,13 @@ export type {
   GridSize,
 } from './board';
 
+// Board utilities and constants
+export {
+  isValidBoardSize,
+  MIN_BOARD_SIZE,
+  MAX_BOARD_SIZE,
+} from './board';
+
 // Opponent types
 export type { Opponent, OpponentType, OpponentStats } from './opponent';
 

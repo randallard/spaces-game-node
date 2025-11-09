@@ -14,7 +14,7 @@ export interface UseGameStateReturn {
   state: GameState;
   setPhase: (phase: GamePhase) => void;
   setGameMode: (mode: GameMode) => void;
-  setBoardSize: (size: 2 | 3) => void;
+  setBoardSize: (size: number) => void;
   selectOpponent: (opponent: Opponent, gameMode: GameMode) => void;
   selectPlayerBoard: (board: Board) => void;
   selectOpponentBoard: (board: Board) => void;
@@ -79,7 +79,7 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
   /**
    * Set board size for the current game
    */
-  const setBoardSize = useCallback((size: 2 | 3): void => {
+  const setBoardSize = useCallback((size: number): void => {
     setState((prev) => ({
       ...prev,
       boardSize: size,

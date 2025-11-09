@@ -53,7 +53,7 @@ export function DeckManager({
   /**
    * Get the board size of a deck (assumes all boards in a deck have the same size)
    */
-  const getDeckSize = (deck: Deck): 2 | 3 | null => {
+  const getDeckSize = (deck: Deck): number | null => {
     if (deck.boards.length === 0) return null;
     return deck.boards[0]?.boardSize ?? null;
   };

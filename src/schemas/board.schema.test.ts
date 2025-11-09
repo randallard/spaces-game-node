@@ -56,10 +56,10 @@ describe('PositionSchema', () => {
 
   it('should reject out of bounds positions', () => {
     // row -1 is valid (for final moves off the board)
-    // Max valid position is row/col 2 (for 3x3 boards), so test with 3+
+    // Max valid position is row/col 98 (for 99x99 boards), so test with 99+
     expect(() => PositionSchema.parse({ row: -2, col: 0 })).toThrow();
-    expect(() => PositionSchema.parse({ row: 0, col: 3 })).toThrow();
-    expect(() => PositionSchema.parse({ row: 3, col: 0 })).toThrow();
+    expect(() => PositionSchema.parse({ row: 0, col: 99 })).toThrow();
+    expect(() => PositionSchema.parse({ row: 99, col: 0 })).toThrow();
   });
 
   it('should accept row -1 for final moves', () => {

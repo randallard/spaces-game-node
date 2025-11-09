@@ -74,8 +74,8 @@ export type GameState = {
   // Game mode
   gameMode: GameMode | null; // null until selected
 
-  // Board size for this game (2x2 or 3x3)
-  boardSize: 2 | 3 | null; // null until selected
+  // Board size for this game (2-99)
+  boardSize: number | null; // null until selected
 
   // Game progress
   currentRound: number; // 1-5 for round-by-round, 1-10 for deck mode

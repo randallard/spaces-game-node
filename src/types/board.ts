@@ -15,7 +15,16 @@ export type BoardMove = {
   order: number; // Sequence order (1, 2, 3, etc.)
 };
 
-export type BoardSize = 2 | 3;
+export type BoardSize = number;
+
+// Board size constraints
+export const MIN_BOARD_SIZE = 2;
+export const MAX_BOARD_SIZE = 99;
+
+// Simple validation
+export function isValidBoardSize(size: number): boolean {
+  return Number.isInteger(size) && size >= MIN_BOARD_SIZE && size <= MAX_BOARD_SIZE;
+}
 
 export type Board = {
   id: string; // UUID
