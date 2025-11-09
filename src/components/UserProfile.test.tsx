@@ -363,14 +363,14 @@ describe('UserProfile', () => {
     it('should handle maxLength attribute', () => {
       render(<UserProfile onUserCreated={mockOnUserCreated} />);
 
-      const input = screen.getByLabelText('Your name') as HTMLInputElement;
+      const input = screen.getByLabelText('Your name');
       expect(input.maxLength).toBe(20);
     });
 
     it('should have autoFocus on name input', () => {
       render(<UserProfile onUserCreated={mockOnUserCreated} />);
 
-      const input = screen.getByLabelText('Your name') as HTMLInputElement;
+      const input = screen.getByLabelText('Your name');
       // In React, autoFocus is a prop, not an HTML attribute
       // Just verify the input is focused or rendered with autoFocus prop
       expect(input).toBeInTheDocument();

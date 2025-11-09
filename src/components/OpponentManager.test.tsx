@@ -170,7 +170,7 @@ describe('OpponentManager', () => {
 
       fireEvent.click(screen.getByLabelText('Play against human opponent'));
 
-      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      const input = screen.getByLabelText('Opponent Name');
       expect(input.value).toBe('');
     });
 
@@ -455,7 +455,7 @@ describe('OpponentManager', () => {
 
       fireEvent.click(screen.getByLabelText('Play against human opponent'));
 
-      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      const input = screen.getByLabelText('Opponent Name');
       // In React, autoFocus is a prop, not an HTML attribute
       expect(input).toBeInTheDocument();
     });
@@ -470,7 +470,7 @@ describe('OpponentManager', () => {
 
       fireEvent.click(screen.getByLabelText('Play against human opponent'));
 
-      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      const input = screen.getByLabelText('Opponent Name');
       expect(input.maxLength).toBe(20);
     });
   });

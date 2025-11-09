@@ -129,7 +129,7 @@ describe('BoardCreator', () => {
       fireEvent.click(startButtons[0]!);
 
       // Move to top-left (0,0)
-      let moveButtons = screen.getAllByText('Move');
+      const moveButtons = screen.getAllByText('Move');
       fireEvent.click(moveButtons[0]!);
 
       // Place trap at previous position (1,0)
