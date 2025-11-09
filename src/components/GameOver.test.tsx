@@ -658,4 +658,110 @@ describe('GameOver', () => {
       expect(mockOnNewGame).toHaveBeenCalledTimes(3);
     });
   });
+
+  describe('Round modal navigation', () => {
+    it('should open round details modal when round card clicked', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Open round 1
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+
+      // Should show round 1 modal
+      expect(screen.getByText('Combined Board View')).toBeInTheDocument();
+    });
+
+    it('should close modal when close button clicked', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Open round 2
+      const round2Card = screen.getByText('Round 2').closest('button');
+      fireEvent.click(round2Card!);
+
+      // Modal should be open
+      expect(screen.getByText('Combined Board View')).toBeInTheDocument();
+
+      // Click close button
+      const closeButton = screen.getByLabelText('Close');
+      fireEvent.click(closeButton);
+
+      // Modal should close
+      expect(screen.queryByText('Combined Board View')).not.toBeInTheDocument();
+    });
+
+  });
+
+  describe('Winner emoji variations', () => {
+    it('should show crown emoji for opponent win', () => {
+      render(
+        <GameOver
+          winner="opponent"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={2}
+          opponentScore={5}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      expect(screen.getByText('👑')).toBeInTheDocument();
+    });
+
+    it('should show handshake emoji for tie', () => {
+      render(
+        <GameOver
+          winner="tie"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={3}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      expect(screen.getByText('🤝')).toBeInTheDocument();
+    });
+  });
+
+  describe('User stats display', () => {
+    it('should display user statistics when provided', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          playerStats={mockPlayerStats}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      expect(screen.getByText('Your Statistics')).toBeInTheDocument();
+      expect(screen.getByText('Games Played')).toBeInTheDocument();
+    });
+  });
 });
