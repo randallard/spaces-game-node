@@ -169,8 +169,10 @@
 
 .buttonGroup {
   display: flex;
-  gap: 1rem;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .nextButton {
@@ -184,7 +186,7 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   white-space: nowrap;
-  min-width: 110px;
+  width: 100%;
 }
 
 .nextButton:hover {
@@ -358,7 +360,7 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   white-space: nowrap;
-  min-width: 110px;
+  width: 100%;
 }
 
 .replayButton:hover {
