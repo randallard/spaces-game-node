@@ -437,20 +437,6 @@ export function RoundResults({
                 <span>Show complete results</span>
               </label>
             </div>
-            <div className={styles.buttonGroup}>
-              {currentStep < maxSteps ? (
-                <button onClick={handleNext} className={styles.nextButton}>
-                  ▶ Step
-                </button>
-              ) : (
-                <button onClick={handleReplay} className={styles.nextButton}>
-                  ↻ Restart
-                </button>
-              )}
-              <button onClick={handleFinish} className={styles.replayButton}>
-                ⏹ Finish
-              </button>
-            </div>
             <div className={styles.explanations}>
               {explanations.map((text, index) => (
                 <div key={index} className={styles.explanationLine}>
@@ -474,6 +460,20 @@ export function RoundResults({
               className={styles.boardThumbnail}
               dangerouslySetInnerHTML={{ __html: combinedBoardSvgData.svg }}
             />
+            <div className={styles.buttonGroup}>
+              {currentStep < maxSteps ? (
+                <button onClick={handleNext} className={styles.nextButton}>
+                  ▶ Step
+                </button>
+              ) : (
+                <button onClick={handleReplay} className={styles.nextButton}>
+                  ↻ Restart
+                </button>
+              )}
+              <button onClick={handleFinish} className={styles.replayButton}>
+                ⏹ Finish
+              </button>
+            </div>
           </div>
         </div>
       </div>
