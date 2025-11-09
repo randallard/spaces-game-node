@@ -51,7 +51,7 @@ function positionKey(row: number, col: number): string {
 /**
  * Simulate a complete round between player and opponent
  *
- * @param round - Round number (1-8)
+ * @param round - Round number (1-5)
  * @param playerBoard - Player's selected board
  * @param opponentBoard - Opponent's selected board
  * @returns Complete round result with winner and details

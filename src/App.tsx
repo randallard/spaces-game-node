@@ -288,7 +288,7 @@ function App(): React.ReactElement {
       setSavedOpponents([...(savedOpponents || []), opponent]);
     }
 
-    // Select opponent with game mode
+    // Select opponent with game mode and reset game state for new game
     loadState({
       ...state,
       opponent,
@@ -296,6 +296,13 @@ function App(): React.ReactElement {
       // boardSize should already be set at this point
       phase: gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 },
       currentRound: 1,
+      playerScore: 0,
+      opponentScore: 0,
+      roundHistory: [],
+      playerSelectedBoard: null,
+      opponentSelectedBoard: null,
+      playerSelectedDeck: null,
+      opponentSelectedDeck: null,
     });
   };
 
@@ -477,6 +484,15 @@ function App(): React.ReactElement {
   // Handle play again
   const handlePlayAgain = () => {
     resetGame();
+    setPhase({ type: 'board-management' });
+  };
+
+  // Handle home navigation - resets game if coming from game-over
+  const handleGoHome = () => {
+    // If in game-over or all-rounds-results, reset the game
+    if (state.phase.type === 'game-over' || state.phase.type === 'all-rounds-results') {
+      resetGame();
+    }
     setPhase({ type: 'board-management' });
   };
 
@@ -815,7 +831,7 @@ function App(): React.ReactElement {
                 className={styles.modeCard}
               >
                 <h3>Round by Round</h3>
-                <p>Classic mode - Select a board each round (8 rounds)</p>
+                <p>Classic mode - Select a board each round (5 rounds)</p>
               </button>
               <button
                 onClick={() => handleGameModeSelect('deck')}
@@ -1019,7 +1035,7 @@ function App(): React.ReactElement {
              !state.phase.type.startsWith('tutorial') && (
               <button
                 className={styles.homeButton}
-                onClick={() => setPhase({ type: 'board-management' })}
+                onClick={handleGoHome}
                 aria-label="Go to home"
               >
                 🏠 Home

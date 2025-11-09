@@ -78,7 +78,7 @@ export type GameState = {
   boardSize: 2 | 3 | null; // null until selected
 
   // Game progress
-  currentRound: number; // 1-8 or 1-10 depending on mode
+  currentRound: number; // 1-5 for round-by-round, 1-10 for deck mode
   playerScore: number;
   opponentScore: number;
 

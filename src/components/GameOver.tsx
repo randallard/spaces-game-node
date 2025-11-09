@@ -3,8 +3,13 @@
  * @module components/GameOver
  */
 
-import { type ReactElement } from 'react';
+import { type ReactElement, useState } from 'react';
 import type { RoundResult, UserStats } from '@/types';
+import { RoundResults } from './RoundResults';
+import { HelpModal } from './HelpModal';
+import { generateOpponentThumbnail } from '@/utils/svg-thumbnail';
+import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
+import { CREATURES } from '@/types/creature';
 import styles from './GameOver.module.css';
 
 export interface GameOverProps {
@@ -51,6 +56,23 @@ export function GameOver({
   onNewGame,
   onShare,
 }: GameOverProps): ReactElement {
+  const [selectedRound, setSelectedRound] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
+  // Calculate running totals for each round
+  const runningTotals = roundHistory.reduce(
+    (acc, result) => {
+      const lastTotal = acc[acc.length - 1] || { player: 0, opponent: 0 };
+      acc.push({
+        player: lastTotal.player + (result.playerPoints ?? 0),
+        opponent: lastTotal.opponent + (result.opponentPoints ?? 0),
+      });
+      return acc;
+    },
+    [] as Array<{ player: number; opponent: number }>
+  );
+
   const getWinnerText = (): string => {
     if (winner === 'player') {
       return `${playerName} Wins the Game!`;
@@ -70,6 +92,53 @@ export function GameOver({
       return '🤝';
     }
   };
+
+  // Handle continuing to next round in modal
+  const handleContinueFromRound = () => {
+    if (selectedRound !== null && selectedRound < roundHistory.length) {
+      // Advance to next round
+      setSelectedRound(selectedRound + 1);
+    } else {
+      // Last round, close modal
+      setSelectedRound(null);
+    }
+  };
+
+  // If a round is selected, show the RoundResults component
+  if (selectedRound !== null) {
+    const result = roundHistory[selectedRound - 1];
+    if (!result) return <div>Invalid round selected</div>;
+
+    const runningTotal = runningTotals[selectedRound - 1];
+    if (!runningTotal) return <div>Invalid running total</div>;
+
+    return (
+      <div className={styles.modalOverlay} onClick={() => setSelectedRound(null)}>
+        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <button
+            className={styles.closeButton}
+            onClick={() => setSelectedRound(null)}
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <RoundResults
+            result={result}
+            playerName={playerName}
+            opponentName={opponentName}
+            playerScore={runningTotal.player}
+            opponentScore={runningTotal.opponent}
+            onContinue={handleContinueFromRound}
+            continueButtonText={
+              selectedRound === roundHistory.length
+                ? 'Back to Summary'
+                : `Continue to Round ${selectedRound + 1}`
+            }
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -99,20 +168,151 @@ export function GameOver({
 
       {/* Round History */}
       <div className={styles.historySection}>
-        <h2 className={styles.sectionTitle}>Round-by-Round Results</h2>
-        <div className={styles.roundsList}>
-          {roundHistory.map((result) => (
-            <div key={result.round} className={styles.roundItem}>
-              <span className={styles.roundNumber}>Round {result.round}</span>
-              <span className={styles.roundWinner}>
-                {result.winner === 'player'
-                  ? `${playerName} Won`
-                  : result.winner === 'opponent'
-                    ? `${opponentName} Won`
-                    : 'Tie'}
-              </span>
-            </div>
-          ))}
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>
+            Round-by-Round Results (Click to review){' '}
+            <button
+              className={styles.helpLink}
+              onClick={(e) => {
+                e.preventDefault();
+                setIsHelpModalOpen(true);
+              }}
+            >
+              (shown opponent moves...)
+            </button>
+          </h2>
+          <div className={styles.viewToggle}>
+            <button
+              className={`${styles.toggleButton} ${viewMode === 'thumbnails' ? styles.toggleButtonActive : ''}`}
+              onClick={() => setViewMode('thumbnails')}
+              title="Show board thumbnails"
+            >
+              Boards
+            </button>
+            <button
+              className={`${styles.toggleButton} ${viewMode === 'creatures' ? styles.toggleButtonActive : ''}`}
+              onClick={() => setViewMode('creatures')}
+              title="Show creature outcome graphics"
+            >
+              Creatures
+            </button>
+            <button
+              className={`${styles.toggleButton} ${viewMode === 'both' ? styles.toggleButtonActive : ''}`}
+              onClick={() => setViewMode('both')}
+              title="Show both boards and creatures"
+            >
+              Both
+            </button>
+          </div>
+        </div>
+        <div className={styles.roundsGrid}>
+          {roundHistory.map((result) => {
+            const roundWinner = result.winner;
+            const roundWinnerClass =
+              roundWinner === 'player'
+                ? styles.roundWinnerPlayer
+                : roundWinner === 'opponent'
+                ? styles.roundWinnerOpponent
+                : styles.roundWinnerTie;
+
+            return (
+              <button
+                key={result.round}
+                className={`${styles.roundCard} ${roundWinnerClass}`}
+                onClick={() => setSelectedRound(result.round)}
+              >
+                <div className={styles.roundHeader}>
+                  <span className={styles.roundNumber}>Round {result.round}</span>
+                  <span className={styles.roundWinnerLabel}>
+                    {roundWinner === 'player'
+                      ? `${playerName} Won`
+                      : roundWinner === 'opponent'
+                      ? `${opponentName} Won`
+                      : 'Tie'}
+                  </span>
+                </div>
+
+                {/* Board Thumbnails - shown when viewMode is 'thumbnails' or 'both' */}
+                {(viewMode === 'thumbnails' || viewMode === 'both') && (
+                  <div className={styles.boardThumbnails}>
+                    <div className={styles.thumbnailWrapper}>
+                      <span className={styles.thumbnailLabel}>{playerName}</span>
+                      <img
+                        src={result.playerBoard.thumbnail}
+                        alt={result.playerBoard.name}
+                        className={styles.thumbnail}
+                      />
+                    </div>
+                    <div className={styles.thumbnailWrapper}>
+                      <span className={styles.thumbnailLabel}>{opponentName}</span>
+                      <img
+                        src={generateOpponentThumbnail(
+                          result.opponentBoard,
+                          result.simulationDetails?.opponentLastStep
+                        )}
+                        alt={result.opponentBoard.name}
+                        className={styles.thumbnail}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Creature Graphics - shown when viewMode is 'creatures' or 'both' */}
+                {(viewMode === 'creatures' || viewMode === 'both') && result.playerCreature && result.opponentCreature && (() => {
+                  const playerCreature = CREATURES[result.playerCreature];
+                  const opponentCreature = CREATURES[result.opponentCreature];
+
+                  if (!playerCreature || !opponentCreature) return null;
+
+                  return (
+                    <div className={styles.creatureGraphics}>
+                      {result.collision ? (
+                        <div className={styles.creatureWrapper}>
+                          <img
+                            src={getSharedGraphic('collision')}
+                            alt="Collision!"
+                            className={styles.creatureImage}
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <div className={styles.creatureWrapper}>
+                            <span className={styles.creatureLabel}>{playerName}</span>
+                            <img
+                              src={getOutcomeGraphic(result.playerCreature, result.playerVisualOutcome ?? 'forward')}
+                              alt={`${playerCreature.name}: ${result.playerVisualOutcome ?? 'forward'}`}
+                              className={styles.creatureImage}
+                            />
+                          </div>
+                          <div className={styles.creatureWrapper}>
+                            <span className={styles.creatureLabel}>{opponentName}</span>
+                            <img
+                              src={getOutcomeGraphic(result.opponentCreature, result.opponentVisualOutcome ?? 'forward')}
+                              alt={`${opponentCreature.name}: ${result.opponentVisualOutcome ?? 'forward'}`}
+                              className={styles.creatureImage}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Points */}
+                <div className={styles.roundPoints}>
+                  <div className={styles.pointsItem}>
+                    <span className={styles.pointsValue}>{result.playerPoints ?? 0}</span>
+                    <span className={styles.pointsLabel}>pts</span>
+                  </div>
+                  <span className={styles.pointsDivider}>-</span>
+                  <div className={styles.pointsItem}>
+                    <span className={styles.pointsValue}>{result.opponentPoints ?? 0}</span>
+                    <span className={styles.pointsLabel}>pts</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -152,6 +352,9 @@ export function GameOver({
           </button>
         )}
       </div>
+
+      {/* Help Modal */}
+      <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     </div>
   );
 }

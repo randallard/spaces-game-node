@@ -8,6 +8,7 @@
 
 import { useState, useCallback } from 'react';
 import type { GameState, GamePhase, Board, Opponent, RoundResult, Deck, GameMode } from '@/types';
+import { GAME_RULES } from '@/constants/game-rules';
 
 export interface UseGameStateReturn {
   state: GameState;
@@ -187,8 +188,8 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
     setState((prev) => {
       const nextRound = prev.currentRound + 1;
 
-      // Check if game is over (8 rounds total)
-      if (nextRound > 8) {
+      // Check if game is over
+      if (nextRound > GAME_RULES.TOTAL_ROUNDS) {
         // Determine winner
         let winner: 'player' | 'opponent' | 'tie';
         if (prev.playerScore > prev.opponentScore) {

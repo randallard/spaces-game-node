@@ -4,7 +4,7 @@
 
 export const GAME_RULES = {
   BOARD_SIZE: 2, // 2x2 grid
-  TOTAL_ROUNDS: 8,
+  TOTAL_ROUNDS: 5,
   MIN_BOARDS_TO_START: 1, // Minimum saved boards to start a game
 } as const;
 
