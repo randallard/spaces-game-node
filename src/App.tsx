@@ -263,7 +263,7 @@ function App(): React.ReactElement {
   };
 
   // Handle board size selection
-  const handleBoardSizeSelect = (size: 2 | 3) => {
+  const handleBoardSizeSelect = (size: number) => {
     setBoardSize(size);
     // After selecting board size, check if opponent is already selected
     if (state.phase.type === 'board-size-selection') {

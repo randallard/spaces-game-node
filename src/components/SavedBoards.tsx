@@ -5,6 +5,7 @@
 
 import { useState, useMemo, type ReactElement } from 'react';
 import type { Board, BoardSize } from '@/types';
+import { isValidBoardSize } from '@/types';
 import { BoardCreator } from './BoardCreator';
 import styles from './SavedBoards.module.css';
 
@@ -26,7 +27,7 @@ export interface SavedBoardsProps {
 }
 
 type ViewMode = 'list' | 'select-size' | 'create';
-type SizeFilter = 'all' | 2 | 3;
+type SizeFilter = 'all' | '2-5' | '6-10' | '11-20' | '21+' | number;
 
 /**
  * Saved boards component with list and create views.
@@ -51,6 +52,8 @@ export function SavedBoards({
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedBoardSize, setSelectedBoardSize] = useState<BoardSize>(2);
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
+  const [customSize, setCustomSize] = useState<string>('');
+  const [customError, setCustomError] = useState<string>('');
 
   /**
    * Handle create new board
@@ -98,31 +101,103 @@ export function SavedBoards({
     if (sizeFilter === 'all') {
       return boards;
     }
+
+    // Handle range filters
+    if (typeof sizeFilter === 'string') {
+      switch (sizeFilter) {
+        case '2-5':
+          return boards.filter((board) => board.boardSize >= 2 && board.boardSize <= 5);
+        case '6-10':
+          return boards.filter((board) => board.boardSize >= 6 && board.boardSize <= 10);
+        case '11-20':
+          return boards.filter((board) => board.boardSize >= 11 && board.boardSize <= 20);
+        case '21+':
+          return boards.filter((board) => board.boardSize >= 21);
+        default:
+          return boards;
+      }
+    }
+
+    // Handle specific size filter
     return boards.filter((board) => board.boardSize === sizeFilter);
   }, [boards, sizeFilter]);
 
   // Show board size selection
   if (viewMode === 'select-size') {
+    // Common preset sizes
+    const presetSizes = [
+      { size: 2, label: 'Classic', description: 'Quick strategic gameplay' },
+      { size: 3, label: 'Standard', description: 'Balanced complexity' },
+      { size: 4, label: 'Advanced', description: 'More strategic depth' },
+      { size: 5, label: 'Large', description: 'Complex gameplay' },
+      { size: 8, label: 'Extra Large', description: 'Extended matches' },
+      { size: 10, label: 'Huge', description: 'Epic battles' },
+    ];
+
+    const handleCustomSize = () => {
+      const size = parseInt(customSize);
+      if (isValidBoardSize(size)) {
+        handleSizeSelected(size);
+      } else {
+        setCustomError('Please enter a number between 2 and 99');
+      }
+    };
+
     return (
       <div className={styles.container}>
         <div className={styles.sizeSelection}>
           <h2 className={styles.sizeSelectionTitle}>Select Board Size</h2>
+          <p className={styles.sizeSelectionSubtitle}>
+            Choose from preset sizes or enter a custom size (2-99)
+          </p>
+
+          {/* Preset sizes */}
           <div className={styles.sizeOptions}>
-            <button
-              onClick={() => handleSizeSelected(2)}
-              className={styles.sizeOption}
-            >
-              <div className={styles.sizeOptionLabel}>2x2</div>
-              <div className={styles.sizeOptionDescription}>Classic board size</div>
-            </button>
-            <button
-              onClick={() => handleSizeSelected(3)}
-              className={styles.sizeOption}
-            >
-              <div className={styles.sizeOptionLabel}>3x3</div>
-              <div className={styles.sizeOptionDescription}>Larger board with more strategy</div>
-            </button>
+            {presetSizes.map(({ size, label, description }) => (
+              <button
+                key={size}
+                onClick={() => handleSizeSelected(size)}
+                className={styles.sizeOption}
+              >
+                <div className={styles.sizeOptionLabel}>{size}×{size}</div>
+                <div className={styles.sizeOptionDescription}>{description}</div>
+                <div className={styles.sizeOptionBadge}>{label}</div>
+              </button>
+            ))}
           </div>
+
+          {/* Custom size input */}
+          <div className={styles.customSection}>
+            <h3 className={styles.customTitle}>Or use a custom size:</h3>
+            <div className={styles.customInput}>
+              <input
+                type="number"
+                min="2"
+                max="99"
+                placeholder="Enter size (2-99)"
+                value={customSize}
+                onChange={(e) => {
+                  setCustomSize(e.target.value);
+                  setCustomError('');
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCustomSize();
+                  }
+                }}
+                className={styles.inputField}
+              />
+              <button
+                onClick={handleCustomSize}
+                className={styles.customButton}
+                disabled={!customSize}
+              >
+                Use {customSize ? `${customSize}×${customSize}` : 'Custom'}
+              </button>
+            </div>
+            {customError && <p className={styles.errorMessage}>{customError}</p>}
+          </div>
+
           <button onClick={handleCancel} className={styles.cancelButton}>
             Cancel
           </button>
@@ -182,16 +257,28 @@ export function SavedBoards({
                 All ({boards.length})
               </button>
               <button
-                onClick={() => setSizeFilter(2)}
-                className={`${styles.filterButton} ${sizeFilter === 2 ? styles.filterButtonActive : ''}`}
+                onClick={() => setSizeFilter('2-5')}
+                className={`${styles.filterButton} ${sizeFilter === '2-5' ? styles.filterButtonActive : ''}`}
               >
-                2x2 ({boards.filter(b => b.boardSize === 2).length})
+                2-5 ({boards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})
               </button>
               <button
-                onClick={() => setSizeFilter(3)}
-                className={`${styles.filterButton} ${sizeFilter === 3 ? styles.filterButtonActive : ''}`}
+                onClick={() => setSizeFilter('6-10')}
+                className={`${styles.filterButton} ${sizeFilter === '6-10' ? styles.filterButtonActive : ''}`}
               >
-                3x3 ({boards.filter(b => b.boardSize === 3).length})
+                6-10 ({boards.filter(b => b.boardSize >= 6 && b.boardSize <= 10).length})
+              </button>
+              <button
+                onClick={() => setSizeFilter('11-20')}
+                className={`${styles.filterButton} ${sizeFilter === '11-20' ? styles.filterButtonActive : ''}`}
+              >
+                11-20 ({boards.filter(b => b.boardSize >= 11 && b.boardSize <= 20).length})
+              </button>
+              <button
+                onClick={() => setSizeFilter('21+')}
+                className={`${styles.filterButton} ${sizeFilter === '21+' ? styles.filterButtonActive : ''}`}
+              >
+                21+ ({boards.filter(b => b.boardSize >= 21).length})
               </button>
             </div>
           </div>

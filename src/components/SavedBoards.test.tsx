@@ -69,7 +69,7 @@ describe('SavedBoards', () => {
       expect(screen.getByText('Select Board Size')).toBeInTheDocument();
 
       // Select 2x2 board size
-      const size2x2Button = screen.getByText('2x2');
+      const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
       // Should show board creator (look for "Choose a starting square")
@@ -276,7 +276,7 @@ describe('SavedBoards', () => {
       expect(screen.getByText('Select Board Size')).toBeInTheDocument();
 
       // Select 2x2 board size
-      const size2x2Button = screen.getByText('2x2');
+      const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
       expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
@@ -317,7 +317,7 @@ describe('SavedBoards', () => {
       fireEvent.click(createButton);
 
       // Select 2x2 board size
-      const size2x2Button = screen.getByText('2x2');
+      const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
       // Create a simple board: start -> move to row 0 -> final
@@ -347,7 +347,7 @@ describe('SavedBoards', () => {
       fireEvent.click(createButton);
 
       // Select 2x2 board size
-      const size2x2Button = screen.getByText('2x2');
+      const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
       expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
@@ -439,7 +439,7 @@ describe('SavedBoards', () => {
       expect(screen.getByText('Select Board Size')).toBeInTheDocument();
 
       // Select 2x2 board size
-      const size2x2Button = screen.getByText('2x2');
+      const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
       expect(screen.getByText('Choose a starting square')).toBeInTheDocument();

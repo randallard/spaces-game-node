@@ -13,21 +13,22 @@ function migrateBoardAddSize(board: any): any {
   }
 
   // If boardSize is already present and valid, no migration needed
-  if ('boardSize' in board && (board.boardSize === 2 || board.boardSize === 3)) {
+  if ('boardSize' in board && typeof board.boardSize === 'number' &&
+      board.boardSize >= 2 && board.boardSize <= 99) {
     return board;
   }
 
   // Add boardSize based on grid dimensions (or default to 2 for safety)
   const gridSize = Array.isArray(board.grid) ? board.grid.length : 2;
 
-  // Ensure the gridSize is either 2 or 3 (valid literal values)
-  const validSize = (gridSize === 2 || gridSize === 3) ? gridSize : 2;
+  // Ensure the gridSize is within valid range (2-99)
+  const validSize = Math.max(2, Math.min(99, gridSize));
 
   console.log('[Migration] Board:', board.id, 'Grid length:', gridSize, 'Setting boardSize to:', validSize);
 
   return {
     ...board,
-    boardSize: validSize as 2 | 3,
+    boardSize: validSize,
   };
 }
 

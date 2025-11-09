@@ -438,8 +438,8 @@ describe('migrateUserProfile - Edge Cases', () => {
     };
 
     const migrated = migrateUserProfile(data);
-    // Invalid size should default to 2
-    expect(migrated.boards[0].boardSize).toBe(2);
+    // Size 4 is now valid, so it should be preserved
+    expect(migrated.boards[0].boardSize).toBe(4);
   });
 
   it('should handle non-object items in boards array', () => {
