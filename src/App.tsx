@@ -810,14 +810,26 @@ function App(): React.ReactElement {
           <p>A turn-based strategy board game</p>
         </div>
         {state.user.name && (
-          <button
-            className={styles.profileButton}
-            onClick={() => setIsProfileModalOpen(true)}
-            aria-label="Open profile"
-          >
-            <span className={styles.profileIcon}>👤</span>
-            <span className={styles.profileName}>{state.user.name}</span>
-          </button>
+          <div className={styles.headerActions}>
+            {/* Home button - show when not on board-management */}
+            {state.phase.type !== 'board-management' && state.phase.type !== 'user-setup' && (
+              <button
+                className={styles.homeButton}
+                onClick={() => setPhase({ type: 'board-management' })}
+                aria-label="Go to home"
+              >
+                🏠 Home
+              </button>
+            )}
+            <button
+              className={styles.profileButton}
+              onClick={() => setIsProfileModalOpen(true)}
+              aria-label="Open profile"
+            >
+              <span className={styles.profileIcon}>👤</span>
+              <span className={styles.profileName}>{state.user.name}</span>
+            </button>
+          </div>
         )}
       </header>
       <main className={styles.main}>{renderPhase()}</main>
