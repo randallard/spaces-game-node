@@ -3,7 +3,7 @@
  * @module components/SavedBoards
  */
 
-import { useState, type ReactElement } from 'react';
+import { useState, useMemo, type ReactElement } from 'react';
 import type { Board, BoardSize } from '@/types';
 import { BoardCreator } from './BoardCreator';
 import styles from './SavedBoards.module.css';
@@ -26,6 +26,7 @@ export interface SavedBoardsProps {
 }
 
 type ViewMode = 'list' | 'select-size' | 'create';
+type SizeFilter = 'all' | 2 | 3;
 
 /**
  * Saved boards component with list and create views.
@@ -49,6 +50,7 @@ export function SavedBoards({
 }: SavedBoardsProps): ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedBoardSize, setSelectedBoardSize] = useState<BoardSize>(2);
+  const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
 
   /**
    * Handle create new board
@@ -88,6 +90,16 @@ export function SavedBoards({
       onBoardDeleted(boardId);
     }
   };
+
+  /**
+   * Filter boards based on selected size
+   */
+  const filteredBoards = useMemo(() => {
+    if (sizeFilter === 'all') {
+      return boards;
+    }
+    return boards.filter((board) => board.boardSize === sizeFilter);
+  }, [boards, sizeFilter]);
 
   // Show board size selection
   if (viewMode === 'select-size') {
@@ -159,8 +171,33 @@ export function SavedBoards({
         </div>
       ) : (
         <>
+          {/* Size Filter */}
+          <div className={styles.filterBar}>
+            <span className={styles.filterLabel}>Filter by size:</span>
+            <div className={styles.filterButtons}>
+              <button
+                onClick={() => setSizeFilter('all')}
+                className={`${styles.filterButton} ${sizeFilter === 'all' ? styles.filterButtonActive : ''}`}
+              >
+                All ({boards.length})
+              </button>
+              <button
+                onClick={() => setSizeFilter(2)}
+                className={`${styles.filterButton} ${sizeFilter === 2 ? styles.filterButtonActive : ''}`}
+              >
+                2x2 ({boards.filter(b => b.boardSize === 2).length})
+              </button>
+              <button
+                onClick={() => setSizeFilter(3)}
+                className={`${styles.filterButton} ${sizeFilter === 3 ? styles.filterButtonActive : ''}`}
+              >
+                3x3 ({boards.filter(b => b.boardSize === 3).length})
+              </button>
+            </div>
+          </div>
+
           <div className={styles.boardsGrid}>
-            {boards.map((board) => (
+            {filteredBoards.map((board) => (
               <div key={board.id} className={styles.boardCard}>
                 <div className={styles.boardThumbnail}>
                   <img

@@ -3,10 +3,12 @@
  * @module components/DeckCreator
  */
 
-import { type ReactElement, useState, useCallback } from 'react';
+import { type ReactElement, useState, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Deck, Board } from '@/types';
 import styles from './DeckCreator.module.css';
+
+type SizeFilter = 'all' | 2 | 3;
 
 export interface DeckCreatorProps {
   /** Available boards to choose from */
@@ -40,6 +42,7 @@ export function DeckCreator({
   const [selectedBoards, setSelectedBoards] = useState<Board[]>(
     existingDeck?.boards || []
   );
+  const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
 
   const handleBoardSelect = useCallback((board: Board) => {
     if (selectedBoards.length < 10) {
@@ -71,6 +74,16 @@ export function DeckCreator({
 
     onDeckSaved(deck);
   }, [deckName, selectedBoards, existingDeck, onDeckSaved]);
+
+  /**
+   * Filter boards based on selected size
+   */
+  const filteredBoards = useMemo(() => {
+    if (sizeFilter === 'all') {
+      return availableBoards;
+    }
+    return availableBoards.filter((board) => board.boardSize === sizeFilter);
+  }, [availableBoards, sizeFilter]);
 
   const isComplete = deckName.trim() !== '' && selectedBoards.length === 10;
 
@@ -104,13 +117,42 @@ export function DeckCreator({
           <h3 className={styles.sectionTitle}>
             Available Boards ({availableBoards.length})
           </h3>
+
+          {/* Size Filter */}
+          <div className={styles.filterBar}>
+            <span className={styles.filterLabel}>Filter by size:</span>
+            <div className={styles.filterButtons}>
+              <button
+                onClick={() => setSizeFilter('all')}
+                className={`${styles.filterButton} ${sizeFilter === 'all' ? styles.filterButtonActive : ''}`}
+              >
+                All ({availableBoards.length})
+              </button>
+              <button
+                onClick={() => setSizeFilter(2)}
+                className={`${styles.filterButton} ${sizeFilter === 2 ? styles.filterButtonActive : ''}`}
+              >
+                2x2 ({availableBoards.filter(b => b.boardSize === 2).length})
+              </button>
+              <button
+                onClick={() => setSizeFilter(3)}
+                className={`${styles.filterButton} ${sizeFilter === 3 ? styles.filterButtonActive : ''}`}
+              >
+                3x3 ({availableBoards.filter(b => b.boardSize === 3).length})
+              </button>
+            </div>
+          </div>
+
           <div className={styles.boardGrid}>
-            {availableBoards.length === 0 ? (
+            {filteredBoards.length === 0 ? (
               <p className={styles.emptyMessage}>
-                No boards available. Create some boards first!
+                {availableBoards.length === 0
+                  ? 'No boards available. Create some boards first!'
+                  : `No ${sizeFilter}x${sizeFilter} boards available.`
+                }
               </p>
             ) : (
-              availableBoards.map((board) => (
+              filteredBoards.map((board) => (
                 <button
                   key={board.id}
                   onClick={() => handleBoardSelect(board)}

@@ -3,9 +3,11 @@
  * @module components/DeckManager
  */
 
-import { type ReactElement } from 'react';
+import { type ReactElement, useState, useMemo } from 'react';
 import type { Deck } from '@/types';
 import styles from './DeckManager.module.css';
+
+type SizeFilter = 'all' | 2 | 3;
 
 export interface DeckManagerProps {
   /** Available decks */
@@ -40,11 +42,42 @@ export function DeckManager({
   onEditDeck,
   onDeleteDeck,
 }: DeckManagerProps): ReactElement {
+  const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
+
   const handleDelete = (deckId: string, deckName: string) => {
     if (confirm(`Are you sure you want to delete "${deckName}"?`)) {
       onDeleteDeck(deckId);
     }
   };
+
+  /**
+   * Get the board size of a deck (assumes all boards in a deck have the same size)
+   */
+  const getDeckSize = (deck: Deck): 2 | 3 | null => {
+    if (deck.boards.length === 0) return null;
+    return deck.boards[0]?.boardSize ?? null;
+  };
+
+  /**
+   * Filter decks based on selected size
+   */
+  const filteredDecks = useMemo(() => {
+    if (sizeFilter === 'all') {
+      return decks;
+    }
+    return decks.filter((deck) => getDeckSize(deck) === sizeFilter);
+  }, [decks, sizeFilter]);
+
+  /**
+   * Count decks by size
+   */
+  const deckCounts = useMemo(() => {
+    return {
+      all: decks.length,
+      size2: decks.filter(d => getDeckSize(d) === 2).length,
+      size3: decks.filter(d => getDeckSize(d) === 3).length,
+    };
+  }, [decks]);
 
   return (
     <div className={styles.container}>
@@ -65,8 +98,41 @@ export function DeckManager({
           </button>
         </div>
       ) : (
-        <div className={styles.deckGrid}>
-          {decks.map((deck) => (
+        <>
+          {/* Size Filter */}
+          <div className={styles.filterBar}>
+            <span className={styles.filterLabel}>Filter by size:</span>
+            <div className={styles.filterButtons}>
+              <button
+                onClick={() => setSizeFilter('all')}
+                className={`${styles.filterButton} ${sizeFilter === 'all' ? styles.filterButtonActive : ''}`}
+              >
+                All ({deckCounts.all})
+              </button>
+              <button
+                onClick={() => setSizeFilter(2)}
+                className={`${styles.filterButton} ${sizeFilter === 2 ? styles.filterButtonActive : ''}`}
+              >
+                2x2 ({deckCounts.size2})
+              </button>
+              <button
+                onClick={() => setSizeFilter(3)}
+                className={`${styles.filterButton} ${sizeFilter === 3 ? styles.filterButtonActive : ''}`}
+              >
+                3x3 ({deckCounts.size3})
+              </button>
+            </div>
+          </div>
+
+          {filteredDecks.length === 0 ? (
+            <div className={styles.emptyFilterState}>
+              <p className={styles.emptyMessage}>
+                No {sizeFilter}x{sizeFilter} decks available.
+              </p>
+            </div>
+          ) : (
+            <div className={styles.deckGrid}>
+              {filteredDecks.map((deck) => (
             <div key={deck.id} className={styles.deckCard}>
               <div className={styles.deckHeader}>
                 <h3 className={styles.deckName}>{deck.name}</h3>
@@ -121,8 +187,10 @@ export function DeckManager({
                 </button>
               </div>
             </div>
-          ))}
-        </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
