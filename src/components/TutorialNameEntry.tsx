@@ -15,6 +15,10 @@ export interface TutorialNameEntryProps {
   opponentCreature: CreatureId;
   /** Player's first board from tutorial */
   firstBoard: Board;
+  /** Whether the player won the tutorial round */
+  playerWon: boolean;
+  /** CPU Sam's name (customizable by player) */
+  cpuSamName: string;
   /** Callback when player enters name and clicks Continue */
   onContinue: (user: UserProfile) => void;
 }
@@ -27,6 +31,8 @@ export function TutorialNameEntry({
   playerCreature,
   opponentCreature,
   firstBoard: _firstBoard,
+  playerWon,
+  cpuSamName,
   onContinue,
 }: TutorialNameEntryProps): ReactElement {
   const [name, setName] = useState('');
@@ -120,10 +126,18 @@ export function TutorialNameEntry({
       <div className={styles.content}>
         {/* Congratulations Text */}
         <div className={styles.congratsSection}>
-          <h2 className={styles.title}>Well Played!</h2>
-          <p className={styles.text}>
-            Go against the tougher CPU or keep showing CPU Sam what you're made of!
-          </p>
+          {playerWon ? (
+            <>
+              <h2 className={styles.title}>Well Played!</h2>
+              <p className={styles.text}>
+                Go against the tougher CPU or keep showing {cpuSamName} what you're made of!
+              </p>
+            </>
+          ) : (
+            <p className={styles.text}>
+              Keep showing {cpuSamName} what you're made of and when you're ready give the tougher CPU a try!
+            </p>
+          )}
           <p className={styles.text}>
             Oh hang on! What should I call you?
           </p>
