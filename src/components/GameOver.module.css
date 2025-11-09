@@ -1,5 +1,5 @@
 .container {
-  max-width: 800px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -97,32 +97,216 @@
 }
 
 /* Round History */
-.roundsList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.roundItem {
+.sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.helpLink {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.helpLink:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.viewToggle {
+  display: flex;
+  gap: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+.toggleButton {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.toggleButton:hover {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.toggleButtonActive {
+  background-color: white;
+  color: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.roundsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.roundCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.roundCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.roundWinnerPlayer {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.roundWinnerPlayer:hover {
+  border-color: #059669;
+}
+
+.roundWinnerOpponent {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.roundWinnerOpponent:hover {
+  border-color: #dc2626;
+}
+
+.roundWinnerTie {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.roundWinnerTie:hover {
+  border-color: #d97706;
+}
+
+.roundHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .roundNumber {
   font-size: 0.875rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.roundWinnerLabel {
+  font-size: 0.75rem;
   font-weight: 600;
   color: #6b7280;
 }
 
-.roundWinner {
-  font-size: 0.875rem;
+.boardThumbnails {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.thumbnailWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.thumbnailLabel {
+  font-size: 0.625rem;
+  color: #6b7280;
   font-weight: 600;
-  color: #1a1a1a;
+  text-align: center;
+}
+
+.thumbnail {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.creatureGraphics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.creatureWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.creatureLabel {
+  font-size: 0.625rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-align: center;
+}
+
+.creatureImage {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.roundPoints {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+}
+
+.pointsItem {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.pointsValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.pointsLabel {
+  font-size: 0.625rem;
+  color: #6b7280;
+}
+
+.pointsDivider {
+  font-size: 1rem;
+  color: #d1d5db;
 }
 
 /* Stats Grid */
@@ -193,6 +377,57 @@
   background-color: #357abd;
 }
 
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modalContent {
+  position: relative;
+  background-color: white;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: #dc2626;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .trophy {
@@ -217,5 +452,13 @@
 
   .actions {
     flex-direction: column;
+  }
+
+  .roundsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalContent {
+    max-height: 95vh;
   }
 }
