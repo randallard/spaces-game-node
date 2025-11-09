@@ -279,8 +279,8 @@ describe('RoundResults', () => {
       );
 
       // Final positions are shown in replay explanations, not as static text
-      // Verify that the replay system exists
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      // Verify that the replay system exists (lively style by default)
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
 
     it('should display opponent final position', () => {
@@ -299,7 +299,7 @@ describe('RoundResults', () => {
 
       // Final positions are shown in replay explanations, not as static text
       // Verify that the replay system exists
-      expect(screen.getByText(/Opponent starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
   });
 
@@ -520,7 +520,7 @@ describe('RoundResults', () => {
 
       // Positions are shown in replay explanations
       // Verify that the replay system exists
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
 
     it('should handle position at board edge (7, 7)', () => {
@@ -542,7 +542,7 @@ describe('RoundResults', () => {
 
       // Positions are shown in replay explanations
       // Verify that the replay system exists
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
 
     it('should render with minimal valid data', () => {
@@ -695,8 +695,8 @@ describe('RoundResults', () => {
       // Replay auto-starts, so finish button should be visible
       expect(screen.getByText('⏹ Finish')).toBeInTheDocument();
       // Should show initial explanations
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
-      expect(screen.getByText(/Opponent starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
 
     it('should show next button during replay', () => {
@@ -736,7 +736,7 @@ describe('RoundResults', () => {
       fireEvent.click(stepButton);
 
       // Should show move explanations
-      expect(screen.getByText(/Player moves to/)).toBeInTheDocument();
+      expect(screen.getByText(/moves!/)).toBeInTheDocument();
     });
 
     it('should stop replay when stop button clicked', () => {
@@ -806,7 +806,7 @@ describe('RoundResults', () => {
       fireEvent.click(screen.getByText('▶ Step'));
 
       // Should show forward movement point
-      expect(screen.getByText(/\+1 point \(forward movement\)/)).toBeInTheDocument();
+      expect(screen.getByText(/\+1 point!/)).toBeInTheDocument();
     });
 
     it('should show goal reached explanation', () => {
@@ -828,8 +828,8 @@ describe('RoundResults', () => {
       fireEvent.click(screen.getByText('▶ Step')); // Step 2 - goal reached
 
       // Should show goal reached message
-      expect(screen.getByText(/Player reaches the goal!/)).toBeInTheDocument();
-      expect(screen.getByText(/\+1 point \(goal reached\)/)).toBeInTheDocument();
+      expect(screen.getByText(/makes it to the goal!/)).toBeInTheDocument();
+      expect(screen.getAllByText(/\+1 point!/).length).toBeGreaterThan(0);
     });
 
     it('should show round end message when goal is reached', () => {
@@ -851,7 +851,7 @@ describe('RoundResults', () => {
       fireEvent.click(screen.getByText('▶ Step'));
 
       // Should show round end message
-      expect(screen.getByText(/Round ends - Player reached the goal!/)).toBeInTheDocument();
+      expect(screen.getByText(/Game over -.*wins!/)).toBeInTheDocument();
     });
 
     it('should handle replay with trap placement', () => {
@@ -912,7 +912,7 @@ describe('RoundResults', () => {
       fireEvent.click(screen.getByText('▶ Step'));
 
       // Should show trap placement message
-      expect(screen.getByText(/Player places trap at/)).toBeInTheDocument();
+      expect(screen.getByText(/sets a trap!/)).toBeInTheDocument();
     });
 
     it('should accumulate explanations across steps', () => {
@@ -930,14 +930,14 @@ describe('RoundResults', () => {
       );
 
       // Replay auto-starts with initial explanations
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
 
       // Advance one step
       fireEvent.click(screen.getByText('▶ Step'));
 
       // Should still have initial explanations AND new ones
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
-      expect(screen.getByText(/Player moves to/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
+      expect(screen.getByText(/moves!/)).toBeInTheDocument();
     });
 
     it('should reset explanations when stopping replay', () => {
@@ -964,7 +964,7 @@ describe('RoundResults', () => {
       fireEvent.click(screen.getByText('↻ Restart'));
 
       // Should have initial explanations again
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
 
     it('should allow replaying multiple times', () => {
@@ -987,7 +987,7 @@ describe('RoundResults', () => {
 
       // Restart replay
       fireEvent.click(screen.getByText('↻ Restart'));
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
   });
 
@@ -1034,7 +1034,7 @@ describe('RoundResults', () => {
       );
 
       // Replay auto-starts - should work without simulationDetails
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
   });
 
@@ -1189,7 +1189,7 @@ describe('RoundResults', () => {
       expect(checkbox).toBeChecked();
 
       // Should show all explanations
-      expect(screen.getByText(/Round ends/)).toBeInTheDocument();
+      expect(screen.getByText(/Game over/)).toBeInTheDocument();
     });
 
     it('should call onShowCompleteResultsChange when checkbox is toggled', () => {
@@ -1479,7 +1479,7 @@ describe('RoundResults', () => {
       );
 
       // Should display replay with simulation data
-      expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
+      expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
   });
 });

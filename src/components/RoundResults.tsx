@@ -30,6 +30,10 @@ export interface RoundResultsProps {
   showCompleteResultsByDefault?: boolean;
   /** Optional callback when the show complete results preference changes */
   onShowCompleteResultsChange?: ((value: boolean) => void) | undefined;
+  /** Optional user preference for explanation style */
+  explanationStyle?: 'lively' | 'technical';
+  /** Optional callback when the explanation style preference changes */
+  onExplanationStyleChange?: ((value: 'lively' | 'technical') => void) | undefined;
 }
 
 /**
@@ -53,6 +57,8 @@ export function RoundResults({
   continueButtonText = 'Continue to Next Round',
   showCompleteResultsByDefault = false,
   onShowCompleteResultsChange,
+  explanationStyle = 'lively',
+  onExplanationStyleChange,
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard } = result;
 
@@ -62,8 +68,17 @@ export function RoundResults({
   const [explanations, setExplanations] = useState<string[]>([]);
   const [showCompleteResults, setShowCompleteResults] = useState(showCompleteResultsByDefault);
 
+  // Explanation style preference (from user profile)
+  const useLivelyStyle = explanationStyle === 'lively';
+
   // Help modal state
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
+  // Toggle explanation style and update user profile
+  const toggleExplanationStyle = () => {
+    const newStyle = useLivelyStyle ? 'technical' : 'lively';
+    onExplanationStyleChange?.(newStyle);
+  };
 
   // Calculate the last step index executed for each player
   const getLastExecutedStepIndex = useCallback((
@@ -94,22 +109,22 @@ export function RoundResults({
   const playerLastStep = result.simulationDetails?.playerLastStep !== undefined
     ? result.simulationDetails.playerLastStep
     : result.simulationDetails
-    ? getLastExecutedStepIndex(
+      ? getLastExecutedStepIndex(
         playerBoard.sequence,
         result.simulationDetails.playerMoves,
         result.simulationDetails.playerHitTrap
       )
-    : playerBoard.sequence.length - 1;
+      : playerBoard.sequence.length - 1;
 
   const opponentLastStep = result.simulationDetails?.opponentLastStep !== undefined
     ? result.simulationDetails.opponentLastStep
     : result.simulationDetails
-    ? getLastExecutedStepIndex(
+      ? getLastExecutedStepIndex(
         opponentBoard.sequence,
         result.simulationDetails.opponentMoves,
         result.simulationDetails.opponentHitTrap
       )
-    : opponentBoard.sequence.length - 1;
+      : opponentBoard.sequence.length - 1;
 
   const maxSteps = Math.max(playerLastStep, opponentLastStep) + 1;
 
@@ -139,7 +154,7 @@ export function RoundResults({
   );
 
   // Generate explanation text for a step (with scoring)
-  const getStepExplanation = useCallback((step: number): string[] => {
+  const getStepExplanation = useCallback((step: number, lively: boolean = useLivelyStyle): string[] => {
     const size = playerBoard.grid.length;
     const explanations: string[] = [];
 
@@ -200,20 +215,33 @@ export function RoundResults({
     if (!playerRoundEnded && !opponentRoundEnded && step <= playerLastStep && step < playerBoard.sequence.length) {
       const move = playerBoard.sequence[step]!;
       if (move.type === 'piece') {
-        explanations.push(`Player moves to (${move.position.row}, ${move.position.col})`);
+        if (lively) {
+          explanations.push(`${playerName} moves!`);
+        } else {
+          explanations.push(`Player moves to (${move.position.row}, ${move.position.col})`);
+        }
 
         // Check for forward movement scoring
         if (playerPosition !== null && move.position.row < playerPosition.row) {
-          explanations.push('  +1 point (forward movement)');
+          explanations.push(lively ? `  ${playerName} +1 point!` : '  Player +1 point (forward movement)');
         }
 
         newPlayerPosition = move.position;
       } else if (move.type === 'trap') {
-        explanations.push(`Player places trap at (${move.position.row}, ${move.position.col})`);
+        if (lively) {
+          explanations.push(`${playerName} sets a trap!`);
+        } else {
+          explanations.push(`Player places trap at (${move.position.row}, ${move.position.col})`);
+        }
         playerTraps.push(move.position);
       } else if (move.type === 'final') {
-        explanations.push('Player reaches the goal!');
-        explanations.push('  +1 point (goal reached)');
+        if (lively) {
+          explanations.push(`${playerName} makes it to the goal!`);
+          explanations.push(`  ${playerName} +1 point!`);
+        } else {
+          explanations.push('Player reaches the goal!');
+          explanations.push('  Player +1 point (goal reached)');
+        }
         playerRoundEnded = true;
       }
     }
@@ -223,20 +251,33 @@ export function RoundResults({
       const move = opponentBoard.sequence[step]!;
       const rotated = rotatePosition(move.position.row, move.position.col);
       if (move.type === 'piece') {
-        explanations.push(`Opponent moves to (${rotated.row}, ${rotated.col})`);
+        if (lively) {
+          explanations.push(`${opponentName} moves!`);
+        } else {
+          explanations.push(`Opponent moves to (${rotated.row}, ${rotated.col})`);
+        }
 
         // Check for forward movement scoring (opponent's forward is towards higher row)
         if (opponentPosition !== null && rotated.row > opponentPosition.row) {
-          explanations.push('  +1 point (forward movement)');
+          explanations.push(lively ? `  ${opponentName} +1 point!` : '  Opponent +1 point (forward movement)');
         }
 
         newOpponentPosition = rotated;
       } else if (move.type === 'trap') {
-        explanations.push(`Opponent places trap at (${rotated.row}, ${rotated.col})`);
+        if (lively) {
+          explanations.push(`${opponentName} sets a trap!`);
+        } else {
+          explanations.push(`Opponent places trap at (${rotated.row}, ${rotated.col})`);
+        }
         opponentTraps.push(rotated);
       } else if (move.type === 'final') {
-        explanations.push('Opponent reaches the goal!');
-        explanations.push('  +1 point (goal reached)');
+        if (lively) {
+          explanations.push(`${opponentName} makes it to the goal!`);
+          explanations.push(`  ${opponentName} +1 point!`);
+        } else {
+          explanations.push('Opponent reaches the goal!');
+          explanations.push('  Opponent +1 point (goal reached)');
+        }
         opponentRoundEnded = true;
       }
     }
@@ -247,7 +288,12 @@ export function RoundResults({
         // Check if player hit opponent's trap (including traps placed this turn)
         const hitTrap = opponentTraps.some(trap => positionsMatch(trap, newPlayerPosition));
         if (hitTrap) {
-          explanations.push('  -1 point (hit trap!)');
+          if (lively) {
+            explanations.push(`  ${playerName} steps right in the trap!`);
+            explanations.push(`  ${playerName} -1 point!`);
+          } else {
+            explanations.push('  Player -1 point (hit trap!)');
+          }
         }
       }
 
@@ -255,41 +301,65 @@ export function RoundResults({
         // Check if opponent hit player's trap (including traps placed this turn)
         const hitTrap = playerTraps.some(trap => positionsMatch(trap, newOpponentPosition));
         if (hitTrap) {
-          explanations.push('  -1 point (hit trap!)');
+          if (lively) {
+            explanations.push(`  ${opponentName} steps right in the trap!`);
+            explanations.push(`  ${opponentName} -1 point!`);
+          } else {
+            explanations.push('  Opponent -1 point (hit trap!)');
+          }
         }
       }
 
       // Check for collision if both players moved to a position
       if (newPlayerPosition && newOpponentPosition && positionsMatch(newPlayerPosition, newOpponentPosition)) {
-        explanations.push('  -1 point (collision!)');
+        if (lively) {
+          explanations.push('  Crash! They collide!');
+          explanations.push(`  ${playerName} -1 point!`);
+          explanations.push(`  ${opponentName} -1 point!`);
+        } else {
+          explanations.push('  Player -1 point (collision!)');
+          explanations.push('  Opponent -1 point (collision!)');
+        }
       }
     }
 
     // Add round end message if appropriate
     if (playerRoundEnded || opponentRoundEnded) {
       if (playerRoundEnded) {
-        explanations.push('');
-        explanations.push('Round ends - Player reached the goal!');
+        if (lively) {
+          explanations.push('');
+          explanations.push(`Game over - ${playerName} wins!`);
+        } else {
+          explanations.push('');
+          explanations.push('Round ends - Player reached the goal!');
+        }
       } else if (opponentRoundEnded) {
-        explanations.push('');
-        explanations.push('Round ends - Opponent reached the goal!');
+        if (lively) {
+          explanations.push('');
+          explanations.push(`Game over - ${opponentName} wins!`);
+        } else {
+          explanations.push('');
+          explanations.push('Round ends - Opponent reached the goal!');
+        }
       }
     }
 
     return explanations;
-  }, [playerBoard, opponentBoard, playerLastStep, opponentLastStep]);
+  }, [playerBoard, opponentBoard, playerLastStep, opponentLastStep, playerName, opponentName, explanationStyle]);
 
   // Start replay
   const handleReplay = useCallback(() => {
     const size = playerBoard.grid.length;
-    const initialExplanations = [
-      `Player starts with piece at (${size - 1}, 0)`,
-      `Opponent starts with piece at (0, ${size - 1})`,
-    ];
+    const initialExplanations = useLivelyStyle
+      ? ['Pieces placed!']
+      : [
+        `Player starts with piece at (${size - 1}, 0)`,
+        `Opponent starts with piece at (0, ${size - 1})`,
+      ];
     setExplanations(initialExplanations);
     setCurrentStep(1); // Start at 1 so currentStep - 1 = 0, showing first pieces
     setIsReplaying(true);
-  }, [playerBoard]);
+  }, [playerBoard, explanationStyle]);
 
   // Next step
   const handleNext = useCallback(() => {
@@ -300,18 +370,26 @@ export function RoundResults({
     if (result.simulationDetails) {
       // Player hit trap at this step
       if (currentStep === playerLastStep && result.simulationDetails.playerHitTrap) {
-        allExplanations.push('Player hit a trap and stopped!');
+        if (useLivelyStyle) {
+          allExplanations.push(`${playerName} is stopped!`);
+        } else {
+          allExplanations.push('Player hit a trap and stopped!');
+        }
       }
 
       // Opponent hit trap at this step
       if (currentStep === opponentLastStep && result.simulationDetails.opponentHitTrap) {
-        allExplanations.push('Opponent hit a trap and stopped!');
+        if (useLivelyStyle) {
+          allExplanations.push(`${opponentName} is stopped!`);
+        } else {
+          allExplanations.push('Opponent hit a trap and stopped!');
+        }
       }
     }
 
     setExplanations(prev => [...prev, ...allExplanations]);
     setCurrentStep(prev => prev + 1);
-  }, [currentStep, getStepExplanation, playerLastStep, opponentLastStep, result.simulationDetails]);
+  }, [currentStep, getStepExplanation, playerLastStep, opponentLastStep, result.simulationDetails, explanationStyle, playerName, opponentName]);
 
   // Finish button - skip to end and show all results (without affecting preference)
   const handleFinish = useCallback(() => {
@@ -321,16 +399,20 @@ export function RoundResults({
     if (currentStep < maxSteps) {
       const allExplanations: string[] = [];
       const size = playerBoard.grid.length;
-      allExplanations.push(
-        `Player starts with piece at (${size - 1}, 0)`,
-        `Opponent starts with piece at (0, ${size - 1})`
-      );
+      if (useLivelyStyle) {
+        allExplanations.push('Pieces placed!');
+      } else {
+        allExplanations.push(
+          `Player starts with piece at (${size - 1}, 0)`,
+          `Opponent starts with piece at (0, ${size - 1})`
+        );
+      }
       for (let step = 1; step < maxSteps; step++) {
         allExplanations.push(...getStepExplanation(step));
       }
       setExplanations(allExplanations);
     }
-  }, [maxSteps, currentStep, playerBoard, getStepExplanation]);
+  }, [maxSteps, currentStep, playerBoard, getStepExplanation, explanationStyle]);
 
   // Automatically start replay when component mounts
   useEffect(() => {
@@ -343,17 +425,43 @@ export function RoundResults({
         // Generate all explanations
         const allExplanations: string[] = [];
         const size = playerBoard.grid.length;
-        allExplanations.push(
-          `Player starts with piece at (${size - 1}, 0)`,
-          `Opponent starts with piece at (0, ${size - 1})`
-        );
+        if (useLivelyStyle) {
+          allExplanations.push('Pieces placed!');
+        } else {
+          allExplanations.push(
+            `Player starts with piece at (${size - 1}, 0)`,
+            `Opponent starts with piece at (0, ${size - 1})`
+          );
+        }
         for (let step = 1; step < maxSteps; step++) {
           allExplanations.push(...getStepExplanation(step));
         }
         setExplanations(allExplanations);
       }, 0);
     }
-  }, [handleReplay, showCompleteResultsByDefault, maxSteps, playerBoard, getStepExplanation]);
+  }, [handleReplay, showCompleteResultsByDefault, maxSteps, playerBoard, getStepExplanation, explanationStyle]);
+
+  // Regenerate explanations when style changes
+  useEffect(() => {
+    if (currentStep > 0) {
+      const allExplanations: string[] = [];
+      const size = playerBoard.grid.length;
+      if (useLivelyStyle) {
+        allExplanations.push('Pieces placed!');
+      } else {
+        allExplanations.push(
+          `Player starts with piece at (${size - 1}, 0)`,
+          `Opponent starts with piece at (0, ${size - 1})`
+        );
+      }
+      // Regenerate all step explanations up to current step
+      const stepsToReplay = Math.min(currentStep, maxSteps);
+      for (let step = 1; step < stepsToReplay; step++) {
+        allExplanations.push(...getStepExplanation(step));
+      }
+      setExplanations(allExplanations);
+    }
+  }, [explanationStyle, playerBoard, currentStep, maxSteps, getStepExplanation]);
 
   const getWinnerText = (): string => {
     if (winner === 'player') {
@@ -414,10 +522,14 @@ export function RoundResults({
                       // Generate all explanations
                       const allExplanations: string[] = [];
                       const size = playerBoard.grid.length;
-                      allExplanations.push(
-                        `Player starts with piece at (${size - 1}, 0)`,
-                        `Opponent starts with piece at (0, ${size - 1})`
-                      );
+                      if (useLivelyStyle) {
+                        allExplanations.push('Pieces placed!');
+                      } else {
+                        allExplanations.push(
+                          `Player starts with piece at (${size - 1}, 0)`,
+                          `Opponent starts with piece at (0, ${size - 1})`
+                        );
+                      }
                       for (let step = 1; step < maxSteps; step++) {
                         allExplanations.push(...getStepExplanation(step));
                       }
@@ -426,16 +538,27 @@ export function RoundResults({
                       // Reset to step 1
                       setCurrentStep(1);
                       const size = playerBoard.grid.length;
-                      setExplanations([
-                        `Player starts with piece at (${size - 1}, 0)`,
-                        `Opponent starts with piece at (0, ${size - 1})`,
-                      ]);
+                      if (useLivelyStyle) {
+                        setExplanations(['Pieces placed!']);
+                      } else {
+                        setExplanations([
+                          `Player starts with piece at (${size - 1}, 0)`,
+                          `Opponent starts with piece at (0, ${size - 1})`,
+                        ]);
+                      }
                     }
                   }}
                   className={styles.checkbox}
                 />
                 <span>Show complete results</span>
               </label>
+              <button
+                onClick={toggleExplanationStyle}
+                className={styles.styleToggle}
+                title={useLivelyStyle ? 'Switch to technical explanations' : 'Switch to lively explanations'}
+              >
+                {useLivelyStyle ? '📖 Technical' : '🎉 Lively'}
+              </button>
             </div>
             <div className={styles.explanations}>
               {explanations.map((text, index) => (

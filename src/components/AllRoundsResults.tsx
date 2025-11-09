@@ -31,6 +31,10 @@ export interface AllRoundsResultsProps {
   showCompleteResultsByDefault?: boolean;
   /** Optional callback when the show complete results preference changes */
   onShowCompleteResultsChange?: (value: boolean) => void;
+  /** Optional user preference for explanation style */
+  explanationStyle?: 'lively' | 'technical';
+  /** Optional callback when the explanation style preference changes */
+  onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
 }
 
 /**
@@ -54,6 +58,8 @@ export function AllRoundsResults({
   onPlayAgain,
   showCompleteResultsByDefault = false,
   onShowCompleteResultsChange,
+  explanationStyle = 'lively',
+  onExplanationStyleChange,
 }: AllRoundsResultsProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -127,6 +133,8 @@ export function AllRoundsResults({
             }
             showCompleteResultsByDefault={showCompleteResultsByDefault}
             onShowCompleteResultsChange={onShowCompleteResultsChange}
+            explanationStyle={explanationStyle}
+            onExplanationStyleChange={onExplanationStyleChange}
           />
         </div>
       </div>

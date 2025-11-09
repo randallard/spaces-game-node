@@ -144,6 +144,7 @@
 .checkboxContainer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0.75rem;
   background-color: #f9fafb;
   border-radius: 0.5rem;
@@ -165,6 +166,24 @@
   height: 1.125rem;
   cursor: pointer;
   accent-color: #4a90e2;
+}
+
+.styleToggle {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.styleToggle:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
 }
 
 .buttonGroup {
