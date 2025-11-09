@@ -132,9 +132,14 @@
   transition: all 0.2s ease;
 }
 
-.boardCard:hover {
+.boardCardClickable {
+  cursor: pointer;
+}
+
+.boardCardClickable:hover {
   border-color: #4a90e2;
   box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+  transform: translateY(-2px);
 }
 
 .boardThumbnail {
@@ -177,15 +182,13 @@
 }
 
 .boardActions {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
   padding: 1rem;
   border-top: 1px solid #e5e7eb;
 }
 
-.selectButton,
-.editButton,
 .deleteButton {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -194,27 +197,6 @@
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
-}
-
-.selectButton {
-  color: white;
-  background-color: #10b981;
-}
-
-.selectButton:hover {
-  background-color: #059669;
-}
-
-.editButton {
-  color: #4a4a4a;
-  background-color: #f3f4f6;
-}
-
-.editButton:hover {
-  background-color: #e5e7eb;
-}
-
-.deleteButton {
   color: #dc2626;
   background-color: #fef2f2;
 }

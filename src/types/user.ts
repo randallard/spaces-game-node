@@ -13,11 +13,16 @@ export type UserStats = {
   ties: number;
 };
 
+export type UserPreferences = {
+  showCompleteRoundResults?: boolean; // Default to false if undefined
+};
+
 export type UserProfile = {
   id: string;
   name: string;
   createdAt: number;
   stats: UserStats;
+  preferences?: UserPreferences; // Optional preferences
   greeting?: string | undefined; // Optional for legacy compatibility
   savedBoards?: Board[] | undefined; // Optional - stored separately
   opponents?: Opponent[] | undefined; // Optional - stored separately

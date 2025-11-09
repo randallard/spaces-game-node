@@ -27,6 +27,10 @@ export interface AllRoundsResultsProps {
   winner: 'player' | 'opponent' | 'tie';
   /** Callback to play again */
   onPlayAgain: () => void;
+  /** Optional user preference for showing complete results */
+  showCompleteResultsByDefault?: boolean;
+  /** Optional callback when the show complete results preference changes */
+  onShowCompleteResultsChange?: (value: boolean) => void;
 }
 
 /**
@@ -48,6 +52,8 @@ export function AllRoundsResults({
   opponentScore,
   winner,
   onPlayAgain,
+  showCompleteResultsByDefault = false,
+  onShowCompleteResultsChange,
 }: AllRoundsResultsProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -119,6 +125,8 @@ export function AllRoundsResults({
                 ? 'Back to All Rounds'
                 : `Continue to Round ${selectedRound + 1}`
             }
+            showCompleteResultsByDefault={showCompleteResultsByDefault}
+            onShowCompleteResultsChange={onShowCompleteResultsChange}
           />
         </div>
       </div>

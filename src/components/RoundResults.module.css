@@ -39,6 +39,13 @@
   color: #6b7280;
 }
 
+/* Winner Section (below board) */
+.winnerSection {
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
 /* Creature Outcome Graphics */
 .creatureOutcomeSection {
   margin-bottom: 2rem;
@@ -119,10 +126,51 @@
 
 .boardContainer {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 2rem;
   justify-content: center;
   margin-bottom: 1rem;
+}
+
+.controlsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.checkbox {
+  width: 1.125rem;
+  height: 1.125rem;
+  cursor: pointer;
+  accent-color: #4a90e2;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
 .nextButton {
@@ -136,10 +184,18 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   white-space: nowrap;
+  min-width: 110px;
 }
 
 .nextButton:hover {
   background-color: #059669;
+}
+
+.boardColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .boardThumbnail {
@@ -197,7 +253,6 @@
   display: flex;
   gap: 2rem;
   justify-content: center;
-  margin-top: 1rem;
 }
 
 .legendItem {
@@ -293,15 +348,17 @@
 }
 
 .replayButton {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
   font-weight: 600;
   color: white;
   background-color: #4a90e2;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  white-space: nowrap;
+  min-width: 110px;
 }
 
 .replayButton:hover {

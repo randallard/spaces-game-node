@@ -3,7 +3,7 @@
  * @module components/RoundResults
  */
 
-import { type ReactElement, useMemo, useState, useCallback } from 'react';
+import { type ReactElement, useMemo, useState, useCallback, useEffect } from 'react';
 import type { RoundResult } from '@/types';
 import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
@@ -26,6 +26,10 @@ export interface RoundResultsProps {
   onContinue: () => void;
   /** Optional custom text for continue button */
   continueButtonText?: string;
+  /** Optional user preference for showing complete results */
+  showCompleteResultsByDefault?: boolean;
+  /** Optional callback when the show complete results preference changes */
+  onShowCompleteResultsChange?: (value: boolean) => void;
 }
 
 /**
@@ -47,13 +51,16 @@ export function RoundResults({
   opponentScore,
   onContinue,
   continueButtonText = 'Continue to Next Round',
+  showCompleteResultsByDefault = false,
+  onShowCompleteResultsChange,
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard, playerFinalPosition, opponentFinalPosition } = result;
 
   // Replay state
-  const [isReplaying, setIsReplaying] = useState(false);
+  const [isReplaying, setIsReplaying] = useState(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [explanations, setExplanations] = useState<string[]>([]);
+  const [showCompleteResults, setShowCompleteResults] = useState(showCompleteResultsByDefault);
 
   // Help modal state
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -306,12 +313,47 @@ export function RoundResults({
     setCurrentStep(prev => prev + 1);
   }, [currentStep, getStepExplanation, playerLastStep, opponentLastStep, result.simulationDetails]);
 
-  // Stop replay
-  const handleStopReplay = useCallback(() => {
-    setIsReplaying(false);
-    setCurrentStep(0);
-    setExplanations([]);
-  }, []);
+  // Finish button - skip to end and show all results (without affecting preference)
+  const handleFinish = useCallback(() => {
+    // Skip to the end
+    setCurrentStep(maxSteps);
+    // Generate all explanations if not already at the end
+    if (currentStep < maxSteps) {
+      const allExplanations: string[] = [];
+      const size = playerBoard.grid.length;
+      allExplanations.push(
+        `Player starts with piece at (${size - 1}, 0)`,
+        `Opponent starts with piece at (0, ${size - 1})`
+      );
+      for (let step = 1; step < maxSteps; step++) {
+        allExplanations.push(...getStepExplanation(step));
+      }
+      setExplanations(allExplanations);
+    }
+  }, [maxSteps, currentStep, playerBoard, getStepExplanation]);
+
+  // Automatically start replay when component mounts
+  useEffect(() => {
+    handleReplay();
+    // If user prefers complete results, skip to the end
+    if (showCompleteResultsByDefault) {
+      setTimeout(() => {
+        setShowCompleteResults(true);
+        setCurrentStep(maxSteps);
+        // Generate all explanations
+        const allExplanations: string[] = [];
+        const size = playerBoard.grid.length;
+        allExplanations.push(
+          `Player starts with piece at (${size - 1}, 0)`,
+          `Opponent starts with piece at (0, ${size - 1})`
+        );
+        for (let step = 1; step < maxSteps; step++) {
+          allExplanations.push(...getStepExplanation(step));
+        }
+        setExplanations(allExplanations);
+      }, 0);
+    }
+  }, [handleReplay, showCompleteResultsByDefault, maxSteps, playerBoard, getStepExplanation]);
 
   const getWinnerText = (): string => {
     if (winner === 'player') {
@@ -336,15 +378,118 @@ export function RoundResults({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <div className={styles.emoji}>{getWinnerEmoji()}</div>
-        <h2 className={styles.title}>Round {result.round} Complete</h2>
-        <h3 className={`${styles.winnerText} ${styles[`winner${winner}`]}`}>
-          {getWinnerText()}
-        </h3>
+        <h2 className={styles.title}>Round {result.round}</h2>
       </div>
 
+      {/* Combined Board Display */}
+      <div className={styles.combinedBoard}>
+        <h4 className={styles.boardTitle}>
+          Combined Board View{' '}
+          <button
+            className={styles.helpIcon}
+            onClick={(e) => {
+              e.preventDefault();
+              setIsHelpModalOpen(true);
+            }}
+            title="Why are some opponent moves hidden?"
+          >
+            (?)
+          </button>
+        </h4>
+        <div className={styles.boardContainer}>
+          <div className={styles.controlsSection}>
+            <div className={styles.checkboxContainer}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={showCompleteResults}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setShowCompleteResults(checked);
+                    // Save preference to user profile
+                    onShowCompleteResultsChange?.(checked);
+                    if (checked) {
+                      // Skip directly to the end
+                      setCurrentStep(maxSteps);
+                      // Generate all explanations
+                      const allExplanations: string[] = [];
+                      const size = playerBoard.grid.length;
+                      allExplanations.push(
+                        `Player starts with piece at (${size - 1}, 0)`,
+                        `Opponent starts with piece at (0, ${size - 1})`
+                      );
+                      for (let step = 1; step < maxSteps; step++) {
+                        allExplanations.push(...getStepExplanation(step));
+                      }
+                      setExplanations(allExplanations);
+                    } else {
+                      // Reset to step 1
+                      setCurrentStep(1);
+                      const size = playerBoard.grid.length;
+                      setExplanations([
+                        `Player starts with piece at (${size - 1}, 0)`,
+                        `Opponent starts with piece at (0, ${size - 1})`,
+                      ]);
+                    }
+                  }}
+                  className={styles.checkbox}
+                />
+                <span>Show complete results</span>
+              </label>
+            </div>
+            <div className={styles.buttonGroup}>
+              {currentStep < maxSteps ? (
+                <button onClick={handleNext} className={styles.nextButton}>
+                  ▶ Step
+                </button>
+              ) : (
+                <button onClick={handleReplay} className={styles.nextButton}>
+                  ↻ Restart
+                </button>
+              )}
+              <button onClick={handleFinish} className={styles.replayButton}>
+                ⏹ Finish
+              </button>
+            </div>
+            <div className={styles.explanations}>
+              {explanations.map((text, index) => (
+                <div key={index} className={styles.explanationLine}>
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={styles.boardColumn}>
+            <div className={styles.legend}>
+              <div className={styles.legendItem}>
+                <div className={styles.legendCircle} style={{ backgroundColor: 'rgb(37, 99, 235)' }}></div>
+                <span>{playerName}</span>
+              </div>
+              <div className={styles.legendItem}>
+                <div className={styles.legendCircle} style={{ backgroundColor: 'rgb(147, 51, 234)' }}></div>
+                <span>{opponentName}</span>
+              </div>
+            </div>
+            <div
+              className={styles.boardThumbnail}
+              dangerouslySetInnerHTML={{ __html: combinedBoardSvgData.svg }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Winner Display */}
+      {currentStep >= maxSteps && (
+        <div className={styles.winnerSection}>
+          <div className={styles.emoji}>{getWinnerEmoji()}</div>
+          <h3 className={`${styles.winnerText} ${styles[`winner${winner}`]}`}>
+            {getWinnerText()}
+          </h3>
+        </div>
+      )}
+
       {/* Creature Outcome Graphics */}
-      {result.playerCreature && result.opponentCreature && (() => {
+      {currentStep >= maxSteps && result.playerCreature && result.opponentCreature && (() => {
         const playerCreature = CREATURES[result.playerCreature];
         const opponentCreature = CREATURES[result.opponentCreature];
 
@@ -395,126 +540,46 @@ export function RoundResults({
       <div className={styles.roundScoreSection}>
         <div className={styles.roundScoreHeader}>
           <h4 className={styles.roundScoreTitle}>Round Score</h4>
-          {!isReplaying ? (
-            <button onClick={handleReplay} className={styles.replayButton}>
-              ▶ Replay
-            </button>
-          ) : (
-            <button onClick={handleStopReplay} className={styles.replayButton}>
-              ⏹ Stop
-            </button>
-          )}
         </div>
-        <div className={styles.scoreDisplay}>
-          <div className={styles.scoreItem}>
-            <span className={styles.scoreName}>{playerName}</span>
-            <span className={styles.scoreValue}>{result.playerPoints ?? 0}</span>
-          </div>
-          <span className={styles.scoreDivider}>-</span>
-          <div className={styles.scoreItem}>
-            <span className={styles.scoreName}>{opponentName}</span>
-            <span className={styles.scoreValue}>{result.opponentPoints ?? 0}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Combined Board Display */}
-      <div className={styles.combinedBoard}>
-        <h4 className={styles.boardTitle}>
-          Combined Board View{' '}
-          <button
-            className={styles.helpIcon}
-            onClick={(e) => {
-              e.preventDefault();
-              setIsHelpModalOpen(true);
-            }}
-            title="Why are some opponent moves hidden?"
-          >
-            (?)
-          </button>
-        </h4>
-        <div className={styles.boardContainer}>
-          {isReplaying && currentStep < maxSteps && (
-            <button onClick={handleNext} className={styles.nextButton}>
-              Next
-            </button>
-          )}
-          <div
-            className={styles.boardThumbnail}
-            dangerouslySetInnerHTML={{ __html: combinedBoardSvgData.svg }}
-          />
-        </div>
-        {isReplaying && (
-          <div className={styles.explanations}>
-            {explanations.map((text, index) => (
-              <div key={index} className={styles.explanationLine}>
-                {text}
-              </div>
-            ))}
+        {currentStep >= maxSteps && (
+          <div className={styles.scoreDisplay}>
+            <div className={styles.scoreItem}>
+              <span className={styles.scoreName}>{playerName}</span>
+              <span className={styles.scoreValue}>{result.playerPoints ?? 0}</span>
+            </div>
+            <span className={styles.scoreDivider}>-</span>
+            <div className={styles.scoreItem}>
+              <span className={styles.scoreName}>{opponentName}</span>
+              <span className={styles.scoreValue}>{result.opponentPoints ?? 0}</span>
+            </div>
           </div>
         )}
-        <div className={styles.legend}>
-          <div className={styles.legendItem}>
-            <div className={styles.legendCircle} style={{ backgroundColor: 'rgb(37, 99, 235)' }}></div>
-            <span>{playerName}</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={styles.legendCircle} style={{ backgroundColor: 'rgb(147, 51, 234)' }}></div>
-            <span>{opponentName}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Board Details */}
-      <div className={styles.boardDetails}>
-        <div className={styles.detailSection}>
-          <h5>{playerName}</h5>
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>Board:</span>
-            <span className={styles.detailValue}>{playerBoard.name}</span>
-          </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>Final Position:</span>
-            <span className={styles.detailValue}>
-              ({playerFinalPosition.row}, {playerFinalPosition.col})
-            </span>
-          </div>
-        </div>
-        <div className={styles.detailSection}>
-          <h5>{opponentName}</h5>
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>Board:</span>
-            <span className={styles.detailValue}>{opponentBoard.name}</span>
-          </div>
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>Final Position:</span>
-            <span className={styles.detailValue}>
-              ({opponentFinalPosition.row}, {opponentFinalPosition.col})
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* Total Score Display */}
-      <div className={styles.totalScoreSection}>
-        <h4 className={styles.totalScoreTitle}>Total Score</h4>
-        <div className={styles.scoreDisplay}>
-          <div className={styles.scoreItem}>
-            <span className={styles.scoreName}>{playerName}</span>
-            <span className={styles.scoreValue}>{playerScore}</span>
-          </div>
-          <span className={styles.scoreDivider}>-</span>
-          <div className={styles.scoreItem}>
-            <span className={styles.scoreName}>{opponentName}</span>
-            <span className={styles.scoreValue}>{opponentScore}</span>
+      {currentStep >= maxSteps && (
+        <div className={styles.totalScoreSection}>
+          <h4 className={styles.totalScoreTitle}>Total Score</h4>
+          <div className={styles.scoreDisplay}>
+            <div className={styles.scoreItem}>
+              <span className={styles.scoreName}>{playerName}</span>
+              <span className={styles.scoreValue}>{playerScore}</span>
+            </div>
+            <span className={styles.scoreDivider}>-</span>
+            <div className={styles.scoreItem}>
+              <span className={styles.scoreName}>{opponentName}</span>
+              <span className={styles.scoreValue}>{opponentScore}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Continue Button */}
-      <button onClick={onContinue} className={styles.continueButton}>
-        {continueButtonText}
-      </button>
+      {currentStep >= maxSteps && (
+        <button onClick={onContinue} className={styles.continueButton}>
+          {continueButtonText}
+        </button>
+      )}
 
       {/* Help Modal */}
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />

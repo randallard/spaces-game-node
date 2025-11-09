@@ -13,11 +13,16 @@ export const UserStatsSchema = z.object({
   ties: z.number().int().min(0),
 });
 
+export const UserPreferencesSchema = z.object({
+  showCompleteRoundResults: z.boolean().optional(),
+});
+
 export const UserProfileSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(50),
   createdAt: z.number().int().positive(),
   stats: UserStatsSchema,
+  preferences: UserPreferencesSchema.optional(),
   greeting: z.string().max(200).optional(),
   savedBoards: z.array(BoardSchema).optional(),
   opponents: z.array(OpponentSchema).optional(),

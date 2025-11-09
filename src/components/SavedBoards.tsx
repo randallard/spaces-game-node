@@ -198,7 +198,11 @@ export function SavedBoards({
 
           <div className={styles.boardsGrid}>
             {filteredBoards.map((board) => (
-              <div key={board.id} className={styles.boardCard}>
+              <div
+                key={board.id}
+                className={`${styles.boardCard} ${!isManagementMode ? styles.boardCardClickable : ''}`}
+                onClick={!isManagementMode ? () => onBoardSelected(board) : undefined}
+              >
                 <div className={styles.boardThumbnail}>
                   <img
                     src={board.thumbnail}
@@ -219,22 +223,19 @@ export function SavedBoards({
                   </div>
                 </div>
 
-                <div className={styles.boardActions}>
-                  {!isManagementMode && (
+                {isManagementMode && (
+                  <div className={styles.boardActions}>
                     <button
-                      onClick={() => onBoardSelected(board)}
-                      className={styles.selectButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(board.id);
+                      }}
+                      className={styles.deleteButton}
                     >
-                      Select
+                      Delete
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(board.id)}
-                    className={styles.deleteButton}
-                  >
-                    Delete
-                  </button>
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
