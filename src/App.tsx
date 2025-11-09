@@ -640,14 +640,20 @@ function App(): React.ReactElement {
     const playerCreature = phaseData.result.playerCreature;
     const opponentCreature = phaseData.result.opponentCreature;
     const firstBoard = phaseData.playerBoard;
+    const playerWon = phaseData.result.winner === 'player';
 
     if (!playerCreature || !opponentCreature) return;
+
+    // Get CPU Sam name from the opponent board name (e.g., "CPU Sam Left Column" -> "CPU Sam")
+    const cpuSamName = phaseData.result.opponentBoard.name.split(' ').slice(0, 2).join(' ');
 
     setPhase({
       type: 'tutorial-name-entry',
       playerCreature,
       opponentCreature,
       firstBoard,
+      playerWon,
+      cpuSamName,
     });
   };
 
@@ -708,6 +714,8 @@ function App(): React.ReactElement {
             playerCreature={state.phase.playerCreature}
             opponentCreature={state.phase.opponentCreature}
             firstBoard={state.phase.firstBoard}
+            playerWon={state.phase.playerWon}
+            cpuSamName={state.phase.cpuSamName}
             onContinue={handleTutorialNameContinue}
           />
         );

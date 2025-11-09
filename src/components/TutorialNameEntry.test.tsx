@@ -20,18 +20,51 @@ describe('TutorialNameEntry', () => {
     mockOnContinue.mockClear();
   });
 
-  it('should render congratulations text', () => {
+  it('should render congratulations text when player won', () => {
     render(
       <TutorialNameEntry
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
 
     expect(screen.getByText('Well Played!')).toBeInTheDocument();
-    expect(screen.getByText(/Go against the tougher CPU/)).toBeInTheDocument();
+    expect(screen.getByText(/Go against the tougher CPU or keep showing CPU Sam what you're made of!/)).toBeInTheDocument();
+  });
+
+  it('should render encouragement text when player lost', () => {
+    render(
+      <TutorialNameEntry
+        playerCreature="square"
+        opponentCreature="bug"
+        firstBoard={mockFirstBoard}
+        playerWon={false}
+        cpuSamName="CPU Sam"
+        onContinue={mockOnContinue}
+      />
+    );
+
+    expect(screen.queryByText('Well Played!')).not.toBeInTheDocument();
+    expect(screen.getByText(/Keep showing CPU Sam what you're made of and when you're ready give the tougher CPU a try!/)).toBeInTheDocument();
+  });
+
+  it('should show custom CPU Sam name in message', () => {
+    render(
+      <TutorialNameEntry
+        playerCreature="square"
+        opponentCreature="bug"
+        firstBoard={mockFirstBoard}
+        playerWon={false}
+        cpuSamName="Robo"
+        onContinue={mockOnContinue}
+      />
+    );
+
+    expect(screen.getByText(/Keep showing Robo what you're made of/)).toBeInTheDocument();
   });
 
   it('should display name input field', () => {
@@ -40,6 +73,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -55,6 +90,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -68,6 +105,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -84,6 +123,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -100,6 +141,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -119,6 +162,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -135,6 +180,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -151,6 +198,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -167,6 +216,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -184,6 +235,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -203,6 +256,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -220,6 +275,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="circle"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -253,6 +310,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -273,6 +332,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -289,6 +350,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -303,6 +366,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -317,6 +382,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -335,6 +402,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -356,6 +425,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
@@ -372,6 +443,8 @@ describe('TutorialNameEntry', () => {
         playerCreature="square"
         opponentCreature="bug"
         firstBoard={mockFirstBoard}
+        playerWon={true}
+        cpuSamName="CPU Sam"
         onContinue={mockOnContinue}
       />
     );
