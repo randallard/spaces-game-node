@@ -20,6 +20,9 @@ const mockUser: UserProfile = {
   },
   playerCreature: 'square',
   opponentCreature: 'circle',
+  preferences: {
+    showCompleteRoundResults: false,
+  },
 };
 
 describe('ProfileModal', () => {
@@ -401,6 +404,7 @@ describe('ProfileModal', () => {
         stats: mockUser.stats, // Stats should be preserved
         playerCreature: mockUser.playerCreature,
         opponentCreature: mockUser.opponentCreature,
+        preferences: mockUser.preferences, // Preferences should be preserved
       });
     });
 
