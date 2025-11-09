@@ -231,6 +231,9 @@ function App(): React.ReactElement {
   // Welcome modal state (CPU Tougher introduction)
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
+  // Board selection loading state
+  const [isSimulatingRound, setIsSimulatingRound] = useState(false);
+
   // Save user to localStorage when it changes
   useEffect(() => {
     if (state.user.name) {
@@ -421,6 +424,9 @@ function App(): React.ReactElement {
       return;
     }
 
+    // Show loading state immediately
+    setIsSimulatingRound(true);
+
     selectPlayerBoard(board);
 
     // Opponent selects a board (CPU chooses random, human would choose via URL)
@@ -473,6 +479,7 @@ function App(): React.ReactElement {
       }
 
       completeRound(result);
+      setIsSimulatingRound(false);
     }, 500); // Shorter delay for better UX
   };
 
@@ -506,6 +513,18 @@ function App(): React.ReactElement {
       ...state,
       user: updatedUser,
     });
+  };
+
+  // Handle show complete results preference change
+  const handleShowCompleteResultsChange = (value: boolean) => {
+    const updatedUser: UserProfileType = {
+      ...state.user,
+      preferences: {
+        ...state.user.preferences,
+        showCompleteRoundResults: value,
+      },
+    };
+    handleProfileUpdate(updatedUser);
   };
 
   // Tutorial Handlers
@@ -678,6 +697,8 @@ function App(): React.ReactElement {
             opponentScore={state.phase.result.opponentPoints || 0}
             onContinue={handleTutorialResultsContinue}
             continueButtonText="Continue"
+            showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
+            onShowCompleteResultsChange={handleShowCompleteResultsChange}
           />
         );
 
@@ -788,7 +809,7 @@ function App(): React.ReactElement {
                   <div className={styles.boardsContent}>
                     <SavedBoards
                       boards={savedBoards || []}
-                      onBoardSelected={() => {}} // No selection in management mode
+                      onBoardSelected={() => { }} // No selection in management mode
                       onBoardSaved={handleBoardSave}
                       onBoardDeleted={handleBoardDelete}
                       currentRound={0} // Not in a round
@@ -901,8 +922,8 @@ function App(): React.ReactElement {
 
         const filteredDecks = state.boardSize
           ? (savedDecks || []).filter(deck =>
-              deck.boards.length > 0 && deck.boards[0]?.boardSize === state.boardSize
-            )
+            deck.boards.length > 0 && deck.boards[0]?.boardSize === state.boardSize
+          )
           : (savedDecks || []);
 
         if (showDeckCreator) {
@@ -937,9 +958,9 @@ function App(): React.ReactElement {
           : (savedBoards || []);
 
         return (
-          <div>
+          <div style={{ position: 'relative' }}>
             <div style={{ marginBottom: '2rem' }}>
-              <h2>Round {state.phase.round} of 8</h2>
+              <h2>Round {state.phase.round} of 5</h2>
               <p>
                 Score: {state.user.name} {state.playerScore} - {state.opponent?.name}{' '}
                 {state.opponentScore}
@@ -959,6 +980,47 @@ function App(): React.ReactElement {
               userName={state.user.name}
               opponentName={state.opponent?.name || 'Opponent'}
             />
+
+            {/* Loading overlay */}
+            {isSimulatingRound && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000,
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: 'white',
+                    padding: '2rem 3rem',
+                    borderRadius: '12px',
+                    textAlign: 'center',
+                    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '3rem',
+                      marginBottom: '1rem',
+                      animation: 'spin 1s linear infinite',
+                    }}
+                  >
+                    ⚔️
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: '1.5rem', color: '#1a1a1a' }}>
+                    Simulating Round...
+                  </h3>
+                </div>
+              </div>
+            )}
           </div>
         );
       }
@@ -973,6 +1035,8 @@ function App(): React.ReactElement {
             playerScore={state.playerScore}
             opponentScore={state.opponentScore}
             onContinue={handleContinue}
+            showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
+            onShowCompleteResultsChange={handleShowCompleteResultsChange}
           />
         );
 
@@ -998,6 +1062,8 @@ function App(): React.ReactElement {
             opponentScore={state.opponentScore}
             winner={winner}
             onPlayAgain={handlePlayAgain}
+            showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
+            onShowCompleteResultsChange={handleShowCompleteResultsChange}
           />
         );
 
@@ -1012,6 +1078,8 @@ function App(): React.ReactElement {
             roundHistory={state.roundHistory}
             playerStats={state.user.stats}
             onNewGame={handlePlayAgain}
+            showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
+            onShowCompleteResultsChange={handleShowCompleteResultsChange}
           />
         );
 
@@ -1031,16 +1099,16 @@ function App(): React.ReactElement {
           <div className={styles.headerActions}>
             {/* Home button - show when not on board-management or tutorial */}
             {state.phase.type !== 'board-management' &&
-             state.phase.type !== 'user-setup' &&
-             !state.phase.type.startsWith('tutorial') && (
-              <button
-                className={styles.homeButton}
-                onClick={handleGoHome}
-                aria-label="Go to home"
-              >
-                🏠 Home
-              </button>
-            )}
+              state.phase.type !== 'user-setup' &&
+              !state.phase.type.startsWith('tutorial') && (
+                <button
+                  className={styles.homeButton}
+                  onClick={handleGoHome}
+                  aria-label="Go to home"
+                >
+                  🏠 Home
+                </button>
+              )}
             <button
               className={styles.profileButton}
               onClick={() => setIsProfileModalOpen(true)}

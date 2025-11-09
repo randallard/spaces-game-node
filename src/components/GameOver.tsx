@@ -31,6 +31,10 @@ export interface GameOverProps {
   onNewGame: () => void;
   /** Callback to share game URL (optional) */
   onShare?: () => void;
+  /** Optional user preference for showing complete results */
+  showCompleteResultsByDefault?: boolean;
+  /** Optional callback when the show complete results preference changes */
+  onShowCompleteResultsChange?: (value: boolean) => void;
 }
 
 /**
@@ -55,6 +59,8 @@ export function GameOver({
   playerStats,
   onNewGame,
   onShare,
+  showCompleteResultsByDefault = false,
+  onShowCompleteResultsChange,
 }: GameOverProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -134,6 +140,8 @@ export function GameOver({
                 ? 'Back to Summary'
                 : `Continue to Round ${selectedRound + 1}`
             }
+            showCompleteResultsByDefault={showCompleteResultsByDefault}
+            onShowCompleteResultsChange={onShowCompleteResultsChange}
           />
         </div>
       </div>

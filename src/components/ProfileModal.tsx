@@ -55,6 +55,9 @@ export function ProfileModal({
   const [opponentCreature, setOpponentCreature] = useState<CreatureId>(
     user.opponentCreature || getRandomCreatureId()
   );
+  const [showCompleteRoundResults, setShowCompleteRoundResults] = useState<boolean>(
+    user.preferences?.showCompleteRoundResults ?? false
+  );
 
   const validateName = useCallback((value: string): string | null => {
     if (value === '') {
@@ -99,17 +102,21 @@ export function ProfileModal({
         return;
       }
 
-      // Update user with new name and creatures
+      // Update user with new name, creatures, and preferences
       onUpdate({
         ...user,
         name: name.trim(),
         playerCreature,
         opponentCreature,
+        preferences: {
+          ...user.preferences,
+          showCompleteRoundResults,
+        },
       });
 
       onClose();
     },
-    [name, user, validateName, onUpdate, onClose, playerCreature, opponentCreature]
+    [name, user, validateName, onUpdate, onClose, playerCreature, opponentCreature, showCompleteRoundResults]
   );
 
   const handleBackdropClick = useCallback(
@@ -189,7 +196,8 @@ export function ProfileModal({
   const hasChanges =
     name.trim() !== user.name ||
     playerCreature !== user.playerCreature ||
-    opponentCreature !== user.opponentCreature;
+    opponentCreature !== user.opponentCreature ||
+    showCompleteRoundResults !== (user.preferences?.showCompleteRoundResults ?? false);
 
   return (
     <div className={styles.backdrop} onClick={handleBackdropClick}>
@@ -268,6 +276,25 @@ export function ProfileModal({
                   ))}
                 </select>
               </div>
+            </div>
+          </div>
+
+          {/* Preferences */}
+          <div className={styles.preferences}>
+            <h3 className={styles.preferencesTitle}>Preferences</h3>
+            <div className={styles.preferenceItem}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={showCompleteRoundResults}
+                  onChange={(e) => setShowCompleteRoundResults(e.target.checked)}
+                  className={styles.checkbox}
+                />
+                <span>Show complete round results by default</span>
+              </label>
+              <p className={styles.preferenceDescription}>
+                Skip step-by-step replay and show all results immediately
+              </p>
             </div>
           </div>
 
