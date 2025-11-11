@@ -51,6 +51,7 @@ export function BoardCreator({
   const [piecePosition, setPiecePosition] = useState<Position | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [selectedStartColumn, setSelectedStartColumn] = useState<number>(0);
+  const [viewMode, setViewMode] = useState<'full' | 'section'>('full');
 
   /**
    * Get adjacent positions (orthogonal only: up, down, left, right)
@@ -409,6 +410,47 @@ export function BoardCreator({
     return 'Use WASD keys, the controls below, or click buttons on the board to move your piece or place traps (Shift+WASD for traps)';
   };
 
+  // Calculate visible section for section view
+  const getSectionBounds = (): { startRow: number; endRow: number; startCol: number; endCol: number } => {
+    if (viewMode === 'full' || !piecePosition) {
+      return { startRow: 0, endRow: boardSize, startCol: 0, endCol: boardSize };
+    }
+
+    // Section view shows 7x7 window centered on piece (or less for smaller boards)
+    const windowSize = Math.min(7, boardSize);
+    const halfWindow = Math.floor(windowSize / 2);
+
+    let startRow = piecePosition.row - halfWindow;
+    let endRow = piecePosition.row + halfWindow + 1;
+    let startCol = piecePosition.col - halfWindow;
+    let endCol = piecePosition.col + halfWindow + 1;
+
+    // Adjust if out of bounds
+    if (startRow < 0) {
+      endRow = Math.min(boardSize, endRow + (-startRow));
+      startRow = 0;
+    }
+    if (endRow > boardSize) {
+      startRow = Math.max(0, startRow - (endRow - boardSize));
+      endRow = boardSize;
+    }
+    if (startCol < 0) {
+      endCol = Math.min(boardSize, endCol + (-startCol));
+      startCol = 0;
+    }
+    if (endCol > boardSize) {
+      startCol = Math.max(0, startCol - (endCol - boardSize));
+      endCol = boardSize;
+    }
+
+    return { startRow, endRow, startCol, endCol };
+  };
+
+  const sectionBounds = getSectionBounds();
+  const visibleRows = grid.slice(sectionBounds.startRow, sectionBounds.endRow);
+  const visibleGrid = visibleRows.map(row => row.slice(sectionBounds.startCol, sectionBounds.endCol));
+  const visibleSize = viewMode === 'section' ? Math.max(visibleGrid.length, visibleGrid[0]?.length || 0) : boardSize;
+
   return (
     <div className={styles.container}>
       {/* Final Move Button (always visible, disabled until piece reaches row 0) */}
@@ -422,13 +464,53 @@ export function BoardCreator({
         Final Move
       </button>
 
-      {/* Grid */}
-      <div
-        className={styles.grid}
-        style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)` }}
-      >
-        {grid.map((row, rowIdx) =>
-          row.map((cell, colIdx) => {
+      {/* View Mode Toggle */}
+      {boardSize > 7 && phase === 'building' && (
+        <button
+          onClick={() => setViewMode(viewMode === 'full' ? 'section' : 'full')}
+          className={styles.viewToggleButton}
+          title={viewMode === 'full' ? 'Switch to section view' : 'Switch to full view'}
+        >
+          {viewMode === 'full' ? 'Section View' : 'Full View'}
+        </button>
+      )}
+
+      {/* Grid Container with Labels */}
+      <div className={viewMode === 'section' ? styles.gridWithLabels : ''}>
+        {/* Column Labels (top) */}
+        {viewMode === 'section' && (
+          <div className={styles.columnLabels} style={{ gridTemplateColumns: `auto repeat(${visibleSize}, 1fr)` }}>
+            <div className={styles.cornerLabel}></div>
+            {Array.from({ length: sectionBounds.endCol - sectionBounds.startCol }).map((_, idx) => (
+              <div key={idx} className={styles.columnLabel}>
+                {sectionBounds.startCol + idx}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Grid with Row Labels */}
+        <div className={styles.gridRow}>
+          {/* Row Labels (left) */}
+          {viewMode === 'section' && (
+            <div className={styles.rowLabels}>
+              {Array.from({ length: sectionBounds.endRow - sectionBounds.startRow }).map((_, idx) => (
+                <div key={idx} className={styles.rowLabel}>
+                  {sectionBounds.startRow + idx}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Grid */}
+          <div
+            className={styles.grid}
+            style={{ gridTemplateColumns: `repeat(${visibleSize}, 1fr)` }}
+          >
+            {visibleGrid.map((row, visibleRowIdx) =>
+              row.map((cell, visibleColIdx) => {
+                const rowIdx = sectionBounds.startRow + visibleRowIdx;
+                const colIdx = sectionBounds.startCol + visibleColIdx;
             const isAdjacent = adjacentPositions.some(
               (p) => p.row === rowIdx && p.col === colIdx
             );
@@ -541,6 +623,8 @@ export function BoardCreator({
             );
           })
         )}
+          </div>
+        </div>
       </div>
 
       {/* Controls Section */}
