@@ -433,16 +433,42 @@ function App(): React.ReactElement {
   };
 
   // Handle deck selection for gameplay
-  const handleDeckSelect = (deck: Deck) => {
+  const handleDeckSelect = (deck: Deck, opponent?: Opponent) => {
+    // If opponent is provided, update it in game state
+    const selectedOpponent = opponent || state.opponent;
+
+    if (opponent) {
+      // Save opponent to localStorage if not already saved
+      const existingIndex = (savedOpponents || []).findIndex((o) => o.id === opponent.id);
+      if (existingIndex >= 0) {
+        const updated = [...(savedOpponents || [])];
+        updated[existingIndex] = opponent;
+        setSavedOpponents(updated);
+      } else {
+        setSavedOpponents([...(savedOpponents || []), opponent]);
+      }
+
+      // Update state with the selected opponent
+      loadState({
+        ...state,
+        opponent,
+        gameMode: 'deck',
+        phase: { type: 'all-rounds-results', results: [] }, // Will be overwritten below
+      });
+    }
+
     selectPlayerDeck(deck);
+
+    // Determine board size from the deck
+    const deckSize = deck.boards.length > 0 ? deck.boards[0]?.boardSize : state.boardSize;
 
     // Opponent selects a deck
     let opponentDeck: Deck;
 
-    if (state.opponent?.type === 'cpu') {
+    if (selectedOpponent?.type === 'cpu') {
       // Match deck to specific CPU opponent by name
       // Deck names are like "CPU 2×2 Deck" or "CPU Tougher 2×2 Deck"
-      const expectedDeckName = `${state.opponent.name} ${state.boardSize}×${state.boardSize} Deck`;
+      const expectedDeckName = `${selectedOpponent.name} ${deckSize}×${deckSize} Deck`;
 
       console.log(`[handleDeckSelect] Looking for deck: "${expectedDeckName}"`);
       console.log(`[handleDeckSelect] Available CPU decks:`, (cpuDecks || []).map(d => ({ name: d.name, boards: d.boards.length })));
@@ -453,18 +479,18 @@ function App(): React.ReactElement {
 
       if (cpuDefaultDeck) {
         // Use the opponent-specific CPU deck (from hidden storage)
-        console.log(`[handleDeckSelect] Found ${state.opponent.name} deck with ${cpuDefaultDeck.boards.length} boards`);
+        console.log(`[handleDeckSelect] Found ${selectedOpponent.name} deck with ${cpuDefaultDeck.boards.length} boards`);
         opponentDeck = cpuDefaultDeck;
       } else {
         // Fallback: log error and use player's deck
-        console.error(`[handleDeckSelect] ${state.opponent.name} deck not found for size ${state.boardSize}×${state.boardSize}`);
+        console.error(`[handleDeckSelect] ${selectedOpponent.name} deck not found for size ${deckSize}×${deckSize}`);
         console.error(`[handleDeckSelect] cpuDecks is:`, cpuDecks);
         opponentDeck = deck;
       }
     } else {
       // Human opponent - would normally choose via URL sharing
       // For now, create random deck from available player boards of same size
-      const boards = (savedBoards || []).filter(b => b.boardSize === state.boardSize);
+      const boards = (savedBoards || []).filter(b => b.boardSize === deckSize);
       const opponentBoards: Board[] = [];
 
       if (boards.length === 0) {
@@ -477,7 +503,7 @@ function App(): React.ReactElement {
 
         opponentDeck = {
           id: `opponent-deck-${Date.now()}`,
-          name: `${state.opponent?.name || 'Opponent'}'s Deck`,
+          name: `${selectedOpponent?.name || 'Opponent'}'s Deck`,
           boards: opponentBoards,
           createdAt: Date.now(),
         };
@@ -1016,6 +1042,7 @@ function App(): React.ReactElement {
         return (
           <DeckManager
             decks={savedDecks || []}
+            opponents={savedOpponents || []}
             onDeckSelected={handleDeckSelect}
             onCreateDeck={() => setShowDeckCreator(true)}
             onEditDeck={handleDeckEdit}
@@ -1052,6 +1079,7 @@ function App(): React.ReactElement {
         return (
           <DeckManager
             decks={filteredDecks}
+            opponents={savedOpponents || []}
             onDeckSelected={handleDeckSelect}
             onCreateDeck={() => setShowDeckCreator(true)}
             onEditDeck={handleDeckEdit}

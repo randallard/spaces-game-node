@@ -4,7 +4,7 @@
  */
 
 import { type ReactElement, useState, useMemo } from 'react';
-import type { Deck, Board } from '@/types';
+import type { Deck, Board, Opponent } from '@/types';
 import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import styles from './DeckManager.module.css';
 
@@ -34,8 +34,10 @@ function MiniThumbnail({ board, index }: MiniThumbnailProps): ReactElement {
 export interface DeckManagerProps {
   /** Available decks */
   decks: Deck[];
-  /** Callback when deck is selected for play */
-  onDeckSelected: (deck: Deck) => void;
+  /** Available opponents */
+  opponents: Opponent[];
+  /** Callback when deck and opponent are selected for play */
+  onDeckSelected: (deck: Deck, opponent: Opponent) => void;
   /** Callback to create new deck */
   onCreateDeck: () => void;
   /** Callback to edit deck */
@@ -59,17 +61,28 @@ export interface DeckManagerProps {
  */
 export function DeckManager({
   decks,
+  opponents,
   onDeckSelected,
   onCreateDeck,
   onEditDeck,
   onDeleteDeck,
 }: DeckManagerProps): ReactElement {
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
+  const [expandedDeckId, setExpandedDeckId] = useState<string | null>(null);
 
   const handleDelete = (deckId: string, deckName: string) => {
     if (confirm(`Are you sure you want to delete "${deckName}"?`)) {
       onDeleteDeck(deckId);
     }
+  };
+
+  const handlePlayClick = (deckId: string) => {
+    setExpandedDeckId(expandedDeckId === deckId ? null : deckId);
+  };
+
+  const handleOpponentSelect = (deck: Deck, opponent: Opponent) => {
+    onDeckSelected(deck, opponent);
+    setExpandedDeckId(null);
   };
 
   /**
@@ -188,10 +201,10 @@ export function DeckManager({
               {/* Actions */}
               <div className={styles.actions}>
                 <button
-                  onClick={() => onDeckSelected(deck)}
-                  className={`${styles.button} ${styles.playButton}`}
+                  onClick={() => handlePlayClick(deck.id)}
+                  className={`${styles.button} ${styles.playButton} ${expandedDeckId === deck.id ? styles.playButtonActive : ''}`}
                 >
-                  Play
+                  Play {expandedDeckId === deck.id ? '▲' : '▼'}
                 </button>
                 <button
                   onClick={() => onEditDeck(deck)}
@@ -206,6 +219,27 @@ export function DeckManager({
                   Delete
                 </button>
               </div>
+
+              {/* Opponent Selector Dropdown */}
+              {expandedDeckId === deck.id && (
+                <div className={styles.opponentDropdown}>
+                  <h4 className={styles.opponentDropdownTitle}>Select Opponent:</h4>
+                  <div className={styles.opponentList}>
+                    {opponents.map((opponent) => (
+                      <button
+                        key={opponent.id}
+                        onClick={() => handleOpponentSelect(deck, opponent)}
+                        className={styles.opponentButton}
+                      >
+                        <span className={styles.opponentName}>{opponent.name}</span>
+                        <span className={styles.opponentRecord}>
+                          ({opponent.wins}-{opponent.losses})
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
               ))}
             </div>

@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DeckManager } from './DeckManager';
-import type { Deck, Board } from '@/types';
+import type { Deck, Board, Opponent } from '@/types';
 
 describe('DeckManager', () => {
   const mockOnDeckSelected = vi.fn();
@@ -35,8 +35,28 @@ describe('DeckManager', () => {
     createdAt: Date.now(),
   });
 
+  const mockOpponents: Opponent[] = [
+    {
+      id: 'opponent-1',
+      name: 'CPU Sam',
+      type: 'cpu',
+      wins: 5,
+      losses: 3,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'opponent-2',
+      name: 'CPU Tougher',
+      type: 'cpu',
+      wins: 2,
+      losses: 8,
+      createdAt: Date.now(),
+    },
+  ];
+
   const defaultProps = {
     decks: [],
+    opponents: mockOpponents,
     onDeckSelected: mockOnDeckSelected,
     onCreateDeck: mockOnCreateDeck,
     onEditDeck: mockOnEditDeck,
@@ -162,39 +182,74 @@ describe('DeckManager', () => {
     });
   });
 
-  describe('Play button', () => {
+  describe('Play button and opponent selection', () => {
     it('should display play button for each deck', () => {
       const decks = [createMockDeck('deck-1', 'My Deck')];
 
       render(<DeckManager {...defaultProps} decks={decks} />);
 
-      expect(screen.getByText('Play')).toBeInTheDocument();
+      const playButtons = screen.getAllByRole('button', { name: /Play/ });
+      expect(playButtons.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should call onDeckSelected when play button clicked', () => {
+    it('should show opponent dropdown when play button clicked', () => {
       const decks = [createMockDeck('deck-1', 'My Deck')];
 
       render(<DeckManager {...defaultProps} decks={decks} />);
 
-      const playButton = screen.getByText('Play');
+      const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
       fireEvent.click(playButton);
 
-      expect(mockOnDeckSelected).toHaveBeenCalledTimes(1);
-      expect(mockOnDeckSelected).toHaveBeenCalledWith(decks[0]);
+      expect(screen.getByText('Select Opponent:')).toBeInTheDocument();
+      expect(screen.getByText('CPU Sam')).toBeInTheDocument();
+      expect(screen.getByText('CPU Tougher')).toBeInTheDocument();
     });
 
-    it('should call onDeckSelected with correct deck when multiple decks', () => {
-      const decks = [
-        createMockDeck('deck-1', 'Deck 1'),
-        createMockDeck('deck-2', 'Deck 2'),
-      ];
+    it('should call onDeckSelected with deck and opponent when opponent selected', () => {
+      const decks = [createMockDeck('deck-1', 'My Deck')];
 
       render(<DeckManager {...defaultProps} decks={decks} />);
 
-      const playButtons = screen.getAllByText('Play');
-      fireEvent.click(playButtons[1]!); // Click second deck's play button
+      const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
+      fireEvent.click(playButton);
 
-      expect(mockOnDeckSelected).toHaveBeenCalledWith(decks[1]);
+      const opponentButton = screen.getByText('CPU Sam');
+      fireEvent.click(opponentButton);
+
+      expect(mockOnDeckSelected).toHaveBeenCalledTimes(1);
+      expect(mockOnDeckSelected).toHaveBeenCalledWith(decks[0], mockOpponents[0]);
+    });
+
+    it('should hide dropdown after opponent is selected', () => {
+      const decks = [createMockDeck('deck-1', 'My Deck')];
+
+      render(<DeckManager {...defaultProps} decks={decks} />);
+
+      const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
+      fireEvent.click(playButton);
+
+      expect(screen.getByText('Select Opponent:')).toBeInTheDocument();
+
+      const opponentButton = screen.getByText('CPU Sam');
+      fireEvent.click(opponentButton);
+
+      expect(screen.queryByText('Select Opponent:')).not.toBeInTheDocument();
+    });
+
+    it('should toggle dropdown when play button clicked multiple times', () => {
+      const decks = [createMockDeck('deck-1', 'My Deck')];
+
+      render(<DeckManager {...defaultProps} decks={decks} />);
+
+      const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
+
+      // Open dropdown
+      fireEvent.click(playButton);
+      expect(screen.getByText('Select Opponent:')).toBeInTheDocument();
+
+      // Close dropdown
+      fireEvent.click(playButton);
+      expect(screen.queryByText('Select Opponent:')).not.toBeInTheDocument();
     });
   });
 
@@ -375,13 +430,19 @@ describe('DeckManager', () => {
 
       render(<DeckManager {...defaultProps} decks={decks} />);
 
-      const playButtons = screen.getAllByText('Play');
+      const playButtons = screen.getAllByRole('button', { name: /Play/ });
 
+      // Click first deck's play button
       fireEvent.click(playButtons[0]!);
-      expect(mockOnDeckSelected).toHaveBeenCalledWith(decks[0]);
+      // Select opponent for first deck
+      fireEvent.click(screen.getByText('CPU Sam'));
+      expect(mockOnDeckSelected).toHaveBeenCalledWith(decks[0], mockOpponents[0]);
 
+      // Click third deck's play button
       fireEvent.click(playButtons[2]!);
-      expect(mockOnDeckSelected).toHaveBeenCalledWith(decks[2]);
+      // Select opponent for third deck
+      fireEvent.click(screen.getByText('CPU Tougher'));
+      expect(mockOnDeckSelected).toHaveBeenCalledWith(decks[2], mockOpponents[1]);
 
       expect(mockOnDeckSelected).toHaveBeenCalledTimes(2);
     });
