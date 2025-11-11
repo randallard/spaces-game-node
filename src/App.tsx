@@ -20,6 +20,7 @@ import {
   TutorialBoardCreator,
   TutorialNameEntry,
   WelcomeModal,
+  GeneratingModal,
 } from '@/components';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
@@ -182,6 +183,10 @@ function App(): React.ReactElement {
   // Board selection loading state
   const [isSimulatingRound, setIsSimulatingRound] = useState(false);
 
+  // CPU generation state
+  const [isGeneratingCpuBoards, setIsGeneratingCpuBoards] = useState(false);
+  const [generatingSize, setGeneratingSize] = useState<number>(2);
+
   // Save user to localStorage when it changes
   useEffect(() => {
     if (state.user.name) {
@@ -210,15 +215,52 @@ function App(): React.ReactElement {
     setPhase({ type: 'board-size-selection', gameMode: mode });
   };
 
+  // Check if CPU has boards/decks for a given size
+  const cpuHasBoardsForSize = (opponentName: string, size: number): boolean => {
+    if (!state.opponent || state.opponent.type !== 'cpu') return true;
+
+    // Check if CPU has boards for this size
+    const cpuBoardsForSize = (cpuBoards || []).filter(
+      b => b.boardSize === size && b.name.startsWith(opponentName)
+    );
+
+    // Check if CPU has deck for this size
+    const expectedDeckName = `${opponentName} ${size}×${size} Deck`;
+    const cpuDeckForSize = (cpuDecks || []).find(d => d.name === expectedDeckName);
+
+    return cpuBoardsForSize.length >= 10 && cpuDeckForSize !== undefined;
+  };
+
   // Handle board size selection
-  const handleBoardSizeSelect = (size: number) => {
+  const handleBoardSizeSelect = async (size: number) => {
     setBoardSize(size);
     // After selecting board size, check if opponent is already selected
     if (state.phase.type === 'board-size-selection') {
       const gameMode = state.phase.gameMode;
 
-      // If opponent already selected, skip opponent selection and go to next phase
-      if (state.opponent) {
+      // If opponent already selected, check if we need to generate CPU boards
+      if (state.opponent && state.opponent.type === 'cpu') {
+        // Check if CPU has boards/decks for this size
+        if (!cpuHasBoardsForSize(state.opponent.name, size)) {
+          // Show generating modal
+          setGeneratingSize(size);
+          setIsGeneratingCpuBoards(true);
+
+          // Generate CPU boards/decks
+          await handleGenerateCpuBoards(size);
+
+          // Hide generating modal after a brief delay
+          setTimeout(() => {
+            setIsGeneratingCpuBoards(false);
+            // Proceed to next phase
+            setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
+          }, 500);
+        } else {
+          // CPU already has boards, proceed to next phase
+          setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
+        }
+      } else if (state.opponent) {
+        // Non-CPU opponent, skip opponent selection and go to next phase
         setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
       } else {
         // No opponent selected yet, go to opponent selection
@@ -1150,6 +1192,14 @@ function App(): React.ReactElement {
         <WelcomeModal
           playerName={state.user.name}
           onClose={() => setShowWelcomeModal(false)}
+        />
+      )}
+
+      {/* Generating Modal (CPU boards/decks generation) */}
+      {isGeneratingCpuBoards && state.opponent && (
+        <GeneratingModal
+          opponentName={state.opponent.name}
+          boardSize={generatingSize}
         />
       )}
     </div>
