@@ -324,25 +324,33 @@ function App(): React.ReactElement {
   };
 
   // Handle generating CPU boards for a specific size
-  const handleGenerateCpuBoards = async (size: number): Promise<void> => {
-    if (!state.opponent) return;
+  const handleGenerateCpuBoards = async (size: number, opponentName?: string): Promise<Deck | null> => {
+    const opponent = state.opponent;
+    if (!opponent && !opponentName) return null;
+
+    const name = opponentName || opponent?.name;
+    if (!name) return null;
 
     // Check if boards already exist for this size (defensive check)
-    if (cpuHasBoardsForSize(state.opponent.name, size)) {
-      console.log(`[handleGenerateCpuBoards] Boards already exist for ${state.opponent.name} ${size}x${size}, skipping generation`);
-      return;
+    if (opponent && cpuHasBoardsForSize(name, size)) {
+      console.log(`[handleGenerateCpuBoards] Boards already exist for ${name} ${size}x${size}, skipping generation`);
+
+      // Return existing deck
+      const expectedDeckName = `${name} ${size}×${size} Deck`;
+      const existingDeck = (cpuDecks || []).find(d => d.name === expectedDeckName && d.boards.length === 10);
+      return existingDeck || null;
     }
 
-    console.log(`[handleGenerateCpuBoards] Generating ${size}x${size} boards for ${state.opponent.name}`);
+    console.log(`[handleGenerateCpuBoards] Generating ${size}x${size} boards for ${name}`);
 
     // Determine if this is CPU Tougher (includes traps)
-    const isTougher = state.opponent.id === 'cpu-tougher-opponent';
+    const isTougher = opponent?.id === 'cpu-tougher-opponent' || name.includes('Tougher');
 
     // Generate boards for this size
-    const newBoards = generateCpuBoardsForSize(state.opponent.name, size, isTougher);
+    const newBoards = generateCpuBoardsForSize(name, size, isTougher);
 
     // Generate deck for this size
-    const newDeck = generateCpuDeckForSize(state.opponent.name, size, newBoards);
+    const newDeck = generateCpuDeckForSize(name, size, newBoards);
 
     // Add boards to CPU boards (check for duplicates first)
     const existingBoardIds = new Set((cpuBoards || []).map((b) => b.id));
@@ -359,6 +367,9 @@ function App(): React.ReactElement {
     }
 
     console.log(`[handleGenerateCpuBoards] Added ${uniqueNewBoards.length} boards and 1 deck`);
+
+    // Return the newly generated deck
+    return newDeck;
   };
 
   // Handle opponent selection (for play button)
@@ -461,29 +472,6 @@ function App(): React.ReactElement {
     // Determine board size from the deck
     const deckSize = deck.boards.length > 0 ? deck.boards[0]?.boardSize : state.boardSize;
 
-    // If opponent is CPU, check if they have a deck for this size
-    if (selectedOpponent?.type === 'cpu') {
-      const expectedDeckName = `${selectedOpponent.name} ${deckSize}×${deckSize} Deck`;
-      const cpuDeckExists = (cpuDecks || []).some(d => d.name === expectedDeckName && d.boards.length === 10);
-
-      // If CPU doesn't have a deck for this size, generate it
-      if (!cpuDeckExists) {
-        console.log(`[handleDeckSelect] CPU deck not found for ${selectedOpponent.name} ${deckSize}×${deckSize}, generating...`);
-
-        // Show generating modal
-        setGeneratingSize(deckSize ?? 2);
-        setIsGeneratingCpuBoards(true);
-
-        // Generate CPU boards/decks
-        await handleGenerateCpuBoards(deckSize ?? 2);
-
-        // Hide generating modal after a brief delay
-        setTimeout(() => {
-          setIsGeneratingCpuBoards(false);
-        }, 500);
-      }
-    }
-
     selectPlayerDeck(deck);
 
     // Opponent selects a deck
@@ -495,20 +483,36 @@ function App(): React.ReactElement {
       const expectedDeckName = `${selectedOpponent.name} ${deckSize}×${deckSize} Deck`;
 
       console.log(`[handleDeckSelect] Looking for deck: "${expectedDeckName}"`);
-      console.log(`[handleDeckSelect] Available CPU decks:`, (cpuDecks || []).map(d => ({ name: d.name, boards: d.boards.length })));
 
-      const cpuDefaultDeck = (cpuDecks || []).find(
+      // First try to find existing deck
+      let cpuDefaultDeck = (cpuDecks || []).find(
         d => d.name === expectedDeckName && d.boards.length === 10
       );
 
+      // If not found, generate it
+      if (!cpuDefaultDeck) {
+        console.log(`[handleDeckSelect] CPU deck not found for ${selectedOpponent.name} ${deckSize}×${deckSize}, generating...`);
+
+        // Show generating modal
+        setGeneratingSize(deckSize ?? 2);
+        setIsGeneratingCpuBoards(true);
+
+        // Generate CPU boards/decks and get the new deck
+        cpuDefaultDeck = await handleGenerateCpuBoards(deckSize ?? 2, selectedOpponent.name);
+
+        // Hide generating modal after a brief delay
+        setTimeout(() => {
+          setIsGeneratingCpuBoards(false);
+        }, 500);
+      }
+
       if (cpuDefaultDeck) {
-        // Use the opponent-specific CPU deck (from hidden storage)
-        console.log(`[handleDeckSelect] Found ${selectedOpponent.name} deck with ${cpuDefaultDeck.boards.length} boards`);
+        // Use the opponent-specific CPU deck (from hidden storage or just generated)
+        console.log(`[handleDeckSelect] Using ${selectedOpponent.name} deck with ${cpuDefaultDeck.boards.length} boards`);
         opponentDeck = cpuDefaultDeck;
       } else {
         // Fallback: log error and use player's deck
-        console.error(`[handleDeckSelect] ${selectedOpponent.name} deck not found for size ${deckSize}×${deckSize}`);
-        console.error(`[handleDeckSelect] cpuDecks is:`, cpuDecks);
+        console.error(`[handleDeckSelect] ${selectedOpponent.name} deck not found or could not be generated for size ${deckSize}×${deckSize}`);
         opponentDeck = deck;
       }
     } else {
