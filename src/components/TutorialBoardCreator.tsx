@@ -294,23 +294,41 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete, onSkip }: Tu
             const isStartChoice = phase === 'choosing-start' && rowIdx === bottomRow;
             const isEmpty = cell === 'empty';
 
+            // Find move at this position
+            const moveAtPosition = sequence.find(
+              (m) => m.position.row === rowIdx && m.position.col === colIdx
+            );
+            const pieceAtPosition = moveAtPosition?.type === 'piece' ? moveAtPosition : undefined;
+            const trapAtPosition = moveAtPosition?.type === 'trap' ? moveAtPosition : undefined;
+            const isCurrentPiece = piecePosition?.row === rowIdx && piecePosition?.col === colIdx && phase === 'building';
+
             return (
               <div
                 key={`${rowIdx}-${colIdx}`}
                 className={styles.cell}
                 aria-label={`Cell ${rowIdx},${colIdx}`}
               >
-                {/* Show piece only at CURRENT position */}
-                {piecePosition?.row === rowIdx && piecePosition?.col === colIdx && phase === 'building' && (
-                  <div className={styles.cellPiece}>
-                    <span className={styles.pieceIcon}>⚫</span>
+                {/* Show piece with number (only if no trap at this position) */}
+                {cell === 'piece' && pieceAtPosition && !trapAtPosition && (
+                  <div className={`${styles.cellPiece} ${isCurrentPiece ? styles.cellPieceCurrent : ''}`}>
+                    <svg viewBox="0 0 40 40" className={styles.pieceIcon}>
+                      <circle cx="20" cy="20" r="15" fill="#4a90e2" />
+                      <text x="20" y="20" fontSize="16" fill="white" textAnchor="middle" dy=".3em">
+                        {pieceAtPosition.order}
+                      </text>
+                    </svg>
                   </div>
                 )}
 
-                {/* Show trap */}
-                {cell === 'trap' && (
+                {/* Show trap with number (trap always shows if present) */}
+                {cell === 'trap' && trapAtPosition && (
                   <div className={styles.cellTrap}>
-                    <span className={styles.trapIcon}>✖</span>
+                    <svg viewBox="0 0 40 40" className={styles.trapIcon}>
+                      <path d="M5 5 l30 30 m0 -30 l-30 30" stroke="#f5222d" strokeWidth="4" opacity="0.7" />
+                      <text x="35" y="20" fontSize="14" fill="#f5222d" textAnchor="middle" dy=".3em" fontWeight="bold">
+                        {trapAtPosition.order}
+                      </text>
+                    </svg>
                   </div>
                 )}
 

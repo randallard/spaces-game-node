@@ -6,7 +6,7 @@ import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-
 import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsForSize, generateCpuDeckForSize } from '@/utils/default-cpu-data';
 import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
 import { updateOpponentStats } from '@/utils/opponent-helpers';
-import { getFeatureUnlocks, getNextUnlock, isDeckModeUnlocked } from '@/utils/feature-unlocks';
+import { getNextUnlock, isDeckModeUnlocked } from '@/utils/feature-unlocks';
 import {
   UserProfile,
   OpponentManager,
@@ -963,35 +963,20 @@ function App(): React.ReactElement {
                 </div>
               </div>
 
-              {/* Right Panel - Decks and Boards */}
+              {/* Right Panel - Boards */}
               <div className={styles.boardsPanel}>
-                <div style={{ marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h2 className={styles.panelTitle}>Decks</h2>
-                    <button
-                      onClick={() => setPhase({ type: 'deck-management' })}
-                      className={styles.addOpponentButton}
-                    >
-                      Manage Decks
-                    </button>
-                  </div>
-                  <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                    {savedDecks?.length || 0} deck(s) created
-                  </p>
-                </div>
-                <div>
-                  <h2 className={styles.panelTitle}>Boards</h2>
-                  <div className={styles.boardsContent}>
-                    <SavedBoards
-                      boards={savedBoards || []}
-                      onBoardSelected={() => { }} // No selection in management mode
-                      onBoardSaved={handleBoardSave}
-                      onBoardDeleted={handleBoardDelete}
-                      currentRound={0} // Not in a round
-                      userName={state.user.name}
-                      opponentName=""
-                    />
-                  </div>
+                <h2 className={styles.panelTitle}>Boards</h2>
+                <div className={styles.boardsContent}>
+                  <SavedBoards
+                    boards={savedBoards || []}
+                    onBoardSelected={() => { }} // No selection in management mode
+                    onBoardSaved={handleBoardSave}
+                    onBoardDeleted={handleBoardDelete}
+                    currentRound={0} // Not in a round
+                    userName={state.user.name}
+                    opponentName=""
+                    user={savedUser}
+                  />
                 </div>
               </div>
             </div>
@@ -1162,6 +1147,7 @@ function App(): React.ReactElement {
               currentRound={state.currentRound}
               userName={state.user.name}
               opponentName={state.opponent?.name || 'Opponent'}
+              user={savedUser}
             />
 
             {/* Loading overlay */}

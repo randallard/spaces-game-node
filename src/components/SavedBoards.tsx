@@ -4,10 +4,11 @@
  */
 
 import { useState, useMemo, type ReactElement } from 'react';
-import type { Board, BoardSize } from '@/types';
+import type { Board, BoardSize, UserProfile } from '@/types';
 import { isValidBoardSize } from '@/types';
 import { BoardCreatorModal } from './BoardCreatorModal';
 import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
+import { getFeatureUnlocks } from '@/utils/feature-unlocks';
 import styles from './SavedBoards.module.css';
 
 export interface SavedBoardsProps {
@@ -25,6 +26,8 @@ export interface SavedBoardsProps {
   userName: string;
   /** Opponent's name (for display) */
   opponentName: string;
+  /** User profile for feature unlock checks */
+  user?: UserProfile | null;
 }
 
 type ViewMode = 'list' | 'select-size' | 'create';
@@ -104,6 +107,7 @@ export function SavedBoards({
   currentRound,
   userName,
   opponentName,
+  user,
 }: SavedBoardsProps): ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedBoardSize, setSelectedBoardSize] = useState<BoardSize>(2);
@@ -180,8 +184,11 @@ export function SavedBoards({
 
   // Show board size selection
   if (viewMode === 'select-size') {
+    // Get unlocked board sizes
+    const { boardSizes: unlockedSizes } = getFeatureUnlocks(user ?? null);
+
     // Common preset sizes
-    const presetSizes = [
+    const allPresetSizes = [
       { size: 2, description: 'Quick strategic gameplay' },
       { size: 3, description: 'Balanced complexity' },
       { size: 4, description: 'More strategic depth' },
@@ -190,13 +197,20 @@ export function SavedBoards({
       { size: 10, description: 'Epic battles' },
     ];
 
+    // Filter to only show unlocked sizes
+    const presetSizes = allPresetSizes.filter(preset => unlockedSizes.includes(preset.size));
+
     const handleCustomSize = () => {
       const size = parseInt(customSize);
-      if (isValidBoardSize(size)) {
-        handleSizeSelected(size);
-      } else {
+      if (!isValidBoardSize(size)) {
         setCustomError('Please enter a number between 2 and 99');
+        return;
       }
+      if (!unlockedSizes.includes(size)) {
+        setCustomError(`Board size ${size}×${size} is not unlocked yet. Complete more games to unlock!`);
+        return;
+      }
+      handleSizeSelected(size);
     };
 
     return (

@@ -59,8 +59,9 @@ describe('TutorialBoardCreator', () => {
       const startButtons = screen.getAllByText('Start');
       fireEvent.click(startButtons[0]!);
 
-      // Should show piece icon
-      expect(screen.getByText('⚫')).toBeInTheDocument();
+      // Should show piece icon (SVG circle)
+      const pieceSvgs = document.querySelectorAll('svg circle[fill="#4a90e2"]');
+      expect(pieceSvgs.length).toBeGreaterThan(0);
       // Should no longer show Start buttons
       expect(screen.queryByText('Start')).not.toBeInTheDocument();
     });
@@ -116,7 +117,8 @@ describe('TutorialBoardCreator', () => {
       fireEvent.click(moveButtons[0]!);
 
       // Piece should still be visible (moved to new position)
-      expect(screen.getByText('⚫')).toBeInTheDocument();
+      const pieceSvgs = document.querySelectorAll('svg circle[fill="#4a90e2"]');
+      expect(pieceSvgs.length).toBeGreaterThan(0);
     });
 
     it('should show instruction after making a move', () => {
@@ -178,8 +180,9 @@ describe('TutorialBoardCreator', () => {
       const trapButtons = screen.getAllByText('Trap');
       fireEvent.click(trapButtons[0]!);
 
-      // Should show trap icon
-      expect(screen.getByText('✖')).toBeInTheDocument();
+      // Should show trap icon (check for SVG path element)
+      const trapSvgs = document.querySelectorAll('svg path[stroke="#f5222d"]');
+      expect(trapSvgs.length).toBeGreaterThan(0);
     });
 
     it('should prevent moving onto trap', () => {
@@ -337,7 +340,8 @@ describe('TutorialBoardCreator', () => {
 
       // Choose start and make moves
       fireEvent.click(screen.getAllByText('Start')[0]!);
-      expect(screen.getByText('⚫')).toBeInTheDocument();
+      let pieceSvgs = document.querySelectorAll('svg circle[fill="#4a90e2"]');
+      expect(pieceSvgs.length).toBeGreaterThan(0);
 
       // Click Restart
       const restartButton = screen.getByText('Restart');
@@ -346,7 +350,8 @@ describe('TutorialBoardCreator', () => {
       // Should go back to choosing start
       expect(screen.getByText('first, choose a start square')).toBeInTheDocument();
       expect(screen.getAllByText('Start')).toHaveLength(2);
-      expect(screen.queryByText('⚫')).not.toBeInTheDocument();
+      pieceSvgs = document.querySelectorAll('svg circle[fill="#4a90e2"]');
+      expect(pieceSvgs.length).toBe(0);
     });
 
     it('should clear traps when restarting', () => {
@@ -362,14 +367,16 @@ describe('TutorialBoardCreator', () => {
       const trapButtons = screen.getAllByText('Trap');
       if (trapButtons.length > 0) {
         fireEvent.click(trapButtons[0]!);
-        expect(screen.getByText('✖')).toBeInTheDocument();
+        let trapSvgs = document.querySelectorAll('svg path[stroke="#f5222d"]');
+        expect(trapSvgs.length).toBeGreaterThan(0);
       }
 
       // Restart
       fireEvent.click(screen.getByText('Restart'));
 
       // Trap should be gone
-      expect(screen.queryByText('✖')).not.toBeInTheDocument();
+      const trapSvgs = document.querySelectorAll('svg path[stroke="#f5222d"]');
+      expect(trapSvgs.length).toBe(0);
     });
   });
 
