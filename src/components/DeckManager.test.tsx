@@ -42,7 +42,6 @@ describe('DeckManager', () => {
       type: 'cpu',
       wins: 5,
       losses: 3,
-      createdAt: Date.now(),
     },
     {
       id: 'opponent-2',
@@ -50,7 +49,6 @@ describe('DeckManager', () => {
       type: 'cpu',
       wins: 2,
       losses: 8,
-      createdAt: Date.now(),
     },
   ];
 

@@ -6,7 +6,7 @@
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { isValidBoardSize } from '@/types';
-import type { Board, Opponent } from '@/types';
+import type { Board, Opponent, Deck } from '@/types';
 import styles from './BoardSizeSelector.module.css';
 
 export interface BoardSizeSelectorProps {
@@ -21,7 +21,7 @@ export interface BoardSizeSelectorProps {
   /** Current opponent (to identify which CPU) */
   opponent?: Opponent | null;
   /** Callback to generate CPU boards for a given size */
-  onGenerateCpuBoards?: (size: number) => Promise<void>;
+  onGenerateCpuBoards?: (size: number, opponentName?: string) => Promise<Deck | undefined>;
 }
 
 /**

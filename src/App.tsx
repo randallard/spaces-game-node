@@ -324,12 +324,12 @@ function App(): React.ReactElement {
   };
 
   // Handle generating CPU boards for a specific size
-  const handleGenerateCpuBoards = async (size: number, opponentName?: string): Promise<Deck | null> => {
+  const handleGenerateCpuBoards = async (size: number, opponentName?: string): Promise<Deck | undefined> => {
     const opponent = state.opponent;
-    if (!opponent && !opponentName) return null;
+    if (!opponent && !opponentName) return undefined;
 
     const name = opponentName || opponent?.name;
-    if (!name) return null;
+    if (!name) return undefined;
 
     // Check if boards already exist for this size (defensive check)
     if (opponent && cpuHasBoardsForSize(name, size)) {
@@ -338,7 +338,7 @@ function App(): React.ReactElement {
       // Return existing deck
       const expectedDeckName = `${name} ${size}×${size} Deck`;
       const existingDeck = (cpuDecks || []).find(d => d.name === expectedDeckName && d.boards.length === 10);
-      return existingDeck || null;
+      return existingDeck;
     }
 
     console.log(`[handleGenerateCpuBoards] Generating ${size}x${size} boards for ${name}`);
