@@ -69,6 +69,9 @@ function buildGridData(
   });
 
   // Process opponent sequence (rotated, up to opponentMaxStep if provided)
+  // Only show opponent trap if player actually hit it at that specific position
+  const playerTrapPosition = result.simulationDetails?.playerTrapPosition;
+
   opponentBoard.sequence.forEach((move, step) => {
     if (opponentMaxStep !== undefined && step > opponentMaxStep) return; // Skip steps beyond opponentMaxStep
     if (move.type === 'final') return; // Skip final moves
@@ -82,7 +85,10 @@ function buildGridData(
       if (move.type === 'piece') {
         square.opponentVisits.push(step);
       } else if (move.type === 'trap') {
-        square.opponentTrapStep = step;
+        // Only show opponent trap if player hit a trap at this exact position
+        if (playerTrapPosition && playerTrapPosition.row === row && playerTrapPosition.col === col) {
+          square.opponentTrapStep = step;
+        }
       }
     }
   });
@@ -212,22 +218,17 @@ export function generateCombinedBoardSvg(
         // Purple half circle (right)
         svg += `<path d="M ${centerX + radius},${centerY + verticalOffset} a ${radius},${radius} 0 0 0 -${radius},0 v ${radius * 2} a ${radius},${radius} 0 0 0 ${radius},0" fill="rgb(147, 51, 234)"/>`;
 
-        // Numbers
+        // Only show player number
         const playerStep = Math.max(...square.playerVisits);
-        const opponentStep = Math.max(...square.opponentVisits);
-
         svg += `<text x="${centerX - radius / 2}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${playerStep + 1}</text>`;
-        svg += `<text x="${centerX + radius / 2}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${opponentStep + 1}</text>`;
       } else if (hasPlayer) {
         // Only player visited
         const step = Math.max(...square.playerVisits);
         svg += `<circle cx="${centerX}" cy="${centerY}" r="15" fill="rgb(37, 99, 235)"/>`;
         svg += `<text x="${centerX}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${step + 1}</text>`;
       } else if (hasOpponent) {
-        // Only opponent visited
-        const step = Math.max(...square.opponentVisits);
+        // Only opponent visited - no number shown
         svg += `<circle cx="${centerX}" cy="${centerY}" r="15" fill="rgb(147, 51, 234)"/>`;
-        svg += `<text x="${centerX}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${step + 1}</text>`;
       }
     }
   }
@@ -244,25 +245,23 @@ export function generateCombinedBoardSvg(
 
       if (hasPlayerTrap && hasOpponentTrap) {
         // Both traps - slightly rotated
-        // Player trap (red, rotated +3 degrees)
+        // Player trap (red, rotated +3 degrees) with number
         svg += `<g transform="translate(${x + 5} ${y + 5}) rotate(3 15 15)">`;
         svg += `<path d="M0 0 l30 30 m0 -30 l-30 30" stroke="rgb(220, 38, 38)" stroke-width="4" opacity="0.6"/>`;
         svg += `</g>`;
         svg += `<text x="${x + 5}" y="${y + 20}" font-size="16" fill="rgb(220, 38, 38)" text-anchor="middle" dy=".3em">${square.playerTrapStep! + 1}</text>`;
 
-        // Opponent trap (orange, rotated -3 degrees)
+        // Opponent trap (orange, rotated -3 degrees) without number
         svg += `<g transform="translate(${x + 5} ${y + 5}) rotate(-3 15 15)">`;
         svg += `<path d="M0 0 l30 30 m0 -30 l-30 30" stroke="rgb(249, 115, 22)" stroke-width="4" opacity="0.6"/>`;
         svg += `</g>`;
-        svg += `<text x="${x + 35}" y="${y + 20}" font-size="16" fill="rgb(249, 115, 22)" text-anchor="middle" dy=".3em">${square.opponentTrapStep! + 1}</text>`;
       } else if (hasPlayerTrap) {
-        // Only player trap
+        // Only player trap with number
         svg += `<path d="M${x + 5} ${y + 5} l30 30 m0 -30 l-30 30" stroke="rgb(220, 38, 38)" stroke-width="4" opacity="0.6"/>`;
         svg += `<text x="${x + 35}" y="${y + 20}" font-size="16" fill="rgb(220, 38, 38)" text-anchor="middle" dy=".3em">${square.playerTrapStep! + 1}</text>`;
       } else if (hasOpponentTrap) {
-        // Only opponent trap
+        // Only opponent trap without number
         svg += `<path d="M${x + 5} ${y + 5} l30 30 m0 -30 l-30 30" stroke="rgb(249, 115, 22)" stroke-width="4" opacity="0.6"/>`;
-        svg += `<text x="${x + 35}" y="${y + 20}" font-size="16" fill="rgb(249, 115, 22)" text-anchor="middle" dy=".3em">${square.opponentTrapStep! + 1}</text>`;
       }
     }
   }

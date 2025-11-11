@@ -596,6 +596,9 @@ export function RoundResults({
               <button onClick={handleFinish} className={styles.replayButton}>
                 ⏹ Finish
               </button>
+              <button onClick={onContinue} className={styles.continueButton}>
+                {continueButtonText}
+              </button>
             </div>
           </div>
         </div>
@@ -695,13 +698,6 @@ export function RoundResults({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Continue Button */}
-      {currentStep >= maxSteps && (
-        <button onClick={onContinue} className={styles.continueButton}>
-          {continueButtonText}
-        </button>
       )}
 
       {/* Help Modal */}

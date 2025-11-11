@@ -64,6 +64,13 @@
   background-color: #357abd;
 }
 
+/* Top Actions */
+.topActions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
 /* Filter Bar */
 .filterBar {
   display: flex;

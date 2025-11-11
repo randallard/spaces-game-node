@@ -28,6 +28,8 @@ export type RoundResult = {
     opponentHitTrap: boolean;
     playerLastStep: number; // Last sequence step executed by player (-1 if none)
     opponentLastStep: number; // Last sequence step executed by opponent (-1 if none)
+    playerTrapPosition?: { row: number; col: number }; // Position where player hit trap (if playerHitTrap is true)
+    opponentTrapPosition?: { row: number; col: number }; // Position where opponent hit trap (if opponentHitTrap is true)
   };
   // Creature graphics info (optional for backward compatibility)
   playerCreature?: CreatureId;

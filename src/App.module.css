@@ -81,9 +81,9 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.header > div {
-  text-align: center;
-  flex: 1;
+.header > div:first-child {
+  text-align: left;
+  flex-shrink: 0;
 }
 
 .header h1 {
@@ -138,6 +138,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 /* Home Button */
@@ -370,6 +371,10 @@ body {
 }
 
 @media (max-width: 768px) {
+  .main {
+    padding: var(--spacing-md);
+  }
+
   .header {
     flex-direction: column;
     gap: var(--spacing-md);
@@ -388,6 +393,15 @@ body {
 
   .managementHeader h1 {
     font-size: 2rem;
+  }
+
+  .managementGrid {
+    gap: var(--spacing-md);
+  }
+
+  .opponentsPanel,
+  .boardsPanel {
+    padding: var(--spacing-md);
   }
 }
 

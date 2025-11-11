@@ -109,10 +109,13 @@ describe('generateOpponentThumbnail', () => {
     expect(thumbnail).toContain('data:image/svg+xml,');
   });
 
-  it('should use opponent color for pieces', () => {
+  it('should use opponent color for pieces and hide sequence numbers', () => {
     const thumbnail = generateOpponentThumbnail(mockBoard);
     const decoded = decodeURIComponent(thumbnail.replace('data:image/svg+xml,', ''));
     expect(decoded).toContain('#722ed1'); // Opponent piece color (purple)
+    // Opponent pieces should not have <text> elements with numbers
+    const textCount = (decoded.match(/<text/g) || []).length;
+    expect(textCount).toBe(0); // No text elements for opponent
   });
 
   it('should differ from player thumbnail (rotation)', () => {
@@ -121,6 +124,34 @@ describe('generateOpponentThumbnail', () => {
 
     // They should be different due to rotation
     expect(playerThumbnail).not.toBe(opponentThumbnail);
+  });
+
+  it('should show only trap at specified position', () => {
+    const boardWithTrap: Board = {
+      id: '123e4567-e89b-12d3-a456-426614174001',
+      name: 'Board with Trap',
+      boardSize: 2,
+      grid: [
+        ['piece', 'empty'],
+        ['trap', 'empty'],
+      ],
+      sequence: [
+        { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+        { position: { row: 1, col: 0 }, type: 'trap', order: 2 },
+      ],
+      thumbnail: '',
+      createdAt: Date.now(),
+    };
+
+    // Show trap at rotated position (1,0) -> rotated to (0,1) on 2x2 board
+    const thumbnailWithTrap = generateOpponentThumbnail(boardWithTrap, undefined, { row: 0, col: 1 });
+    const decodedWithTrap = decodeURIComponent(thumbnailWithTrap.replace('data:image/svg+xml,', ''));
+    expect(decodedWithTrap).toContain('rgb(249, 115, 22)'); // Opponent trap color (orange)
+
+    // Don't show trap when no position specified
+    const thumbnailNoTraps = generateOpponentThumbnail(boardWithTrap, undefined, undefined);
+    const decodedNoTraps = decodeURIComponent(thumbnailNoTraps.replace('data:image/svg+xml,', ''));
+    expect(decodedNoTraps).not.toContain('rgb(249, 115, 22)'); // Should not contain trap color
   });
 });
 

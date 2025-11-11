@@ -244,8 +244,9 @@ export function initializeDefaultCpuData(): {
   deck3x3: Deck;
 } {
   const opponent = createDefaultCpuOpponent();
-  const boards2x2 = createDefault2x2Boards();
-  const boards3x3 = createDefault3x3Boards();
+  // Use the dynamic generation function for consistency
+  const boards2x2 = generateCpuBoardsForSize(CPU_OPPONENT_NAME, 2, false);
+  const boards3x3 = generateCpuBoardsForSize(CPU_OPPONENT_NAME, 3, false);
   const deck2x2 = createDefault2x2Deck(boards2x2);
   const deck3x3 = createDefault3x3Deck(boards3x3);
 
@@ -462,24 +463,25 @@ export function initializeCpuTougherData(): {
   deck3x3: Deck;
 } {
   const opponent = createCpuTougherOpponent();
-  const boards2x2 = createCpuTougher2x2Boards();
-  const boards3x3 = createCpuTougher3x3Boards();
+  // Use the dynamic generation function for consistency (with isTougher = true for traps)
+  const boards2x2 = generateCpuBoardsForSize(CPU_TOUGHER_OPPONENT_NAME, 2, true);
+  const boards3x3 = generateCpuBoardsForSize(CPU_TOUGHER_OPPONENT_NAME, 3, true);
 
-  // Create decks with mixed boards (including traps)
+  // Create decks cycling through the 3 boards
   const deck2x2: Deck = {
     id: `cpu-tougher-deck-2x2-${Date.now()}`,
     name: 'CPU Tougher 2×2 Deck',
     boards: [
-      boards2x2[0]!, // With trap
-      boards2x2[2]!, // No trap
-      boards2x2[1]!, // With trap
-      boards2x2[3]!, // No trap
-      boards2x2[0]!, // With trap
-      boards2x2[2]!, // No trap
-      boards2x2[1]!, // With trap
-      boards2x2[3]!, // No trap
-      boards2x2[0]!, // With trap
-      boards2x2[1]!, // With trap
+      boards2x2[0]!,
+      boards2x2[1]!,
+      boards2x2[2]!,
+      boards2x2[0]!,
+      boards2x2[1]!,
+      boards2x2[2]!,
+      boards2x2[0]!,
+      boards2x2[1]!,
+      boards2x2[2]!,
+      boards2x2[0]!,
     ],
     createdAt: Date.now(),
   };
@@ -488,16 +490,16 @@ export function initializeCpuTougherData(): {
     id: `cpu-tougher-deck-3x3-${Date.now()}`,
     name: 'CPU Tougher 3×3 Deck',
     boards: [
-      boards3x3[0]!, // No trap (left)
-      boards3x3[2]!, // With trap (left)
-      boards3x3[1]!, // No trap (middle)
-      boards3x3[3]!, // With trap (middle)
-      boards3x3[0]!, // No trap (left)
-      boards3x3[2]!, // With trap (left)
-      boards3x3[1]!, // No trap (middle)
-      boards3x3[3]!, // With trap (middle)
-      boards3x3[2]!, // With trap (left)
-      boards3x3[3]!, // With trap (middle)
+      boards3x3[0]!,
+      boards3x3[1]!,
+      boards3x3[2]!,
+      boards3x3[0]!,
+      boards3x3[1]!,
+      boards3x3[2]!,
+      boards3x3[0]!,
+      boards3x3[1]!,
+      boards3x3[2]!,
+      boards3x3[0]!,
     ],
     createdAt: Date.now(),
   };
@@ -513,12 +515,12 @@ export function initializeCpuTougherData(): {
 
 /**
  * Generate CPU boards dynamically for any board size
- * Creates 4 playable boards for the specified opponent and size
+ * Creates 3 simple boards for CPU Sam (straight columns) or 3 boards for CPU Tougher (with traps)
  *
  * @param opponentName - Name of the opponent (used in board names)
  * @param boardSize - Size of the board (2-99)
  * @param isTougher - Whether this is for CPU Tougher (includes traps)
- * @returns Array of 4 boards for the specified size
+ * @returns Array of 3 boards for the specified size
  */
 export function generateCpuBoardsForSize(
   opponentName: string,
@@ -535,156 +537,298 @@ export function generateCpuBoardsForSize(
     );
   };
 
-  // Board 1: Straight up left column
-  const board1Grid = createEmptyGrid();
-  const board1Sequence: Board['sequence'] = [];
-  for (let row = boardSize - 1; row >= 0; row--) {
-    board1Grid[row]![0] = 'piece';
+  if (!isTougher) {
+    // CPU Sam: Simple straight-down columns
+    // Board 1: Left column (column 0)
+    const board1Grid = createEmptyGrid();
+    const board1Sequence: Board['sequence'] = [];
+    for (let row = boardSize - 1; row >= 0; row--) {
+      board1Grid[row]![0] = 'piece';
+      board1Sequence.push({
+        position: { row, col: 0 },
+        type: 'piece',
+        order: boardSize - row,
+      });
+    }
     board1Sequence.push({
-      position: { row, col: 0 },
-      type: 'piece',
-      order: boardSize - row,
+      position: { row: -1, col: 0 },
+      type: 'final',
+      order: boardSize + 1,
     });
-  }
-  board1Sequence.push({
-    position: { row: -1, col: 0 },
-    type: 'final',
-    order: boardSize + 1,
-  });
 
-  boards.push({
-    id: uuidv4(),
-    name: `${opponentName} Board 1`,
-    boardSize,
-    grid: board1Grid,
-    sequence: board1Sequence,
-    thumbnail: '',
-    createdAt: now,
-  });
+    boards.push({
+      id: uuidv4(),
+      name: `${opponentName} Left Column`,
+      boardSize,
+      grid: board1Grid,
+      sequence: board1Sequence,
+      thumbnail: '',
+      createdAt: now,
+    });
 
-  // Board 2: Straight up right column
-  const board2Grid = createEmptyGrid();
-  const board2Sequence: Board['sequence'] = [];
-  const rightCol = boardSize - 1;
-  for (let row = boardSize - 1; row >= 0; row--) {
-    board2Grid[row]![rightCol] = 'piece';
+    // Board 2: Right column (last column)
+    const board2Grid = createEmptyGrid();
+    const board2Sequence: Board['sequence'] = [];
+    const rightCol = boardSize - 1;
+    for (let row = boardSize - 1; row >= 0; row--) {
+      board2Grid[row]![rightCol] = 'piece';
+      board2Sequence.push({
+        position: { row, col: rightCol },
+        type: 'piece',
+        order: boardSize - row,
+      });
+    }
     board2Sequence.push({
-      position: { row, col: rightCol },
-      type: 'piece',
-      order: boardSize - row,
+      position: { row: -1, col: rightCol },
+      type: 'final',
+      order: boardSize + 1,
     });
-  }
-  board2Sequence.push({
-    position: { row: -1, col: rightCol },
-    type: 'final',
-    order: boardSize + 1,
-  });
 
-  boards.push({
-    id: uuidv4(),
-    name: `${opponentName} Board 2`,
-    boardSize,
-    grid: board2Grid,
-    sequence: board2Sequence,
-    thumbnail: '',
-    createdAt: now + 1,
-  });
+    boards.push({
+      id: uuidv4(),
+      name: `${opponentName} Right Column`,
+      boardSize,
+      grid: board2Grid,
+      sequence: board2Sequence,
+      thumbnail: '',
+      createdAt: now + 1,
+    });
 
-  // Board 3: Straight up middle column (or column 1 if size is 2)
-  const middleCol = boardSize === 2 ? 1 : Math.floor(boardSize / 2);
-  const board3Grid = createEmptyGrid();
-  const board3Sequence: Board['sequence'] = [];
-  for (let row = boardSize - 1; row >= 0; row--) {
-    board3Grid[row]![middleCol] = 'piece';
+    // Board 3: Middle-ish column
+    // For small boards (2-5): use true middle
+    // For medium boards (6-10): use column around 1/3
+    // For large boards (>10): use a column around 1/4
+    let middleCol: number;
+    if (boardSize <= 5) {
+      middleCol = Math.floor(boardSize / 2);
+    } else if (boardSize <= 10) {
+      middleCol = Math.floor(boardSize / 3);
+    } else {
+      middleCol = Math.floor(boardSize / 4);
+    }
+
+    const board3Grid = createEmptyGrid();
+    const board3Sequence: Board['sequence'] = [];
+    for (let row = boardSize - 1; row >= 0; row--) {
+      board3Grid[row]![middleCol] = 'piece';
+      board3Sequence.push({
+        position: { row, col: middleCol },
+        type: 'piece',
+        order: boardSize - row,
+      });
+    }
     board3Sequence.push({
-      position: { row, col: middleCol },
+      position: { row: -1, col: middleCol },
+      type: 'final',
+      order: boardSize + 1,
+    });
+
+    boards.push({
+      id: uuidv4(),
+      name: `${opponentName} Middle Column`,
+      boardSize,
+      grid: board3Grid,
+      sequence: board3Sequence,
+      thumbnail: '',
+      createdAt: now + 2,
+    });
+  } else {
+    // CPU Tougher: Off-edge columns with traps
+    // Strategy: Use columns that are not on edges (0 or last) and not exact center
+
+    // Board 1: Near-right column with traps at bottom on both sides
+    const col1 = boardSize === 2 ? 1 : Math.max(1, boardSize - 2); // Second from right
+    const board1Grid = createEmptyGrid();
+    const board1Sequence: Board['sequence'] = [];
+    let order1 = 1;
+
+    // Start at bottom of chosen column
+    board1Grid[boardSize - 1]![col1] = 'piece';
+    board1Sequence.push({
+      position: { row: boardSize - 1, col: col1 },
       type: 'piece',
-      order: boardSize - row,
+      order: order1++,
     });
-  }
-  board3Sequence.push({
-    position: { row: -1, col: middleCol },
-    type: 'final',
-    order: boardSize + 1,
-  });
 
-  boards.push({
-    id: uuidv4(),
-    name: `${opponentName} Board 3`,
-    boardSize,
-    grid: board3Grid,
-    sequence: board3Sequence,
-    thumbnail: '',
-    createdAt: now + 2,
-  });
+    // Add traps on both sides at bottom
+    if (col1 > 0) {
+      board1Grid[boardSize - 1]![col1 - 1] = 'trap';
+      board1Sequence.push({
+        position: { row: boardSize - 1, col: col1 - 1 },
+        type: 'trap',
+        order: order1++,
+      });
+    }
+    if (col1 < boardSize - 1) {
+      board1Grid[boardSize - 1]![col1 + 1] = 'trap';
+      board1Sequence.push({
+        position: { row: boardSize - 1, col: col1 + 1 },
+        type: 'trap',
+        order: order1++,
+      });
+    }
 
-  // Board 4: Diagonal or L-shaped path (with optional trap for CPU Tougher)
-  const board4Grid = createEmptyGrid();
-  const board4Sequence: Board['sequence'] = [];
-  let order = 1;
+    // Go straight up
+    for (let row = boardSize - 2; row >= 0; row--) {
+      board1Grid[row]![col1] = 'piece';
+      board1Sequence.push({
+        position: { row, col: col1 },
+        type: 'piece',
+        order: order1++,
+      });
+    }
 
-  // Start at bottom-left
-  board4Grid[boardSize - 1]![0] = 'piece';
-  board4Sequence.push({
-    position: { row: boardSize - 1, col: 0 },
-    type: 'piece',
-    order: order++,
-  });
-
-  // If CPU Tougher, add a trap
-  if (isTougher && boardSize > 2) {
-    const trapCol = Math.floor(boardSize / 2);
-    board4Grid[boardSize - 1]![trapCol] = 'trap';
-    board4Sequence.push({
-      position: { row: boardSize - 1, col: trapCol },
-      type: 'trap',
-      order: order++,
+    board1Sequence.push({
+      position: { row: -1, col: col1 },
+      type: 'final',
+      order: order1,
     });
-  }
 
-  // Move to top-right corner in diagonal steps
-  let currentRow = boardSize - 1;
-  let currentCol = 0;
-  const targetCol = boardSize - 1;
+    boards.push({
+      id: uuidv4(),
+      name: `${opponentName} Board 1`,
+      boardSize,
+      grid: board1Grid,
+      sequence: board1Sequence,
+      thumbnail: '',
+      createdAt: now,
+    });
 
-  // First move horizontally to target column
-  while (currentCol < targetCol) {
-    currentCol++;
-    board4Grid[currentRow]![currentCol] = 'piece';
-    board4Sequence.push({
-      position: { row: currentRow, col: currentCol },
+    // Board 2: Near-left column with traps at bottom on both sides
+    const col2 = boardSize === 2 ? 0 : 1; // Second from left (or left edge for 2x2)
+    const board2Grid = createEmptyGrid();
+    const board2Sequence: Board['sequence'] = [];
+    let order2 = 1;
+
+    // Start at bottom of chosen column
+    board2Grid[boardSize - 1]![col2] = 'piece';
+    board2Sequence.push({
+      position: { row: boardSize - 1, col: col2 },
       type: 'piece',
-      order: order++,
+      order: order2++,
     });
-  }
 
-  // Then move vertically to top
-  while (currentRow > 0) {
-    currentRow--;
-    board4Grid[currentRow]![currentCol] = 'piece';
-    board4Sequence.push({
-      position: { row: currentRow, col: currentCol },
+    // Add traps on both sides at bottom (if not on edge)
+    if (col2 > 0) {
+      board2Grid[boardSize - 1]![col2 - 1] = 'trap';
+      board2Sequence.push({
+        position: { row: boardSize - 1, col: col2 - 1 },
+        type: 'trap',
+        order: order2++,
+      });
+    }
+    if (col2 < boardSize - 1) {
+      board2Grid[boardSize - 1]![col2 + 1] = 'trap';
+      board2Sequence.push({
+        position: { row: boardSize - 1, col: col2 + 1 },
+        type: 'trap',
+        order: order2++,
+      });
+    }
+
+    // Go straight up
+    for (let row = boardSize - 2; row >= 0; row--) {
+      board2Grid[row]![col2] = 'piece';
+      board2Sequence.push({
+        position: { row, col: col2 },
+        type: 'piece',
+        order: order2++,
+      });
+    }
+
+    board2Sequence.push({
+      position: { row: -1, col: col2 },
+      type: 'final',
+      order: order2,
+    });
+
+    boards.push({
+      id: uuidv4(),
+      name: `${opponentName} Board 2`,
+      boardSize,
+      grid: board2Grid,
+      sequence: board2Sequence,
+      thumbnail: '',
+      createdAt: now + 1,
+    });
+
+    // Board 3: Off-center column with traps in the middle of the path
+    const col3 = boardSize === 2 ? 1 : Math.floor(boardSize / 2) + (boardSize > 4 ? 1 : 0); // Slightly off-center
+    const board3Grid = createEmptyGrid();
+    const board3Sequence: Board['sequence'] = [];
+    let order3 = 1;
+
+    // Start at bottom
+    board3Grid[boardSize - 1]![col3] = 'piece';
+    board3Sequence.push({
+      position: { row: boardSize - 1, col: col3 },
       type: 'piece',
-      order: order++,
+      order: order3++,
+    });
+
+    // Go up to middle
+    const trapRow = Math.floor(boardSize / 2);
+    for (let row = boardSize - 2; row > trapRow; row--) {
+      board3Grid[row]![col3] = 'piece';
+      board3Sequence.push({
+        position: { row, col: col3 },
+        type: 'piece',
+        order: order3++,
+      });
+    }
+
+    // Place piece at trap row
+    board3Grid[trapRow]![col3] = 'piece';
+    board3Sequence.push({
+      position: { row: trapRow, col: col3 },
+      type: 'piece',
+      order: order3++,
+    });
+
+    // Add traps on both sides at trap row
+    if (col3 > 0) {
+      board3Grid[trapRow]![col3 - 1] = 'trap';
+      board3Sequence.push({
+        position: { row: trapRow, col: col3 - 1 },
+        type: 'trap',
+        order: order3++,
+      });
+    }
+    if (col3 < boardSize - 1) {
+      board3Grid[trapRow]![col3 + 1] = 'trap';
+      board3Sequence.push({
+        position: { row: trapRow, col: col3 + 1 },
+        type: 'trap',
+        order: order3++,
+      });
+    }
+
+    // Continue to top
+    for (let row = trapRow - 1; row >= 0; row--) {
+      board3Grid[row]![col3] = 'piece';
+      board3Sequence.push({
+        position: { row, col: col3 },
+        type: 'piece',
+        order: order3++,
+      });
+    }
+
+    board3Sequence.push({
+      position: { row: -1, col: col3 },
+      type: 'final',
+      order: order3,
+    });
+
+    boards.push({
+      id: uuidv4(),
+      name: `${opponentName} Board 3`,
+      boardSize,
+      grid: board3Grid,
+      sequence: board3Sequence,
+      thumbnail: '',
+      createdAt: now + 2,
     });
   }
-
-  // Add final goal
-  board4Sequence.push({
-    position: { row: -1, col: targetCol },
-    type: 'final',
-    order: order,
-  });
-
-  boards.push({
-    id: uuidv4(),
-    name: `${opponentName} Board 4`,
-    boardSize,
-    grid: board4Grid,
-    sequence: board4Sequence,
-    thumbnail: '',
-    createdAt: now + 3,
-  });
 
   return boards;
 }

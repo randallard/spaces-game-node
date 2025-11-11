@@ -212,6 +212,11 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 1 }
     );
 
+    // Set playerTrapPosition so opponent trap at (1,0) becomes visible (rotated from opponent's 0,1)
+    result.simulationDetails!.playerHitTrap = true;
+    result.simulationDetails!.playerLastStep = 0;
+    result.simulationDetails!.playerTrapPosition = { row: 1, col: 0 }; // Rotated position where player hit trap
+
     const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
     const svg = result_obj.svg;
 
@@ -399,6 +404,11 @@ describe('generateCombinedBoardSvg', () => {
       { row: 0, col: 0 },
       { row: 0, col: 1 }
     );
+
+    // Set playerTrapPosition so opponent trap at (0,0) becomes visible
+    result.simulationDetails!.playerHitTrap = true;
+    result.simulationDetails!.playerLastStep = 0;
+    result.simulationDetails!.playerTrapPosition = { row: 0, col: 0 }; // Position where player hit trap
 
     const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
     const svg = result_obj.svg;

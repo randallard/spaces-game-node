@@ -301,6 +301,13 @@ export function SavedBoards({
         </div>
       ) : (
         <>
+          {/* Create New Board Button */}
+          <div className={styles.topActions}>
+            <button onClick={handleCreateNew} className={styles.newBoardButton}>
+              + Create New Board
+            </button>
+          </div>
+
           {/* Size Filter */}
           <div className={styles.filterBar}>
             <span className={styles.filterLabel}>Filter by size:</span>
@@ -348,12 +355,6 @@ export function SavedBoards({
                 onDelete={handleDelete}
               />
             ))}
-          </div>
-
-          <div className={styles.footer}>
-            <button onClick={handleCreateNew} className={styles.newBoardButton}>
-              + Create New Board
-            </button>
           </div>
         </>
       )}

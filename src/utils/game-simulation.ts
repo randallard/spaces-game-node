@@ -105,6 +105,8 @@ export function simulateRound(
   let opponentMoves = 0;
   let playerLastStep = -1; // Last sequence step executed by player
   let opponentLastStep = -1; // Last sequence step executed by opponent
+  let playerTrapPosition: Position | null = null; // Position where player hit trap
+  let opponentTrapPosition: Position | null = null; // Position where opponent hit trap
 
   // Track trap placements
   const traps: TrapData = {
@@ -217,6 +219,7 @@ export function simulateRound(
           console.log(`Player lost point from trap! Score now ${playerScore}`);
         }
         playerHitTrap = true;
+        playerTrapPosition = { row: playerPosition.row, col: playerPosition.col };
         playerRoundEnded = true;
       }
     }
@@ -235,6 +238,7 @@ export function simulateRound(
           console.log(`Opponent lost point from trap! Score now ${opponentScore}`);
         }
         opponentHitTrap = true;
+        opponentTrapPosition = { row: opponentPosition.row, col: opponentPosition.col };
         opponentRoundEnded = true;
       }
     }
@@ -323,6 +327,8 @@ export function simulateRound(
       opponentHitTrap,
       playerLastStep,
       opponentLastStep,
+      playerTrapPosition: playerTrapPosition ?? undefined,
+      opponentTrapPosition: opponentTrapPosition ?? undefined,
     },
   };
 }

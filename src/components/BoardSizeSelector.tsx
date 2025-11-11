@@ -56,7 +56,16 @@ export function BoardSizeSelector({
   // Check board availability for a given size
   const getBoardAvailability = (size: number) => {
     const playerHasBoards = playerBoards.some((b) => b.boardSize === size);
-    const cpuHasBoards = cpuBoards.some((b) => b.boardSize === size);
+
+    // CPU needs at least 3 boards for the size to be considered "ready"
+    // This matches the check in App.tsx cpuHasBoardsForSize function
+    let cpuHasBoards = false;
+    if (opponent) {
+      const cpuBoardsForSize = cpuBoards.filter(
+        (b) => b.boardSize === size && b.name.startsWith(opponent.name)
+      );
+      cpuHasBoards = cpuBoardsForSize.length >= 3;
+    }
 
     return {
       playerHasBoards,

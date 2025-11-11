@@ -520,9 +520,12 @@ export function BoardCreator({
             const isSelectedStartColumn = colIdx === selectedStartColumn;
             const useLargeBoard = boardSize > 9;
 
-            // Find if there's a move at this position
-            const moveAtPosition = sequence.find(
-              (m) => m.position.row === rowIdx && m.position.col === colIdx && m.type !== 'final'
+            // Find moves at this position - separate for pieces and traps
+            const pieceAtPosition = sequence.find(
+              (m) => m.position.row === rowIdx && m.position.col === colIdx && m.type === 'piece'
+            );
+            const trapAtPosition = sequence.find(
+              (m) => m.position.row === rowIdx && m.position.col === colIdx && m.type === 'trap'
             );
             const isCurrentPiece = piecePosition?.row === rowIdx && piecePosition?.col === colIdx && phase === 'building';
 
@@ -546,25 +549,25 @@ export function BoardCreator({
                   cursor: isEmpty && isStartChoice && useLargeBoard ? 'pointer' : undefined,
                 }}
               >
-                {/* Show piece with number */}
-                {cell === 'piece' && moveAtPosition && (
+                {/* Show piece with number (only if no trap at this position) */}
+                {cell === 'piece' && pieceAtPosition && !trapAtPosition && (
                   <div className={`${styles.cellPiece} ${isCurrentPiece ? styles.cellPieceCurrent : ''}`}>
                     <svg viewBox="0 0 40 40" className={styles.pieceIcon}>
                       <circle cx="20" cy="20" r="15" fill="#4a90e2" />
                       <text x="20" y="20" fontSize="16" fill="white" textAnchor="middle" dy=".3em">
-                        {moveAtPosition.order}
+                        {pieceAtPosition.order}
                       </text>
                     </svg>
                   </div>
                 )}
 
-                {/* Show trap with number */}
-                {cell === 'trap' && moveAtPosition && (
+                {/* Show trap with number (trap always shows if present) */}
+                {cell === 'trap' && trapAtPosition && (
                   <div className={styles.cellTrap}>
                     <svg viewBox="0 0 40 40" className={styles.trapIcon}>
                       <path d="M5 5 l30 30 m0 -30 l-30 30" stroke="#f5222d" strokeWidth="4" opacity="0.7" />
                       <text x="35" y="20" fontSize="14" fill="#f5222d" textAnchor="middle" dy=".3em" fontWeight="bold">
-                        {moveAtPosition.order}
+                        {trapAtPosition.order}
                       </text>
                     </svg>
                   </div>
