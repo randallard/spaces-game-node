@@ -52,3 +52,6 @@ export type { CpuSamCustomizerProps } from './CpuSamCustomizer';
 
 export { WelcomeModal } from './WelcomeModal';
 export type { WelcomeModalProps } from './WelcomeModal';
+
+export { GeneratingModal } from './GeneratingModal';
+export type { GeneratingModalProps } from './GeneratingModal';
