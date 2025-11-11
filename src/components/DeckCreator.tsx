@@ -6,9 +6,29 @@
 import { type ReactElement, useState, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Deck, Board } from '@/types';
+import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import styles from './DeckCreator.module.css';
 
 type SizeFilter = 'all' | '2-5' | '6-10' | '11-20' | '21+' | number;
+
+/**
+ * BoardThumbnail component with on-demand thumbnail generation
+ */
+interface BoardThumbnailProps {
+  board: Board;
+}
+
+function BoardThumbnail({ board }: BoardThumbnailProps): ReactElement {
+  const thumbnail = useBoardThumbnail(board);
+
+  return (
+    <img
+      src={thumbnail}
+      alt={board.name}
+      className={styles.boardThumbnail}
+    />
+  );
+}
 
 export interface DeckCreatorProps {
   /** Available boards to choose from */
@@ -190,11 +210,7 @@ export function DeckCreator({
                   className={styles.boardCard}
                   title={board.name}
                 >
-                  <img
-                    src={board.thumbnail}
-                    alt={board.name}
-                    className={styles.boardThumbnail}
-                  />
+                  <BoardThumbnail board={board} />
                   <span className={styles.boardName}>{board.name}</span>
                 </button>
               ))
@@ -220,11 +236,7 @@ export function DeckCreator({
                     ×
                   </button>
                 </div>
-                <img
-                  src={board.thumbnail}
-                  alt={board.name}
-                  className={styles.boardThumbnail}
-                />
+                <BoardThumbnail board={board} />
                 <span className={styles.boardName}>{board.name}</span>
               </div>
             ))}

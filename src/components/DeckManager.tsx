@@ -4,10 +4,32 @@
  */
 
 import { type ReactElement, useState, useMemo } from 'react';
-import type { Deck } from '@/types';
+import type { Deck, Board } from '@/types';
+import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import styles from './DeckManager.module.css';
 
 type SizeFilter = 'all' | 2 | 3;
+
+/**
+ * MiniThumbnail component with on-demand thumbnail generation
+ */
+interface MiniThumbnailProps {
+  board: Board;
+  index: number;
+}
+
+function MiniThumbnail({ board, index }: MiniThumbnailProps): ReactElement {
+  const thumbnail = useBoardThumbnail(board);
+
+  return (
+    <img
+      src={thumbnail}
+      alt={board.name}
+      className={styles.miniThumbnail}
+      title={`Round ${index + 1}: ${board.name}`}
+    />
+  );
+}
 
 export interface DeckManagerProps {
   /** Available decks */
@@ -142,12 +164,10 @@ export function DeckManager({
               {/* Board thumbnails preview */}
               <div className={styles.boardPreview}>
                 {deck.boards.slice(0, 5).map((board, i) => (
-                  <img
+                  <MiniThumbnail
                     key={`${board.id}-${i}`}
-                    src={board.thumbnail}
-                    alt={board.name}
-                    className={styles.miniThumbnail}
-                    title={`Round ${i + 1}: ${board.name}`}
+                    board={board}
+                    index={i}
                   />
                 ))}
                 {deck.boards.length > 5 && (

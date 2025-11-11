@@ -6,10 +6,54 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BoardSizeSelector } from './BoardSizeSelector';
+import type { Board } from '@/types';
 
 describe('BoardSizeSelector', () => {
   let mockOnSizeSelected: ReturnType<typeof vi.fn>;
   let mockOnBack: ReturnType<typeof vi.fn>;
+
+  // Mock boards for testing - create boards for sizes 2 and 3
+  const mockPlayerBoards: Board[] = [
+    {
+      id: '1',
+      name: 'Player 2x2 Board',
+      boardSize: 2,
+      grid: [['piece', 'empty'], ['empty', 'empty']],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    },
+    {
+      id: '2',
+      name: 'Player 3x3 Board',
+      boardSize: 3,
+      grid: [['piece', 'empty', 'empty'], ['empty', 'empty', 'empty'], ['empty', 'empty', 'empty']],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    },
+  ];
+
+  const mockCpuBoards: Board[] = [
+    {
+      id: '3',
+      name: 'CPU 2x2 Board',
+      boardSize: 2,
+      grid: [['piece', 'empty'], ['empty', 'empty']],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    },
+    {
+      id: '4',
+      name: 'CPU 3x3 Board',
+      boardSize: 3,
+      grid: [['piece', 'empty', 'empty'], ['empty', 'empty', 'empty'], ['empty', 'empty', 'empty']],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    },
+  ];
 
   beforeEach(() => {
     mockOnSizeSelected = vi.fn();
@@ -54,7 +98,13 @@ describe('BoardSizeSelector', () => {
 
   describe('Size Selection', () => {
     it('should call onSizeSelected with 2 when 2x2 is clicked', () => {
-      render(<BoardSizeSelector onSizeSelected={mockOnSizeSelected} />);
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          playerBoards={mockPlayerBoards}
+          cpuBoards={mockCpuBoards}
+        />
+      );
 
       const button2x2 = screen.getByLabelText('Select 2x2 board size');
       fireEvent.click(button2x2);
@@ -64,7 +114,13 @@ describe('BoardSizeSelector', () => {
     });
 
     it('should call onSizeSelected with 3 when 3x3 is clicked', () => {
-      render(<BoardSizeSelector onSizeSelected={mockOnSizeSelected} />);
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          playerBoards={mockPlayerBoards}
+          cpuBoards={mockCpuBoards}
+        />
+      );
 
       const button3x3 = screen.getByLabelText('Select 3x3 board size');
       fireEvent.click(button3x3);
@@ -109,7 +165,13 @@ describe('BoardSizeSelector', () => {
 
   describe('Accessibility', () => {
     it('should have proper aria-labels for size options', () => {
-      render(<BoardSizeSelector onSizeSelected={mockOnSizeSelected} />);
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          playerBoards={mockPlayerBoards}
+          cpuBoards={mockCpuBoards}
+        />
+      );
 
       expect(
         screen.getByLabelText('Select 2x2 board size')
@@ -122,7 +184,13 @@ describe('BoardSizeSelector', () => {
 
   describe('Multiple Interactions', () => {
     it('should allow selecting different sizes multiple times', () => {
-      render(<BoardSizeSelector onSizeSelected={mockOnSizeSelected} />);
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          playerBoards={mockPlayerBoards}
+          cpuBoards={mockCpuBoards}
+        />
+      );
 
       const button2x2 = screen.getByLabelText('Select 2x2 board size');
       const button3x3 = screen.getByLabelText('Select 3x3 board size');

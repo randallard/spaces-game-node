@@ -21,6 +21,8 @@ export interface TutorialNameEntryProps {
   cpuSamName: string;
   /** Callback when player enters name and clicks Continue */
   onContinue: (user: UserProfile) => void;
+  /** Callback when player clicks Skip */
+  onSkip?: () => void;
 }
 
 /**
@@ -34,6 +36,7 @@ export function TutorialNameEntry({
   playerWon,
   cpuSamName,
   onContinue,
+  onSkip,
 }: TutorialNameEntryProps): ReactElement {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -125,7 +128,7 @@ export function TutorialNameEntry({
     .join(' ');
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} style={{ position: 'relative' }}>
       <div className={styles.content}>
         {/* Congratulations Text */}
         <div className={styles.congratsSection}>
@@ -212,6 +215,13 @@ export function TutorialNameEntry({
           </button>
         </form>
       </div>
+
+      {/* Skip Button - only show if onSkip is provided */}
+      {onSkip && (
+        <button onClick={onSkip} className={styles.skipButton}>
+          Skip Tutorial
+        </button>
+      )}
     </div>
   );
 }

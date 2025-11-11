@@ -7,7 +7,6 @@ import { useState, useCallback, type ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Board, CellContent, BoardMove, Position, BoardSize } from '@/types';
 import { validateBoard } from '@/utils/board-validation';
-import { generateBoardThumbnail } from '@/utils/svg-thumbnail';
 import styles from './BoardCreator.module.css';
 
 export interface BoardCreatorProps {
@@ -211,8 +210,8 @@ export function BoardCreator({
       return;
     }
 
-    // Generate thumbnail
-    board.thumbnail = generateBoardThumbnail(board);
+    // Thumbnail will be generated on-demand when displayed
+    board.thumbnail = '';
 
     // Auto-save
     onBoardSaved(board);

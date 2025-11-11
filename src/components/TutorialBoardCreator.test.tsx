@@ -227,6 +227,17 @@ describe('TutorialBoardCreator', () => {
       if (!finalMoveButton.hasAttribute('disabled')) {
         fireEvent.click(finalMoveButton);
 
+        // Should show completion message
+        expect(screen.getByText("Let's see how you did!")).toBeInTheDocument();
+
+        // Should show View Results button
+        const viewResultsButton = screen.getByText('View Results');
+        expect(viewResultsButton).toBeInTheDocument();
+
+        // Click View Results
+        fireEvent.click(viewResultsButton);
+
+        // Should call onBoardComplete
         expect(mockOnBoardComplete).toHaveBeenCalled();
       }
     });
@@ -282,12 +293,16 @@ describe('TutorialBoardCreator', () => {
       if (!finalMoveButton.hasAttribute('disabled')) {
         fireEvent.click(finalMoveButton);
 
-        if (mockOnBoardComplete.mock.calls.length > 0) {
-          const call = mockOnBoardComplete.mock.calls[0];
-          if (call) {
-            const [, hasTraps] = call;
-            expect(hasTraps).toBe(true);
-          }
+        // Click View Results
+        const viewResultsButton = screen.getByText('View Results');
+        fireEvent.click(viewResultsButton);
+
+        // Should call onBoardComplete with hasTraps = true
+        expect(mockOnBoardComplete).toHaveBeenCalled();
+        const call = mockOnBoardComplete.mock.calls[0];
+        if (call) {
+          const [, hasTraps] = call;
+          expect(hasTraps).toBe(true);
         }
       }
     });
@@ -441,20 +456,24 @@ describe('TutorialBoardCreator', () => {
       if (!finalMoveButton.hasAttribute('disabled')) {
         fireEvent.click(finalMoveButton);
 
-        if (mockOnBoardComplete.mock.calls.length > 0) {
-          const call = mockOnBoardComplete.mock.calls[0];
-          if (call) {
-            const [board] = call;
-            expect(board).toMatchObject({
-              name: 'My First Board',
-              boardSize: 2,
-            });
-            expect(board.id).toBeDefined();
-            expect(board.grid).toBeDefined();
-            expect(board.sequence).toBeDefined();
-            expect(board.thumbnail).toBeDefined();
-            expect(board.createdAt).toBeDefined();
-          }
+        // Click View Results
+        const viewResultsButton = screen.getByText('View Results');
+        fireEvent.click(viewResultsButton);
+
+        // Should call onBoardComplete with valid board
+        expect(mockOnBoardComplete).toHaveBeenCalled();
+        const call = mockOnBoardComplete.mock.calls[0];
+        if (call) {
+          const [board] = call;
+          expect(board).toMatchObject({
+            name: 'My First Board',
+            boardSize: 2,
+          });
+          expect(board.id).toBeDefined();
+          expect(board.grid).toBeDefined();
+          expect(board.sequence).toBeDefined();
+          expect(board.thumbnail).toBeDefined();
+          expect(board.createdAt).toBeDefined();
         }
       }
     });

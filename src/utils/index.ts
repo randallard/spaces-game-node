@@ -71,3 +71,20 @@ export {
   loadBackupFromFile,
   type BackupData,
 } from './backup';
+
+// App helpers
+export {
+  getOpponentIcon,
+  createEmptyUser,
+  createInitialState,
+} from './app-helpers';
+
+// CPU data generation
+export {
+  generateCpuBoardsForSize,
+  generateCpuDeckForSize,
+  createDefaultCpuOpponent,
+  createCpuTougherOpponent,
+  initializeDefaultCpuData,
+  initializeCpuTougherData,
+} from './default-cpu-data';

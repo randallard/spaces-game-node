@@ -7,7 +7,6 @@ import { useState, useCallback, type ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Board, CellContent, BoardMove, Position, CreatureId } from '@/types';
 import { validateBoard } from '@/utils/board-validation';
-import { generateBoardThumbnail } from '@/utils/svg-thumbnail';
 import styles from './BoardCreator.module.css'; // Reuse existing styles
 import tutorialStyles from './TutorialBoardCreator.module.css';
 
@@ -16,14 +15,16 @@ export interface TutorialBoardCreatorProps {
   cpuSamData: { name: string; creature: CreatureId };
   /** Callback when board is created and final move is clicked */
   onBoardComplete: (board: Board, hasTraps: boolean) => void;
+  /** Callback when player clicks Skip */
+  onSkip?: () => void;
 }
 
-type CreationPhase = 'choosing-start' | 'building';
+type CreationPhase = 'choosing-start' | 'building' | 'completing';
 
 /**
  * Tutorial version of BoardCreator with dynamic instruction text
  */
-export function TutorialBoardCreator({ cpuSamData, onBoardComplete }: TutorialBoardCreatorProps): ReactElement {
+export function TutorialBoardCreator({ cpuSamData, onBoardComplete, onSkip }: TutorialBoardCreatorProps): ReactElement {
   const boardSize = 2; // Tutorial always uses 2x2
 
   const createEmptyGrid = useCallback((): CellContent[][] => {
@@ -36,6 +37,7 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete }: TutorialBo
   const [piecePosition, setPiecePosition] = useState<Position | null>(null);
   const [hasSetTrap, setHasSetTrap] = useState(false);
   const [isTrapped, setIsTrapped] = useState(false);
+  const [completedBoard, setCompletedBoard] = useState<Board | null>(null);
 
   /**
    * Get adjacent positions (orthogonal only: up, down, left, right)
@@ -187,9 +189,21 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete }: TutorialBo
       return;
     }
 
-    board.thumbnail = generateBoardThumbnail(board);
-    onBoardComplete(board, hasSetTrap);
-  }, [piecePosition, sequence, grid, hasSetTrap, onBoardComplete]);
+    // Thumbnail will be generated on-demand when displayed
+    board.thumbnail = '';
+
+    // Save the board and set completing phase to show "Let's see how you did!" message
+    setCompletedBoard(board);
+    setPhase('completing');
+  }, [piecePosition, sequence, grid]);
+
+  /**
+   * Handle view results
+   */
+  const handleViewResults = useCallback((): void => {
+    if (!completedBoard) return;
+    onBoardComplete(completedBoard, hasSetTrap);
+  }, [completedBoard, hasSetTrap, onBoardComplete]);
 
   /**
    * Handle restart
@@ -201,6 +215,7 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete }: TutorialBo
     setPiecePosition(null);
     setHasSetTrap(false);
     setIsTrapped(false);
+    setCompletedBoard(null);
   }, [createEmptyGrid]);
 
   // Get adjacent positions for Move/Trap buttons
@@ -216,6 +231,10 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete }: TutorialBo
    * Get dynamic tutorial instruction text
    */
   const getInstruction = (): string => {
+    if (phase === 'completing') {
+      return "Let's see how you did!";
+    }
+
     if (phase === 'choosing-start') {
       return 'first, choose a start square';
     }
@@ -242,22 +261,24 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete }: TutorialBo
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} style={{ position: 'relative' }}>
       {/* Tutorial Instruction Text */}
       <div className={tutorialStyles.instructionBanner}>
         {getInstruction()}
       </div>
 
-      {/* Final Move Button */}
-      <button
-        onClick={handleFinalMove}
-        className={styles.finalMoveButton}
-        aria-label="Complete board with final move"
-        disabled={!canFinish}
-        title={!canFinish ? 'Move your piece to the top row first' : 'Complete the board'}
-      >
-        Final Move
-      </button>
+      {/* Final Move Button - hide during completing phase */}
+      {phase !== 'completing' && (
+        <button
+          onClick={handleFinalMove}
+          className={styles.finalMoveButton}
+          aria-label="Complete board with final move"
+          disabled={!canFinish}
+          title={!canFinish ? 'Move your piece to the top row first' : 'Complete the board'}
+        >
+          Final Move
+        </button>
+      )}
 
       {/* Grid */}
       <div
@@ -333,6 +354,22 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete }: TutorialBo
             Restart
           </button>
         </div>
+      )}
+
+      {/* View Results Button - show during completing phase */}
+      {phase === 'completing' && (
+        <div className={styles.actions}>
+          <button onClick={handleViewResults} className={styles.finalMoveButton}>
+            View Results
+          </button>
+        </div>
+      )}
+
+      {/* Skip Button - only show if onSkip is provided */}
+      {onSkip && (
+        <button onClick={onSkip} className={tutorialStyles.skipButton}>
+          Skip Tutorial
+        </button>
       )}
     </div>
   );

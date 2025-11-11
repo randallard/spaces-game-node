@@ -97,7 +97,9 @@ describe('SavedBoards', () => {
 
       const thumbnail = screen.getByAltText('Board 1 thumbnail');
       expect(thumbnail).toBeInTheDocument();
-      expect(thumbnail).toHaveAttribute('src', boards[0]!.thumbnail);
+      // Thumbnail is generated on-demand, check it's a valid data URI
+      expect(thumbnail).toHaveAttribute('src');
+      expect(thumbnail.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
     });
 
     it('should display board meta information', () => {

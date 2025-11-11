@@ -7,7 +7,7 @@ import { type ReactElement, useState } from 'react';
 import type { RoundResult } from '@/types';
 import { RoundResults } from './RoundResults';
 import { HelpModal } from './HelpModal';
-import { generateOpponentThumbnail } from '@/utils/svg-thumbnail';
+import { generateOpponentThumbnail, generateBoardThumbnail } from '@/utils/svg-thumbnail';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
 import styles from './AllRoundsResults.module.css';
@@ -237,7 +237,7 @@ export function AllRoundsResults({
                     <div className={styles.thumbnailWrapper}>
                       <span className={styles.thumbnailLabel}>{playerName}</span>
                       <img
-                        src={result.playerBoard.thumbnail}
+                        src={generateBoardThumbnail(result.playerBoard)}
                         alt={result.playerBoard.name}
                         className={styles.thumbnail}
                       />

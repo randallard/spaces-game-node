@@ -3,7 +3,7 @@
  * Rules based on game requirements:
  * - Exactly 1 piece required
  * - 0-3 traps allowed
- * - Total sequence items: minimum 2, maximum 8
+ * - Total sequence items: minimum 2, maximum 2(boardSize²)
  * - Sequence numbers must be consecutive 1..N with no duplicates
  * - Each sequence item must correspond to a cell on the board
  */
@@ -55,10 +55,13 @@ export function validateBoard(board: Board): ValidationResult {
       message: `Board must have at least 2 sequence items (found ${sequenceCount})`,
     });
   }
-  if (sequenceCount > 8) {
+
+  // Maximum sequence is 2(n²) - allows for complex paths with revisits
+  const maxSequence = 2 * board.boardSize * board.boardSize;
+  if (sequenceCount > maxSequence) {
     errors.push({
       field: 'sequence',
-      message: `Board can have maximum 8 sequence items (found ${sequenceCount})`,
+      message: `Board can have maximum ${maxSequence} sequence items (found ${sequenceCount})`,
     });
   }
 
@@ -233,7 +236,8 @@ export function hasTooManyTraps(board: Board): boolean {
 
 export function hasValidSequenceCount(board: Board): boolean {
   const count = board.sequence.length;
-  return count >= 2 && count <= 8;
+  const maxSequence = 2 * board.boardSize * board.boardSize;
+  return count >= 2 && count <= maxSequence;
 }
 
 export function hasConsecutiveSequence(board: Board): boolean {

@@ -105,6 +105,67 @@
   letter-spacing: 0.05em;
 }
 
+/* Disabled state (player doesn't have boards) */
+.sizeOptionDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.sizeOptionDisabled:hover {
+  border-color: #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transform: none;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.sizeOptionMessage {
+  font-size: 0.875rem;
+  color: #ef4444;
+  text-align: center;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+/* Generate state (CPU doesn't have boards) */
+.sizeOptionGenerate {
+  border-color: #fbbf24;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.sizeOptionGenerate:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.2);
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, #fffbeb 0%, #fde68a 100%);
+}
+
+.generateButton {
+  margin-top: 1rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  background-color: #f59e0b;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.generateButton:hover:not(:disabled) {
+  background-color: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.generateButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Back Button */
 .backButton {
   padding: 0.75rem 2rem;
