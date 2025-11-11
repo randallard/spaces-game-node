@@ -6,7 +6,7 @@
 import { useState, useMemo, type ReactElement } from 'react';
 import type { Board, BoardSize } from '@/types';
 import { isValidBoardSize } from '@/types';
-import { BoardCreator } from './BoardCreator';
+import { BoardCreatorModal } from './BoardCreatorModal';
 import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import styles from './SavedBoards.module.css';
 
@@ -182,12 +182,12 @@ export function SavedBoards({
   if (viewMode === 'select-size') {
     // Common preset sizes
     const presetSizes = [
-      { size: 2, label: 'Classic', description: 'Quick strategic gameplay' },
-      { size: 3, label: 'Standard', description: 'Balanced complexity' },
-      { size: 4, label: 'Advanced', description: 'More strategic depth' },
-      { size: 5, label: 'Large', description: 'Complex gameplay' },
-      { size: 8, label: 'Extra Large', description: 'Extended matches' },
-      { size: 10, label: 'Huge', description: 'Epic battles' },
+      { size: 2, description: 'Quick strategic gameplay' },
+      { size: 3, description: 'Balanced complexity' },
+      { size: 4, description: 'More strategic depth' },
+      { size: 5, description: 'Complex gameplay' },
+      { size: 8, description: 'Extended matches' },
+      { size: 10, description: 'Epic battles' },
     ];
 
     const handleCustomSize = () => {
@@ -209,7 +209,7 @@ export function SavedBoards({
 
           {/* Preset sizes */}
           <div className={styles.sizeOptions}>
-            {presetSizes.map(({ size, label, description }) => (
+            {presetSizes.map(({ size, description }) => (
               <button
                 key={size}
                 onClick={() => handleSizeSelected(size)}
@@ -217,7 +217,6 @@ export function SavedBoards({
               >
                 <div className={styles.sizeOptionLabel}>{size}×{size}</div>
                 <div className={styles.sizeOptionDescription}>{description}</div>
-                <div className={styles.sizeOptionBadge}>{label}</div>
               </button>
             ))}
           </div>
@@ -265,7 +264,7 @@ export function SavedBoards({
   // Show board creator
   if (viewMode === 'create') {
     return (
-      <BoardCreator
+      <BoardCreatorModal
         onBoardSaved={handleBoardSaved}
         onCancel={handleCancel}
         existingBoards={boards}

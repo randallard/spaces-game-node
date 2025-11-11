@@ -11,6 +11,9 @@ export type { OpponentManagerProps } from './OpponentManager';
 export { BoardCreator } from './BoardCreator';
 export type { BoardCreatorProps } from './BoardCreator';
 
+export { BoardCreatorModal } from './BoardCreatorModal';
+export type { BoardCreatorModalProps } from './BoardCreatorModal';
+
 export { SavedBoards } from './SavedBoards';
 export type { SavedBoardsProps } from './SavedBoards';
 
