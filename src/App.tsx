@@ -6,6 +6,7 @@ import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-
 import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsForSize, generateCpuDeckForSize } from '@/utils/default-cpu-data';
 import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
 import { updateOpponentStats } from '@/utils/opponent-helpers';
+import { getFeatureUnlocks, getNextUnlock, isDeckModeUnlocked } from '@/utils/feature-unlocks';
 import {
   UserProfile,
   OpponentManager,
@@ -997,7 +998,10 @@ function App(): React.ReactElement {
           </div>
         );
 
-      case 'game-mode-selection':
+      case 'game-mode-selection': {
+        const deckModeUnlocked = isDeckModeUnlocked(savedUser);
+        const nextUnlock = getNextUnlock(savedUser);
+
         return (
           <div className={styles.gameModeSelection}>
             {state.opponent && (
@@ -1006,6 +1010,11 @@ function App(): React.ReactElement {
               </div>
             )}
             <h2>Choose Game Mode</h2>
+            {nextUnlock && (
+              <div style={{ textAlign: 'center', marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+                🎯 Next unlock: <strong>{nextUnlock.description}</strong> ({nextUnlock.gamesRemaining} {nextUnlock.gamesRemaining === 1 ? 'game' : 'games'} remaining)
+              </div>
+            )}
             <div className={styles.modeGrid}>
               <button
                 onClick={() => handleGameModeSelect('round-by-round')}
@@ -1015,11 +1024,17 @@ function App(): React.ReactElement {
                 <p>Classic mode - Select a board each round (5 rounds)</p>
               </button>
               <button
-                onClick={() => handleGameModeSelect('deck')}
-                className={styles.modeCard}
+                onClick={deckModeUnlocked ? () => handleGameModeSelect('deck') : undefined}
+                className={`${styles.modeCard} ${!deckModeUnlocked ? styles.lockedCard : ''}`}
+                disabled={!deckModeUnlocked}
               >
-                <h3>Deck Mode</h3>
+                <h3>Deck Mode {!deckModeUnlocked && '🔒'}</h3>
                 <p>Fast mode - Create a deck of 10 boards and play all at once</p>
+                {!deckModeUnlocked && (
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+                    Complete {3 - (savedUser?.stats.totalGames ?? 0)} more {3 - (savedUser?.stats.totalGames ?? 0) === 1 ? 'game' : 'games'} to unlock
+                  </p>
+                )}
               </button>
             </div>
             <button
@@ -1030,6 +1045,7 @@ function App(): React.ReactElement {
             </button>
           </div>
         );
+      }
 
       case 'board-size-selection':
         return (
@@ -1040,6 +1056,7 @@ function App(): React.ReactElement {
             cpuBoards={cpuBoards || []}
             opponent={state.opponent}
             onGenerateCpuBoards={handleGenerateCpuBoards}
+            user={savedUser}
           />
         );
 

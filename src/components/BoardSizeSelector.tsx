@@ -6,7 +6,8 @@
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { isValidBoardSize } from '@/types';
-import type { Board, Opponent, Deck } from '@/types';
+import type { Board, Opponent, Deck, UserProfile } from '@/types';
+import { getFeatureUnlocks, getNextUnlock } from '@/utils/feature-unlocks';
 import styles from './BoardSizeSelector.module.css';
 
 export interface BoardSizeSelectorProps {
@@ -22,6 +23,8 @@ export interface BoardSizeSelectorProps {
   opponent?: Opponent | null;
   /** Callback to generate CPU boards for a given size */
   onGenerateCpuBoards?: (size: number, opponentName?: string) => Promise<Deck | undefined>;
+  /** User profile for feature unlock checks */
+  user?: UserProfile | null;
 }
 
 /**
@@ -38,20 +41,31 @@ export function BoardSizeSelector({
   cpuBoards = [],
   opponent,
   onGenerateCpuBoards,
+  user,
 }: BoardSizeSelectorProps): ReactElement {
   const [customSize, setCustomSize] = useState<string>('');
   const [customError, setCustomError] = useState<string>('');
   const [generatingSize, setGeneratingSize] = useState<number | null>(null);
 
-  // Common preset sizes
-  const presetSizes = [
+  // Get unlocked board sizes
+  const { boardSizes: unlockedSizes } = getFeatureUnlocks(user);
+  const nextUnlock = getNextUnlock(user);
+
+  // All preset sizes
+  const allPresetSizes = [
     { size: 2, label: 'Classic', description: 'Quick strategic gameplay' },
     { size: 3, label: 'Standard', description: 'Balanced complexity' },
     { size: 4, label: 'Advanced', description: 'More strategic depth' },
     { size: 5, label: 'Large', description: 'Complex gameplay' },
-    { size: 8, label: 'Extra Large', description: 'Extended matches' },
+    { size: 6, label: 'Large+', description: 'Extra depth' },
+    { size: 7, label: 'Extra Large', description: 'Extended matches' },
+    { size: 8, label: 'Very Large', description: 'Complex battles' },
+    { size: 9, label: 'Massive', description: 'Long games' },
     { size: 10, label: 'Huge', description: 'Epic battles' },
   ];
+
+  // Filter to only show unlocked sizes
+  const presetSizes = allPresetSizes.filter(preset => unlockedSizes.includes(preset.size));
 
   // Check board availability for a given size
   const getBoardAvailability = (size: number) => {
@@ -88,11 +102,15 @@ export function BoardSizeSelector({
 
   const handleCustomSize = () => {
     const size = parseInt(customSize);
-    if (isValidBoardSize(size)) {
-      onSizeSelected(size);
-    } else {
+    if (!isValidBoardSize(size)) {
       setCustomError(`Please enter a number between 2 and 99`);
+      return;
     }
+    if (!unlockedSizes.includes(size)) {
+      setCustomError(`Board size ${size}×${size} is not unlocked yet. Complete more games to unlock!`);
+      return;
+    }
+    onSizeSelected(size);
   };
 
   return (
@@ -101,6 +119,13 @@ export function BoardSizeSelector({
       <p className={styles.subtitle}>
         Select the board size for this game. All boards used in this game must match this size.
       </p>
+
+      {/* Next unlock notification */}
+      {nextUnlock && (
+        <div style={{ textAlign: 'center', margin: '1rem 0', padding: '0.75rem', backgroundColor: '#fef3c7', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+          🎯 Next unlock: <strong>{nextUnlock.description}</strong> ({nextUnlock.gamesRemaining} {nextUnlock.gamesRemaining === 1 ? 'game' : 'games'} remaining)
+        </div>
+      )}
 
       {/* Preset sizes */}
       <div className={styles.sizeOptions}>
