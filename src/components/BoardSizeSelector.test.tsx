@@ -6,11 +6,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BoardSizeSelector } from './BoardSizeSelector';
-import type { Board } from '@/types';
+import type { Board, Opponent } from '@/types';
 
 describe('BoardSizeSelector', () => {
   let mockOnSizeSelected: ReturnType<typeof vi.fn>;
   let mockOnBack: ReturnType<typeof vi.fn>;
+
+  const mockOpponent: Opponent = {
+    id: 'cpu-opponent',
+    name: 'CPU Sam',
+    type: 'cpu',
+    wins: 0,
+    losses: 0,
+  };
 
   // Mock boards for testing - create boards for sizes 2 and 3
   const mockPlayerBoards: Board[] = [
@@ -37,7 +45,25 @@ describe('BoardSizeSelector', () => {
   const mockCpuBoards: Board[] = [
     {
       id: '3',
-      name: 'CPU 2x2 Board',
+      name: 'CPU Sam 2x2 Board 1',
+      boardSize: 2,
+      grid: [['piece', 'empty'], ['empty', 'empty']],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    },
+    {
+      id: '3b',
+      name: 'CPU Sam 2x2 Board 2',
+      boardSize: 2,
+      grid: [['piece', 'empty'], ['empty', 'empty']],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    },
+    {
+      id: '3c',
+      name: 'CPU Sam 2x2 Board 3',
       boardSize: 2,
       grid: [['piece', 'empty'], ['empty', 'empty']],
       sequence: [],
@@ -46,7 +72,25 @@ describe('BoardSizeSelector', () => {
     },
     {
       id: '4',
-      name: 'CPU 3x3 Board',
+      name: 'CPU Sam 3x3 Board 1',
+      boardSize: 3,
+      grid: [['piece', 'empty', 'empty'], ['empty', 'empty', 'empty'], ['empty', 'empty', 'empty']],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    },
+    {
+      id: '4b',
+      name: 'CPU Sam 3x3 Board 2',
+      boardSize: 3,
+      grid: [['piece', 'empty', 'empty'], ['empty', 'empty', 'empty'], ['empty', 'empty', 'empty']],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    },
+    {
+      id: '4c',
+      name: 'CPU Sam 3x3 Board 3',
       boardSize: 3,
       grid: [['piece', 'empty', 'empty'], ['empty', 'empty', 'empty'], ['empty', 'empty', 'empty']],
       sequence: [],
@@ -103,6 +147,7 @@ describe('BoardSizeSelector', () => {
           onSizeSelected={mockOnSizeSelected}
           playerBoards={mockPlayerBoards}
           cpuBoards={mockCpuBoards}
+          opponent={mockOpponent}
         />
       );
 
@@ -119,6 +164,7 @@ describe('BoardSizeSelector', () => {
           onSizeSelected={mockOnSizeSelected}
           playerBoards={mockPlayerBoards}
           cpuBoards={mockCpuBoards}
+          opponent={mockOpponent}
         />
       );
 
@@ -170,6 +216,7 @@ describe('BoardSizeSelector', () => {
           onSizeSelected={mockOnSizeSelected}
           playerBoards={mockPlayerBoards}
           cpuBoards={mockCpuBoards}
+          opponent={mockOpponent}
         />
       );
 
@@ -189,6 +236,7 @@ describe('BoardSizeSelector', () => {
           onSizeSelected={mockOnSizeSelected}
           playerBoards={mockPlayerBoards}
           cpuBoards={mockCpuBoards}
+          opponent={mockOpponent}
         />
       );
 

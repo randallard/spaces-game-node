@@ -14,16 +14,32 @@ export function generateBoardThumbnail(board: Board): string {
 
 /**
  * Generate SVG thumbnail for opponent's board (180-degree rotated)
+ * @param board - The opponent's board
+ * @param maxStep - Maximum step to render (for replay animation)
+ * @param trapPositionToShow - If provided, only show trap at this rotated position (in global coordinates)
  */
-export function generateOpponentThumbnail(board: Board, maxStep?: number): string {
-  const svg = createBoardSvg(board, true, maxStep);
+export function generateOpponentThumbnail(
+  board: Board,
+  maxStep?: number,
+  trapPositionToShow?: { row: number; col: number }
+): string {
+  const svg = createBoardSvg(board, true, maxStep, trapPositionToShow);
   return createDataUri(svg);
 }
 
 /**
  * Create SVG string for board
+ * @param board - The board to render
+ * @param rotated - Whether to rotate 180 degrees (for opponent view)
+ * @param maxStep - Maximum step to render (for replay animation)
+ * @param trapPositionToShow - If provided (for opponent boards), only show trap at this rotated position
  */
-function createBoardSvg(board: Board, rotated: boolean, maxStep?: number): string {
+function createBoardSvg(
+  board: Board,
+  rotated: boolean,
+  maxStep?: number,
+  trapPositionToShow?: { row: number; col: number }
+): string {
   const size = board.grid.length;
   const cellSize = 45;
   const viewBoxSize = size * cellSize + 10;
@@ -54,6 +70,19 @@ function createBoardSvg(board: Board, rotated: boolean, maxStep?: number): strin
     // Skip final moves (goal reached marker)
     if (move.type === 'final') {
       return;
+    }
+
+    // For opponent boards, only show traps at the specified position (after rotation)
+    if (rotated && move.type === 'trap') {
+      if (!trapPositionToShow) {
+        return; // Skip all traps if no position specified
+      }
+      const size = board.grid.length;
+      const rotatedRow = size - 1 - move.position.row;
+      const rotatedCol = size - 1 - move.position.col;
+      if (rotatedRow !== trapPositionToShow.row || rotatedCol !== trapPositionToShow.col) {
+        return; // Skip this trap, it's not at the position to show
+      }
     }
 
     const key = `${move.position.row},${move.position.col}`;
@@ -96,6 +125,11 @@ function drawPiece(x: number, y: number, order: number, isOpponent: boolean): st
   const centerY = y + 20;
   const color = isOpponent ? '#722ed1' : '#4a90e2'; // Purple for opponent, blue for player
 
+  // Don't show numbers for opponent pieces
+  if (isOpponent) {
+    return `<circle cx="${centerX}" cy="${centerY}" r="15" fill="${color}"/>`;
+  }
+
   return `
     <circle cx="${centerX}" cy="${centerY}" r="15" fill="${color}"/>
     <text x="${centerX}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${order}</text>
@@ -109,6 +143,11 @@ function drawTrap(x: number, y: number, order: number, isOpponent: boolean): str
   const startX = x + 5;
   const startY = y + 5;
   const color = isOpponent ? 'rgb(249, 115, 22)' : '#f5222d'; // Orange for opponent, red for player
+
+  // Don't show numbers for opponent traps
+  if (isOpponent) {
+    return `<path d="M${startX} ${startY} l30 30 m0 -30 l-30 30" stroke="${color}" stroke-width="4" opacity="0.7"/>`;
+  }
 
   return `
     <path d="M${startX} ${startY} l30 30 m0 -30 l-30 30" stroke="${color}" stroke-width="4" opacity="0.7"/>

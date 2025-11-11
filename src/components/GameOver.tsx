@@ -264,7 +264,8 @@ export function GameOver({
                       <img
                         src={generateOpponentThumbnail(
                           result.opponentBoard,
-                          result.simulationDetails?.opponentLastStep
+                          result.simulationDetails?.opponentLastStep,
+                          result.simulationDetails?.playerTrapPosition // Only show trap at position player hit
                         )}
                         alt={result.opponentBoard.name}
                         className={styles.thumbnail}

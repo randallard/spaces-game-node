@@ -5,6 +5,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-simulation';
 import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsForSize, generateCpuDeckForSize } from '@/utils/default-cpu-data';
 import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
+import { updateOpponentStats } from '@/utils/opponent-helpers';
 import {
   UserProfile,
   OpponentManager,
@@ -76,6 +77,12 @@ function App(): React.ReactElement {
     const cpuExists = savedOpponents?.some(o => o.id === CPU_OPPONENT_ID);
     const cpuTougherExists = savedOpponents?.some(o => o.id === CPU_TOUGHER_OPPONENT_ID);
 
+    // Check if CPU boards exist (at least 3 for each size)
+    const cpuBoards2x2 = (cpuBoards || []).filter(b => b.boardSize === 2 && b.name.startsWith(CPU_OPPONENT_NAME));
+    const cpuBoards3x3 = (cpuBoards || []).filter(b => b.boardSize === 3 && b.name.startsWith(CPU_OPPONENT_NAME));
+    const cpuTougherBoards2x2 = (cpuBoards || []).filter(b => b.boardSize === 2 && b.name.startsWith('CPU Tougher'));
+    const cpuTougherBoards3x3 = (cpuBoards || []).filter(b => b.boardSize === 3 && b.name.startsWith('CPU Tougher'));
+
     // Check if CPU decks exist with proper names
     const cpuDeck2x2Exists = cpuDecks?.some(d => d.name === 'CPU Sam 2×2 Deck');
     const cpuDeck3x3Exists = cpuDecks?.some(d => d.name === 'CPU Sam 3×3 Deck');
@@ -86,15 +93,22 @@ function App(): React.ReactElement {
     const newCpuBoards: Board[] = [];
     let updatedCpuDecks = cpuDecks || [];
 
-    // Initialize regular CPU opponent if it doesn't exist OR if decks are missing
-    if (!cpuExists || !cpuDeck2x2Exists || !cpuDeck3x3Exists) {
+    // Initialize regular CPU opponent if it doesn't exist OR if boards/decks are missing
+    if (!cpuExists || cpuBoards2x2.length < 3 || cpuBoards3x3.length < 3 || !cpuDeck2x2Exists || !cpuDeck3x3Exists) {
       console.log('[APP] Initializing default CPU opponent, boards, and decks');
       const defaultData = initializeDefaultCpuData();
 
       if (!cpuExists) {
         newOpponents.push(defaultData.opponent);
       }
-      newCpuBoards.push(...defaultData.boards2x2, ...defaultData.boards3x3);
+
+      // Only add boards if they don't exist (at least 3)
+      if (cpuBoards2x2.length < 3) {
+        newCpuBoards.push(...defaultData.boards2x2);
+      }
+      if (cpuBoards3x3.length < 3) {
+        newCpuBoards.push(...defaultData.boards3x3);
+      }
 
       // Remove old CPU decks and add new ones
       if (!cpuDeck2x2Exists || !cpuDeck3x3Exists) {
@@ -106,15 +120,22 @@ function App(): React.ReactElement {
       }
     }
 
-    // Initialize CPU Tougher opponent if it doesn't exist OR if decks are missing
-    if (!cpuTougherExists || !cpuTougherDeck2x2Exists || !cpuTougherDeck3x3Exists) {
+    // Initialize CPU Tougher opponent if it doesn't exist OR if boards/decks are missing
+    if (!cpuTougherExists || cpuTougherBoards2x2.length < 3 || cpuTougherBoards3x3.length < 3 || !cpuTougherDeck2x2Exists || !cpuTougherDeck3x3Exists) {
       console.log('[APP] Initializing CPU Tougher opponent, boards, and decks');
       const tougherData = initializeCpuTougherData();
 
       if (!cpuTougherExists) {
         newOpponents.push(tougherData.opponent);
       }
-      newCpuBoards.push(...tougherData.boards2x2, ...tougherData.boards3x3);
+
+      // Only add boards if they don't exist (at least 3)
+      if (cpuTougherBoards2x2.length < 3) {
+        newCpuBoards.push(...tougherData.boards2x2);
+      }
+      if (cpuTougherBoards3x3.length < 3) {
+        newCpuBoards.push(...tougherData.boards3x3);
+      }
 
       // Remove old CPU Tougher decks and add new ones
       if (!cpuTougherDeck2x2Exists || !cpuTougherDeck3x3Exists) {
@@ -195,6 +216,39 @@ function App(): React.ReactElement {
     }
   }, [state.user, setSavedUser]);
 
+  // Update opponent record when game ends
+  useEffect(() => {
+    if (!state.opponent) return;
+
+    // Check if we're in an end-game phase
+    if (state.phase.type === 'game-over' || state.phase.type === 'all-rounds-results') {
+      // Determine if opponent won
+      const opponentWon = state.opponentScore > state.playerScore;
+
+      // Update opponent stats
+      const updatedOpponent = updateOpponentStats(state.opponent, opponentWon);
+
+      // Only update if the record actually changed (to avoid infinite loops)
+      if (updatedOpponent.wins !== state.opponent.wins || updatedOpponent.losses !== state.opponent.losses) {
+        // Save updated opponent to localStorage
+        const existingIndex = (savedOpponents || []).findIndex((o) => o.id === updatedOpponent.id);
+        if (existingIndex >= 0) {
+          const updated = [...(savedOpponents || [])];
+          updated[existingIndex] = updatedOpponent;
+          setSavedOpponents(updated);
+          console.log('[APP] Updated opponent record:', updatedOpponent.name, `(${updatedOpponent.wins}-${updatedOpponent.losses})`);
+        }
+
+        // Update opponent in game state
+        loadState({
+          ...state,
+          opponent: updatedOpponent,
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase.type, state.opponent?.id, state.playerScore, state.opponentScore]);
+
   // Handle user creation
   const handleUserCreate = (newUser: UserProfileType) => {
     // Save user to localStorage
@@ -219,7 +273,7 @@ function App(): React.ReactElement {
   const cpuHasBoardsForSize = (opponentName: string, size: number): boolean => {
     if (!state.opponent || state.opponent.type !== 'cpu') return true;
 
-    // Check if CPU has boards for this size
+    // Check if CPU has boards for this size (minimum 3 boards required)
     const cpuBoardsForSize = (cpuBoards || []).filter(
       b => b.boardSize === size && b.name.startsWith(opponentName)
     );
@@ -228,7 +282,7 @@ function App(): React.ReactElement {
     const expectedDeckName = `${opponentName} ${size}×${size} Deck`;
     const cpuDeckForSize = (cpuDecks || []).find(d => d.name === expectedDeckName);
 
-    return cpuBoardsForSize.length >= 10 && cpuDeckForSize !== undefined;
+    return cpuBoardsForSize.length >= 3 && cpuDeckForSize !== undefined;
   };
 
   // Handle board size selection
@@ -272,6 +326,12 @@ function App(): React.ReactElement {
   // Handle generating CPU boards for a specific size
   const handleGenerateCpuBoards = async (size: number): Promise<void> => {
     if (!state.opponent) return;
+
+    // Check if boards already exist for this size (defensive check)
+    if (cpuHasBoardsForSize(state.opponent.name, size)) {
+      console.log(`[handleGenerateCpuBoards] Boards already exist for ${state.opponent.name} ${size}x${size}, skipping generation`);
+      return;
+    }
 
     console.log(`[handleGenerateCpuBoards] Generating ${size}x${size} boards for ${state.opponent.name}`);
 

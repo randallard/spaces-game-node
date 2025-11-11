@@ -268,7 +268,7 @@ describe('initializeDefaultCpuData', () => {
   it('should create correct number of boards', () => {
     const data = initializeDefaultCpuData();
 
-    expect(data.boards2x2).toHaveLength(4);
+    expect(data.boards2x2).toHaveLength(3);
     expect(data.boards3x3).toHaveLength(3);
   });
 
@@ -538,8 +538,8 @@ describe('initializeCpuTougherData', () => {
   it('should create correct number of boards', () => {
     const data = initializeCpuTougherData();
 
-    expect(data.boards2x2).toHaveLength(4);
-    expect(data.boards3x3).toHaveLength(4);
+    expect(data.boards2x2).toHaveLength(3);
+    expect(data.boards3x3).toHaveLength(3);
   });
 
   it('should create decks with correct boards', () => {
@@ -552,8 +552,8 @@ describe('initializeCpuTougherData', () => {
   it('should create 2x2 deck with mixed trap/no-trap pattern', () => {
     const data = initializeCpuTougherData();
 
-    // Deck pattern: [0,2,1,3,0,2,1,3,0,1] (with trap, no trap, with trap, no trap, ...)
-    const expectedIndices = [0, 2, 1, 3, 0, 2, 1, 3, 0, 1];
+    // Deck pattern: [0,1,2,0,1,2,0,1,2,0] (cycles through 3 boards)
+    const expectedIndices = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0];
 
     expectedIndices.forEach((expectedIndex, i) => {
       expect(data.deck2x2.boards[i]).toBe(data.boards2x2[expectedIndex]);
@@ -563,8 +563,8 @@ describe('initializeCpuTougherData', () => {
   it('should create 3x3 deck with mixed boards', () => {
     const data = initializeCpuTougherData();
 
-    // Deck pattern: [0,2,1,3,0,2,1,3,2,3]
-    const expectedIndices = [0, 2, 1, 3, 0, 2, 1, 3, 2, 3];
+    // Deck pattern: [0,1,2,0,1,2,0,1,2,0] (cycles through 3 boards)
+    const expectedIndices = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0];
 
     expectedIndices.forEach((expectedIndex, i) => {
       expect(data.deck3x3.boards[i]).toBe(data.boards3x3[expectedIndex]);
