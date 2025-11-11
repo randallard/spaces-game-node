@@ -327,8 +327,8 @@ export function simulateRound(
       opponentHitTrap,
       playerLastStep,
       opponentLastStep,
-      playerTrapPosition: playerTrapPosition ?? undefined,
-      opponentTrapPosition: opponentTrapPosition ?? undefined,
+      ...(playerTrapPosition && { playerTrapPosition }),
+      ...(opponentTrapPosition && { opponentTrapPosition }),
     },
   };
 }
