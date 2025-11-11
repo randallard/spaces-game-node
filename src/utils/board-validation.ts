@@ -2,7 +2,7 @@
  * Board validation utilities
  * Rules based on game requirements:
  * - Exactly 1 piece required
- * - 0-3 traps allowed
+ * - 0-(n²-1) traps allowed (e.g., 2x2 allows 3 traps, 3x3 allows 8 traps, 4x4 allows 15 traps)
  * - Total sequence items: minimum 2, maximum 2(boardSize²)
  * - Sequence numbers must be consecutive 1..N with no duplicates
  * - Each sequence item must correspond to a cell on the board
@@ -38,12 +38,13 @@ export function validateBoard(board: Board): ValidationResult {
     });
   }
 
-  // Check trap count
+  // Check trap count (max traps = n² - 1)
   const trapCount = countCellType(board.grid, 'trap');
-  if (trapCount > 3) {
+  const maxTraps = board.boardSize * board.boardSize - 1;
+  if (trapCount > maxTraps) {
     errors.push({
       field: 'trap',
-      message: `Board can have maximum 3 traps (found ${trapCount})`,
+      message: `Board can have maximum ${maxTraps} traps (found ${trapCount})`,
     });
   }
 
@@ -231,7 +232,8 @@ export function hasExactlyOnePiece(board: Board): boolean {
 }
 
 export function hasTooManyTraps(board: Board): boolean {
-  return countCellType(board.grid, 'trap') > 3;
+  const maxTraps = board.boardSize * board.boardSize - 1;
+  return countCellType(board.grid, 'trap') > maxTraps;
 }
 
 export function hasValidSequenceCount(board: Board): boolean {
