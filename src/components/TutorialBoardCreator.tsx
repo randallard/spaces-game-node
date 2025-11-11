@@ -281,10 +281,7 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete, onSkip }: Tu
       )}
 
       {/* Grid */}
-      <div
-        className={styles.grid}
-        style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)` }}
-      >
+      <div className={tutorialStyles.tutorialGrid}>
         {grid.map((row, rowIdx) =>
           row.map((cell, colIdx) => {
             const isAdjacent = adjacentPositions.some(
@@ -305,7 +302,7 @@ export function TutorialBoardCreator({ cpuSamData, onBoardComplete, onSkip }: Tu
             return (
               <div
                 key={`${rowIdx}-${colIdx}`}
-                className={styles.cell}
+                className={tutorialStyles.tutorialCell}
                 aria-label={`Cell ${rowIdx},${colIdx}`}
               >
                 {/* Show piece with number (only if no trap at this position) */}
