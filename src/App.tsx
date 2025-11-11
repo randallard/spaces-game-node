@@ -3,7 +3,8 @@ import styles from './App.module.css';
 import { useGameState } from '@/hooks/useGameState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-simulation';
-import { initializeDefaultCpuData, initializeCpuTougherData } from '@/utils/default-cpu-data';
+import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsForSize, generateCpuDeckForSize } from '@/utils/default-cpu-data';
+import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
 import {
   UserProfile,
   OpponentManager,
@@ -22,60 +23,7 @@ import {
 } from '@/components';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
-import { CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID, CPU_OPPONENT_NAME, CPU_TOUGHER_OPPONENT_NAME } from '@/constants/game-rules';
-
-// Get opponent icon based on opponent type and name
-const getOpponentIcon = (opponent: Opponent): string => {
-  if (opponent.type === 'cpu') {
-    // CPU Tougher gets the strong arm emoji
-    if (opponent.id === CPU_TOUGHER_OPPONENT_ID || opponent.name === CPU_TOUGHER_OPPONENT_NAME) {
-      return '🦾';
-    }
-    // CPU Sam gets the robot emoji
-    return '🤖';
-  }
-  // Human opponents get the person emoji
-  return '👤';
-};
-
-// Create initial empty user for game state initialization
-const createEmptyUser = (): UserProfileType => ({
-  id: '',
-  name: '',
-  createdAt: Date.now(),
-  stats: {
-    totalGames: 0,
-    wins: 0,
-    losses: 0,
-    ties: 0,
-  },
-});
-
-// Initial game state
-const createInitialState = (user: UserProfileType | null): GameState => {
-  // If we have a saved user with a name, go to board management
-  // Otherwise start with tutorial
-  const phase: GameState['phase'] = user && user.name
-    ? { type: 'board-management' }
-    : { type: 'tutorial-intro' };
-
-  return {
-    phase,
-    user: user || createEmptyUser(),
-    opponent: null,
-    gameMode: null,
-    boardSize: null,
-    currentRound: 1,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
-    playerSelectedDeck: null,
-    opponentSelectedDeck: null,
-    roundHistory: [],
-    checksum: '',
-  };
-};
+import { CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID, CPU_OPPONENT_NAME } from '@/constants/game-rules';
 
 function App(): React.ReactElement {
   // LocalStorage for persistence
@@ -277,6 +225,38 @@ function App(): React.ReactElement {
         setPhase({ type: 'opponent-selection', gameMode });
       }
     }
+  };
+
+  // Handle generating CPU boards for a specific size
+  const handleGenerateCpuBoards = async (size: number): Promise<void> => {
+    if (!state.opponent) return;
+
+    console.log(`[handleGenerateCpuBoards] Generating ${size}x${size} boards for ${state.opponent.name}`);
+
+    // Determine if this is CPU Tougher (includes traps)
+    const isTougher = state.opponent.id === 'cpu-tougher-opponent';
+
+    // Generate boards for this size
+    const newBoards = generateCpuBoardsForSize(state.opponent.name, size, isTougher);
+
+    // Generate deck for this size
+    const newDeck = generateCpuDeckForSize(state.opponent.name, size, newBoards);
+
+    // Add boards to CPU boards (check for duplicates first)
+    const existingBoardIds = new Set((cpuBoards || []).map((b) => b.id));
+    const uniqueNewBoards = newBoards.filter((b) => !existingBoardIds.has(b.id));
+
+    if (uniqueNewBoards.length > 0) {
+      setCpuBoards([...(cpuBoards || []), ...uniqueNewBoards]);
+    }
+
+    // Add deck to CPU decks (check for duplicates first)
+    const existingDeckIds = new Set((cpuDecks || []).map((d) => d.id));
+    if (!existingDeckIds.has(newDeck.id)) {
+      setCpuDecks([...(cpuDecks || []), newDeck]);
+    }
+
+    console.log(`[handleGenerateCpuBoards] Added ${uniqueNewBoards.length} boards and 1 deck`);
   };
 
   // Handle opponent selection (for play button)
@@ -701,6 +681,7 @@ function App(): React.ReactElement {
           <TutorialBoardCreator
             cpuSamData={state.phase.cpuSamData}
             onBoardComplete={handleTutorialBoardComplete}
+            onSkip={handleTutorialSkip}
           />
         );
 
@@ -731,6 +712,7 @@ function App(): React.ReactElement {
             playerWon={state.phase.playerWon}
             cpuSamName={state.phase.cpuSamName}
             onContinue={handleTutorialNameContinue}
+            onSkip={handleTutorialSkip}
           />
         );
 
@@ -898,6 +880,10 @@ function App(): React.ReactElement {
           <BoardSizeSelector
             onSizeSelected={handleBoardSizeSelect}
             onBack={() => setPhase({ type: 'game-mode-selection' })}
+            playerBoards={savedBoards || []}
+            cpuBoards={cpuBoards || []}
+            opponent={state.opponent}
+            onGenerateCpuBoards={handleGenerateCpuBoards}
           />
         );
 

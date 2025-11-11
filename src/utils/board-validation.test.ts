@@ -137,11 +137,10 @@ describe('validateBoard', () => {
     });
   });
 
-  it('should allow maximum 8 sequence items', () => {
+  it('should allow maximum 2(boardSize²) sequence items', () => {
     const board = createValidBoard();
-    // Create a 2x4 grid with 1 piece and 7 traps (but only use 3 traps max)
-    // So we'll use 1 piece + 3 traps = 4 items, which is valid
-    // Actually, let's test with maximum: 1 piece + 3 traps = 4 sequence items
+    // For a 2x2 board, max is 2(2²) = 8 sequence items
+    // Create board with 1 piece + 3 traps = 4 items (well under the limit)
     board.grid = [
       ['piece', 'trap'],
       ['trap', 'trap'],
@@ -158,8 +157,9 @@ describe('validateBoard', () => {
     expect(result.valid).toBe(true);
   });
 
-  it('should reject more than 8 sequence items', () => {
+  it('should reject more than 2(boardSize²) sequence items', () => {
     const board = createValidBoard();
+    // For a 2x2 board, max is 2(2²) = 8 sequence items, so 9 should fail
     board.sequence = Array.from({ length: 9 }, (_, i) => ({
       position: { row: 0, col: 0 },
       type: 'piece',

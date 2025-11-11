@@ -33,6 +33,36 @@ function migrateBoardAddSize(board: any): any {
 }
 
 /**
+ * Migrate a board object to clear stored thumbnail
+ * Thumbnails are now generated on-demand to save storage space
+ */
+function migrateBoardClearThumbnail(board: any): any {
+  if (!board || typeof board !== 'object') {
+    return board;
+  }
+
+  // Clear thumbnail if it exists
+  if ('thumbnail' in board) {
+    return {
+      ...board,
+      thumbnail: '',
+    };
+  }
+
+  return board;
+}
+
+/**
+ * Apply all board migrations
+ */
+function migrateBoard(board: any): any {
+  let migrated = board;
+  migrated = migrateBoardAddSize(migrated);
+  migrated = migrateBoardClearThumbnail(migrated);
+  return migrated;
+}
+
+/**
  * Migrate user profile data to add missing boardSize to boards
  */
 export function migrateUserProfile(data: any): any {
@@ -44,7 +74,7 @@ export function migrateUserProfile(data: any): any {
   if (Array.isArray(data.boards)) {
     return {
       ...data,
-      boards: data.boards.map(migrateBoardAddSize),
+      boards: data.boards.map(migrateBoard),
     };
   }
 
@@ -70,7 +100,7 @@ export function migrateGameState(data: any): any {
       return {
         ...deck,
         boards: Array.isArray(deck.boards)
-          ? deck.boards.map(migrateBoardAddSize)
+          ? deck.boards.map(migrateBoard)
           : deck.boards,
       };
     });
@@ -85,7 +115,7 @@ export function migrateGameState(data: any): any {
       return {
         ...deck,
         boards: Array.isArray(deck.boards)
-          ? deck.boards.map(migrateBoardAddSize)
+          ? deck.boards.map(migrateBoard)
           : deck.boards,
       };
     });
@@ -102,7 +132,7 @@ export function migrateBoards(boards: any): any {
     return boards;
   }
 
-  return boards.map(migrateBoardAddSize);
+  return boards.map(migrateBoard);
 }
 
 /**
@@ -120,7 +150,7 @@ export function migrateDecks(data: any): any {
     return {
       ...deck,
       boards: Array.isArray(deck.boards)
-        ? deck.boards.map(migrateBoardAddSize)
+        ? deck.boards.map(migrateBoard)
         : deck.boards,
     };
   });

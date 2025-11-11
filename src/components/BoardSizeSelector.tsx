@@ -6,6 +6,7 @@
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { isValidBoardSize } from '@/types';
+import type { Board, Opponent } from '@/types';
 import styles from './BoardSizeSelector.module.css';
 
 export interface BoardSizeSelectorProps {
@@ -13,6 +14,14 @@ export interface BoardSizeSelectorProps {
   onSizeSelected: (size: number) => void;
   /** Callback to go back */
   onBack?: () => void;
+  /** Player's boards (to check availability) */
+  playerBoards?: Board[];
+  /** CPU opponent's boards (to check availability) */
+  cpuBoards?: Board[];
+  /** Current opponent (to identify which CPU) */
+  opponent?: Opponent | null;
+  /** Callback to generate CPU boards for a given size */
+  onGenerateCpuBoards?: (size: number) => Promise<void>;
 }
 
 /**
@@ -25,9 +34,14 @@ export interface BoardSizeSelectorProps {
 export function BoardSizeSelector({
   onSizeSelected,
   onBack,
+  playerBoards = [],
+  cpuBoards = [],
+  opponent,
+  onGenerateCpuBoards,
 }: BoardSizeSelectorProps): ReactElement {
   const [customSize, setCustomSize] = useState<string>('');
   const [customError, setCustomError] = useState<string>('');
+  const [generatingSize, setGeneratingSize] = useState<number | null>(null);
 
   // Common preset sizes
   const presetSizes = [
@@ -38,6 +52,30 @@ export function BoardSizeSelector({
     { size: 8, label: 'Extra Large', description: 'Extended matches' },
     { size: 10, label: 'Huge', description: 'Epic battles' },
   ];
+
+  // Check board availability for a given size
+  const getBoardAvailability = (size: number) => {
+    const playerHasBoards = playerBoards.some((b) => b.boardSize === size);
+    const cpuHasBoards = cpuBoards.some((b) => b.boardSize === size);
+
+    return {
+      playerHasBoards,
+      cpuHasBoards,
+      bothHaveBoards: playerHasBoards && cpuHasBoards,
+    };
+  };
+
+  // Handle generating CPU boards
+  const handleGenerateCpuBoards = async (size: number) => {
+    if (!onGenerateCpuBoards) return;
+
+    setGeneratingSize(size);
+    try {
+      await onGenerateCpuBoards(size);
+    } finally {
+      setGeneratingSize(null);
+    }
+  };
 
   const handleCustomSize = () => {
     const size = parseInt(customSize);
@@ -57,18 +95,59 @@ export function BoardSizeSelector({
 
       {/* Preset sizes */}
       <div className={styles.sizeOptions}>
-        {presetSizes.map(({ size, label, description }) => (
-          <button
-            key={size}
-            onClick={() => onSizeSelected(size)}
-            className={styles.sizeOption}
-            aria-label={`Select ${size}x${size} board size`}
-          >
-            <div className={styles.sizeOptionLabel}>{size}×{size}</div>
-            <div className={styles.sizeOptionDescription}>{description}</div>
-            <div className={styles.sizeOptionBadge}>{label}</div>
-          </button>
-        ))}
+        {presetSizes.map(({ size, label, description }) => {
+          const { playerHasBoards, cpuHasBoards, bothHaveBoards } = getBoardAvailability(size);
+          const isGenerating = generatingSize === size;
+
+          // Both have boards - normal selectable button
+          if (bothHaveBoards) {
+            return (
+              <button
+                key={size}
+                onClick={() => onSizeSelected(size)}
+                className={styles.sizeOption}
+                aria-label={`Select ${size}x${size} board size`}
+              >
+                <div className={styles.sizeOptionLabel}>{size}×{size}</div>
+                <div className={styles.sizeOptionDescription}>{description}</div>
+                <div className={styles.sizeOptionBadge}>{label}</div>
+              </button>
+            );
+          }
+
+          // Player doesn't have boards - disabled with message
+          if (!playerHasBoards) {
+            return (
+              <div key={size} className={`${styles.sizeOption} ${styles.sizeOptionDisabled}`}>
+                <div className={styles.sizeOptionLabel}>{size}×{size}</div>
+                <div className={styles.sizeOptionDescription}>{description}</div>
+                <div className={styles.sizeOptionBadge}>{label}</div>
+                <div className={styles.sizeOptionMessage}>You need to create {size}×{size} boards</div>
+              </div>
+            );
+          }
+
+          // CPU doesn't have boards - show generate button
+          if (!cpuHasBoards && opponent) {
+            return (
+              <div key={size} className={`${styles.sizeOption} ${styles.sizeOptionGenerate}`}>
+                <div className={styles.sizeOptionLabel}>{size}×{size}</div>
+                <div className={styles.sizeOptionDescription}>{description}</div>
+                <div className={styles.sizeOptionBadge}>{label}</div>
+                <button
+                  onClick={() => handleGenerateCpuBoards(size)}
+                  className={styles.generateButton}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? 'Generating...' : `Generate ${opponent.name} boards`}
+                </button>
+              </div>
+            );
+          }
+
+          // Fallback - shouldn't reach here
+          return null;
+        })}
       </div>
 
       {/* Custom size input */}

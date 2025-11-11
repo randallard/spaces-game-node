@@ -144,6 +144,27 @@
   transform: none;
 }
 
+/* Skip Button (lower right) */
+.skipButton {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.skipButton:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .title {
@@ -152,5 +173,11 @@
 
   .text {
     font-size: 1rem;
+  }
+
+  .skipButton {
+    position: static;
+    margin-top: var(--spacing-xl);
+    width: 100%;
   }
 }

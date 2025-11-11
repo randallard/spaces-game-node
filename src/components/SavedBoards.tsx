@@ -7,6 +7,7 @@ import { useState, useMemo, type ReactElement } from 'react';
 import type { Board, BoardSize } from '@/types';
 import { isValidBoardSize } from '@/types';
 import { BoardCreator } from './BoardCreator';
+import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import styles from './SavedBoards.module.css';
 
 export interface SavedBoardsProps {
@@ -28,6 +29,61 @@ export interface SavedBoardsProps {
 
 type ViewMode = 'list' | 'select-size' | 'create';
 type SizeFilter = 'all' | '2-5' | '6-10' | '11-20' | '21+' | number;
+
+/**
+ * BoardCard component with on-demand thumbnail generation
+ */
+interface BoardCardProps {
+  board: Board;
+  isManagementMode: boolean;
+  onBoardSelected: (board: Board) => void;
+  onDelete: (boardId: string) => void;
+}
+
+function BoardCard({ board, isManagementMode, onBoardSelected, onDelete }: BoardCardProps): ReactElement {
+  const thumbnail = useBoardThumbnail(board);
+
+  return (
+    <div
+      className={`${styles.boardCard} ${!isManagementMode ? styles.boardCardClickable : ''}`}
+      onClick={!isManagementMode ? () => onBoardSelected(board) : undefined}
+    >
+      <div className={styles.boardThumbnail}>
+        <img
+          src={thumbnail}
+          alt={`${board.name} thumbnail`}
+          className={styles.thumbnailImage}
+        />
+      </div>
+
+      <div className={styles.boardInfo}>
+        <h3 className={styles.boardName}>{board.name}</h3>
+        <div className={styles.boardMeta}>
+          <span className={styles.metaItem}>
+            {board.sequence.length} moves
+          </span>
+          <span className={styles.metaItem}>
+            Created {new Date(board.createdAt).toLocaleDateString()}
+          </span>
+        </div>
+      </div>
+
+      {isManagementMode && (
+        <div className={styles.boardActions}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(board.id);
+            }}
+            className={styles.deleteButton}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Saved boards component with list and create views.
@@ -285,45 +341,13 @@ export function SavedBoards({
 
           <div className={styles.boardsGrid}>
             {filteredBoards.map((board) => (
-              <div
+              <BoardCard
                 key={board.id}
-                className={`${styles.boardCard} ${!isManagementMode ? styles.boardCardClickable : ''}`}
-                onClick={!isManagementMode ? () => onBoardSelected(board) : undefined}
-              >
-                <div className={styles.boardThumbnail}>
-                  <img
-                    src={board.thumbnail}
-                    alt={`${board.name} thumbnail`}
-                    className={styles.thumbnailImage}
-                  />
-                </div>
-
-                <div className={styles.boardInfo}>
-                  <h3 className={styles.boardName}>{board.name}</h3>
-                  <div className={styles.boardMeta}>
-                    <span className={styles.metaItem}>
-                      {board.sequence.length} moves
-                    </span>
-                    <span className={styles.metaItem}>
-                      Created {new Date(board.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-
-                {isManagementMode && (
-                  <div className={styles.boardActions}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(board.id);
-                      }}
-                      className={styles.deleteButton}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
+                board={board}
+                isManagementMode={isManagementMode}
+                onBoardSelected={onBoardSelected}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
 

@@ -6,7 +6,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Opponent, Board, Deck } from '@/types';
 import { CPU_OPPONENT_ID, CPU_OPPONENT_NAME, CPU_TOUGHER_OPPONENT_ID, CPU_TOUGHER_OPPONENT_NAME } from '@/constants/game-rules';
-import { generateBoardThumbnail } from '@/utils/svg-thumbnail';
 
 /**
  * Create the default CPU opponent
@@ -105,11 +104,8 @@ export function createDefault2x2Boards(): Board[] {
     createdAt: now + 3,
   };
 
-  // Generate thumbnails
-  board1.thumbnail = generateBoardThumbnail(board1);
-  board2.thumbnail = generateBoardThumbnail(board2);
-  board3.thumbnail = generateBoardThumbnail(board3);
-  board4.thumbnail = generateBoardThumbnail(board4);
+  // Thumbnails will be generated on-demand when displayed
+  // No need to pre-generate them here
 
   return [board1, board2, board3, board4];
 }
@@ -185,10 +181,8 @@ export function createDefault3x3Boards(): Board[] {
     createdAt: now + 2,
   };
 
-  // Generate thumbnails
-  board1.thumbnail = generateBoardThumbnail(board1);
-  board2.thumbnail = generateBoardThumbnail(board2);
-  board3.thumbnail = generateBoardThumbnail(board3);
+  // Thumbnails will be generated on-demand when displayed
+  // No need to pre-generate them here
 
   return [board1, board2, board3];
 }
@@ -357,11 +351,8 @@ export function createCpuTougher2x2Boards(): Board[] {
     createdAt: now + 3,
   };
 
-  // Generate thumbnails
-  board1.thumbnail = generateBoardThumbnail(board1);
-  board2.thumbnail = generateBoardThumbnail(board2);
-  board3.thumbnail = generateBoardThumbnail(board3);
-  board4.thumbnail = generateBoardThumbnail(board4);
+  // Thumbnails will be generated on-demand when displayed
+  // No need to pre-generate them here
 
   return [board1, board2, board3, board4];
 }
@@ -454,11 +445,8 @@ export function createCpuTougher3x3Boards(): Board[] {
     createdAt: now + 3,
   };
 
-  // Generate thumbnails
-  board5.thumbnail = generateBoardThumbnail(board5);
-  board6.thumbnail = generateBoardThumbnail(board6);
-  board7.thumbnail = generateBoardThumbnail(board7);
-  board8.thumbnail = generateBoardThumbnail(board8);
+  // Thumbnails will be generated on-demand when displayed
+  // No need to pre-generate them here
 
   return [board5, board6, board7, board8];
 }
@@ -520,5 +508,214 @@ export function initializeCpuTougherData(): {
     boards3x3,
     deck2x2,
     deck3x3,
+  };
+}
+
+/**
+ * Generate CPU boards dynamically for any board size
+ * Creates 4 playable boards for the specified opponent and size
+ *
+ * @param opponentName - Name of the opponent (used in board names)
+ * @param boardSize - Size of the board (2-99)
+ * @param isTougher - Whether this is for CPU Tougher (includes traps)
+ * @returns Array of 4 boards for the specified size
+ */
+export function generateCpuBoardsForSize(
+  opponentName: string,
+  boardSize: number,
+  isTougher: boolean = false
+): Board[] {
+  const now = Date.now();
+  const boards: Board[] = [];
+
+  // Helper to create an empty grid
+  const createEmptyGrid = (): ('empty' | 'piece' | 'trap')[][] => {
+    return Array.from({ length: boardSize }, () =>
+      Array.from({ length: boardSize }, () => 'empty' as 'empty' | 'piece' | 'trap')
+    );
+  };
+
+  // Board 1: Straight up left column
+  const board1Grid = createEmptyGrid();
+  const board1Sequence: Board['sequence'] = [];
+  for (let row = boardSize - 1; row >= 0; row--) {
+    board1Grid[row]![0] = 'piece';
+    board1Sequence.push({
+      position: { row, col: 0 },
+      type: 'piece',
+      order: boardSize - row,
+    });
+  }
+  board1Sequence.push({
+    position: { row: -1, col: 0 },
+    type: 'final',
+    order: boardSize + 1,
+  });
+
+  boards.push({
+    id: uuidv4(),
+    name: `${opponentName} Board 1`,
+    boardSize,
+    grid: board1Grid,
+    sequence: board1Sequence,
+    thumbnail: '',
+    createdAt: now,
+  });
+
+  // Board 2: Straight up right column
+  const board2Grid = createEmptyGrid();
+  const board2Sequence: Board['sequence'] = [];
+  const rightCol = boardSize - 1;
+  for (let row = boardSize - 1; row >= 0; row--) {
+    board2Grid[row]![rightCol] = 'piece';
+    board2Sequence.push({
+      position: { row, col: rightCol },
+      type: 'piece',
+      order: boardSize - row,
+    });
+  }
+  board2Sequence.push({
+    position: { row: -1, col: rightCol },
+    type: 'final',
+    order: boardSize + 1,
+  });
+
+  boards.push({
+    id: uuidv4(),
+    name: `${opponentName} Board 2`,
+    boardSize,
+    grid: board2Grid,
+    sequence: board2Sequence,
+    thumbnail: '',
+    createdAt: now + 1,
+  });
+
+  // Board 3: Straight up middle column (or column 1 if size is 2)
+  const middleCol = boardSize === 2 ? 1 : Math.floor(boardSize / 2);
+  const board3Grid = createEmptyGrid();
+  const board3Sequence: Board['sequence'] = [];
+  for (let row = boardSize - 1; row >= 0; row--) {
+    board3Grid[row]![middleCol] = 'piece';
+    board3Sequence.push({
+      position: { row, col: middleCol },
+      type: 'piece',
+      order: boardSize - row,
+    });
+  }
+  board3Sequence.push({
+    position: { row: -1, col: middleCol },
+    type: 'final',
+    order: boardSize + 1,
+  });
+
+  boards.push({
+    id: uuidv4(),
+    name: `${opponentName} Board 3`,
+    boardSize,
+    grid: board3Grid,
+    sequence: board3Sequence,
+    thumbnail: '',
+    createdAt: now + 2,
+  });
+
+  // Board 4: Diagonal or L-shaped path (with optional trap for CPU Tougher)
+  const board4Grid = createEmptyGrid();
+  const board4Sequence: Board['sequence'] = [];
+  let order = 1;
+
+  // Start at bottom-left
+  board4Grid[boardSize - 1]![0] = 'piece';
+  board4Sequence.push({
+    position: { row: boardSize - 1, col: 0 },
+    type: 'piece',
+    order: order++,
+  });
+
+  // If CPU Tougher, add a trap
+  if (isTougher && boardSize > 2) {
+    const trapCol = Math.floor(boardSize / 2);
+    board4Grid[boardSize - 1]![trapCol] = 'trap';
+    board4Sequence.push({
+      position: { row: boardSize - 1, col: trapCol },
+      type: 'trap',
+      order: order++,
+    });
+  }
+
+  // Move to top-right corner in diagonal steps
+  let currentRow = boardSize - 1;
+  let currentCol = 0;
+  const targetCol = boardSize - 1;
+
+  // First move horizontally to target column
+  while (currentCol < targetCol) {
+    currentCol++;
+    board4Grid[currentRow]![currentCol] = 'piece';
+    board4Sequence.push({
+      position: { row: currentRow, col: currentCol },
+      type: 'piece',
+      order: order++,
+    });
+  }
+
+  // Then move vertically to top
+  while (currentRow > 0) {
+    currentRow--;
+    board4Grid[currentRow]![currentCol] = 'piece';
+    board4Sequence.push({
+      position: { row: currentRow, col: currentCol },
+      type: 'piece',
+      order: order++,
+    });
+  }
+
+  // Add final goal
+  board4Sequence.push({
+    position: { row: -1, col: targetCol },
+    type: 'final',
+    order: order,
+  });
+
+  boards.push({
+    id: uuidv4(),
+    name: `${opponentName} Board 4`,
+    boardSize,
+    grid: board4Grid,
+    sequence: board4Sequence,
+    thumbnail: '',
+    createdAt: now + 3,
+  });
+
+  return boards;
+}
+
+/**
+ * Generate CPU deck for any board size
+ * Creates a 10-board deck cycling through the provided boards
+ *
+ * @param opponentName - Name of the opponent
+ * @param boardSize - Size of the boards
+ * @param boards - Array of boards to cycle through
+ * @returns Deck with 10 boards
+ */
+export function generateCpuDeckForSize(
+  opponentName: string,
+  boardSize: number,
+  boards: Board[]
+): Deck {
+  if (boards.length === 0) {
+    throw new Error('Need at least 1 board to create deck');
+  }
+
+  const deckBoards: Board[] = [];
+  for (let i = 0; i < 10; i++) {
+    deckBoards.push(boards[i % boards.length]!);
+  }
+
+  return {
+    id: `cpu-deck-${boardSize}x${boardSize}-${Date.now()}`,
+    name: `${opponentName} ${boardSize}×${boardSize} Deck`,
+    boards: deckBoards,
+    createdAt: Date.now(),
   };
 }
