@@ -72,8 +72,8 @@ describe('SavedBoards', () => {
       const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
-      // Should show board creator (look for "Choose a starting square")
-      expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
+      // Should show board creator (look for instruction text)
+      expect(screen.getByText(/Choose a starting column below or click a Start button/)).toBeInTheDocument();
     });
   });
 
@@ -281,7 +281,7 @@ describe('SavedBoards', () => {
       const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
-      expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
+      expect(screen.getByText(/Choose a starting column below or click a Start button/)).toBeInTheDocument();
     });
 
     it('should hide board list when in create mode', () => {
@@ -352,7 +352,7 @@ describe('SavedBoards', () => {
       const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
-      expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
+      expect(screen.getByText(/Choose a starting column below or click a Start button/)).toBeInTheDocument();
 
       // Cancel
       const cancelButton = screen.getByText('Cancel');
@@ -360,7 +360,7 @@ describe('SavedBoards', () => {
 
       // Should return to list
       expect(screen.getByText('Board 1')).toBeInTheDocument();
-      expect(screen.queryByText('Choose a starting square')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Choose a starting column below or click a Start button/)).not.toBeInTheDocument();
     });
   });
 
@@ -444,7 +444,7 @@ describe('SavedBoards', () => {
       const size2x2Button = screen.getByText('2×2');
       fireEvent.click(size2x2Button);
 
-      expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
+      expect(screen.getByText(/Choose a starting column below or click a Start button/)).toBeInTheDocument();
 
       // Switch back to list view
       const cancelButton = screen.getByText('Cancel');

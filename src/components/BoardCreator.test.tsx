@@ -26,7 +26,7 @@ describe('BoardCreator', () => {
     it('should render in choosing-start phase', () => {
       render(<BoardCreator {...defaultProps} />);
 
-      expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
+      expect(screen.getByText(/Choose a starting column below or click a Start button/)).toBeInTheDocument();
 
       // Final Move button should be visible but disabled from the start
       const finalMoveButton = screen.getByText('Final Move');
@@ -60,7 +60,7 @@ describe('BoardCreator', () => {
       fireEvent.click(startButtons[0]!);
 
       // Should transition to building phase
-      expect(screen.getByText(/Select an adjacent square/)).toBeInTheDocument();
+      expect(screen.getByText(/Use WASD keys, the controls below, or click buttons on the board/)).toBeInTheDocument();
       expect(screen.getByText('Restart')).toBeInTheDocument();
     });
 
@@ -70,8 +70,8 @@ describe('BoardCreator', () => {
       const startButtons = screen.getAllByText('Start');
       fireEvent.click(startButtons[0]!);
 
-      // Should show piece icon
-      expect(screen.getByText('⚫')).toBeInTheDocument();
+      // Should show piece with number 1 (first move in sequence)
+      expect(screen.getByText('1')).toBeInTheDocument();
     });
 
     it('should show Move and Trap buttons on adjacent squares', () => {
@@ -102,8 +102,9 @@ describe('BoardCreator', () => {
       const moveButtons = screen.getAllByText('Move');
       fireEvent.click(moveButtons[0]!);
 
-      // Piece should still be visible
-      expect(screen.getByText('⚫')).toBeInTheDocument();
+      // Both piece positions should be visible with numbers
+      expect(screen.getByText('1')).toBeInTheDocument(); // First position
+      expect(screen.getByText('2')).toBeInTheDocument(); // Second position
     });
 
     it('should allow placing trap on adjacent square', () => {
@@ -117,8 +118,9 @@ describe('BoardCreator', () => {
       const trapButtons = screen.getAllByText('Trap');
       fireEvent.click(trapButtons[0]!);
 
-      // Should show trap icon
-      expect(screen.getByText('✖')).toBeInTheDocument();
+      // Should show piece (1) and trap (2)
+      expect(screen.getByText('1')).toBeInTheDocument(); // Piece
+      expect(screen.getByText('2')).toBeInTheDocument(); // Trap
     });
 
     it('should allow placing trap where piece was previously', () => {
@@ -136,8 +138,9 @@ describe('BoardCreator', () => {
       const trapButtons = screen.getAllByText('Trap');
       fireEvent.click(trapButtons[0]!);
 
-      // Should show trap icon
-      expect(screen.getByText('✖')).toBeInTheDocument();
+      // Should show piece (2) and trap (3) - trap replaces piece at (1,0)
+      expect(screen.getByText('2')).toBeInTheDocument(); // Current piece position
+      expect(screen.getByText('3')).toBeInTheDocument(); // Trap at previous position
     });
 
     it('should show Final Move button enabled when piece reaches row 0', () => {
@@ -155,7 +158,7 @@ describe('BoardCreator', () => {
       const finalMoveButton = screen.getByText('Final Move');
       expect(finalMoveButton).toBeInTheDocument();
       expect(finalMoveButton).not.toBeDisabled();
-      expect(finalMoveButton).toHaveAttribute('title', 'Complete the board');
+      expect(finalMoveButton).toHaveAttribute('title', 'Complete the board (Enter)');
     });
 
     it('should show Final Move button as disabled when piece is not at row 0', () => {
@@ -277,14 +280,14 @@ describe('BoardCreator', () => {
       const startButtons = screen.getAllByText('Start');
       fireEvent.click(startButtons[0]!);
 
-      expect(screen.getByText(/Select an adjacent square/)).toBeInTheDocument();
+      expect(screen.getByText(/Use WASD keys, the controls below, or click buttons on the board/)).toBeInTheDocument();
 
       // Click Restart
       const restartButton = screen.getByText('Restart');
       fireEvent.click(restartButton);
 
       // Should return to choosing-start phase
-      expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
+      expect(screen.getByText(/Choose a starting column below or click a Start button/)).toBeInTheDocument();
       expect(screen.queryByText('Restart')).not.toBeInTheDocument();
     });
 
@@ -295,14 +298,14 @@ describe('BoardCreator', () => {
       const startButtons = screen.getAllByText('Start');
       fireEvent.click(startButtons[0]!);
 
-      expect(screen.getByText('⚫')).toBeInTheDocument();
+      expect(screen.getByText('1')).toBeInTheDocument();
 
       // Restart
       const restartButton = screen.getByText('Restart');
       fireEvent.click(restartButton);
 
-      // Piece should be gone
-      expect(screen.queryByText('⚫')).not.toBeInTheDocument();
+      // Piece should be gone (no numbered markers)
+      expect(screen.queryByText('1')).not.toBeInTheDocument();
     });
   });
 
@@ -428,7 +431,7 @@ describe('BoardCreator', () => {
   describe('Instruction text', () => {
     it('should show correct instruction in choosing-start phase', () => {
       render(<BoardCreator {...defaultProps} />);
-      expect(screen.getByText('Choose a starting square')).toBeInTheDocument();
+      expect(screen.getByText(/Choose a starting column below or click a Start button/)).toBeInTheDocument();
     });
 
     it('should show correct instruction in building phase', () => {
@@ -437,7 +440,7 @@ describe('BoardCreator', () => {
       const startButtons = screen.getAllByText('Start');
       fireEvent.click(startButtons[0]!);
 
-      expect(screen.getByText(/Select an adjacent square/)).toBeInTheDocument();
+      expect(screen.getByText(/Use WASD keys, the controls below, or click buttons on the board/)).toBeInTheDocument();
     });
   });
 });
