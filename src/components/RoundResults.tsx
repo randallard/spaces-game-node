@@ -3,7 +3,7 @@
  * @module components/RoundResults
  */
 
-import { type ReactElement, useMemo, useState, useCallback, useEffect } from 'react';
+import { type ReactElement, useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import type { RoundResult } from '@/types';
 import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
@@ -68,6 +68,9 @@ export function RoundResults({
   const [explanations, setExplanations] = useState<string[]>([]);
   const [showCompleteResults, setShowCompleteResults] = useState(showCompleteResultsByDefault);
 
+  // Ref for auto-scrolling explanations panel
+  const explanationsRef = useRef<HTMLDivElement>(null);
+
   // Explanation style preference (from user profile)
   const useLivelyStyle = explanationStyle === 'lively';
 
@@ -79,6 +82,13 @@ export function RoundResults({
     const newStyle = useLivelyStyle ? 'technical' : 'lively';
     onExplanationStyleChange?.(newStyle);
   };
+
+  // Auto-scroll explanations panel to bottom when new content is added
+  useEffect(() => {
+    if (explanationsRef.current) {
+      explanationsRef.current.scrollTop = explanationsRef.current.scrollHeight;
+    }
+  }, [explanations]);
 
   // Calculate the last step index executed for each player
   const getLastExecutedStepIndex = useCallback((
@@ -387,7 +397,7 @@ export function RoundResults({
       }
     }
 
-    setExplanations(prev => [...allExplanations, ...prev]);
+    setExplanations(prev => [...prev, ...allExplanations]);
     setCurrentStep(prev => prev + 1);
   }, [currentStep, getStepExplanation, playerLastStep, opponentLastStep, result.simulationDetails, explanationStyle, playerName, opponentName]);
 
@@ -560,7 +570,7 @@ export function RoundResults({
                 {useLivelyStyle ? '📖 Technical' : '🎉 Lively'}
               </button>
             </div>
-            <div className={styles.explanations}>
+            <div className={styles.explanations} ref={explanationsRef}>
               {explanations.map((text, index) => (
                 <div key={index} className={styles.explanationLine}>
                   {text}
