@@ -6,6 +6,7 @@
 import { type ReactElement, useState, useMemo } from 'react';
 import type { Deck, Board, Opponent } from '@/types';
 import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
+import { getOpponentIcon } from '@/utils/app-helpers';
 import styles from './DeckManager.module.css';
 
 type SizeFilter = 'all' | 2 | 3;
@@ -68,7 +69,7 @@ export function DeckManager({
   onDeleteDeck,
 }: DeckManagerProps): ReactElement {
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
-  const [expandedDeckId, setExpandedDeckId] = useState<string | null>(null);
+  const [selectedDeckForModal, setSelectedDeckForModal] = useState<Deck | null>(null);
 
   const handleDelete = (deckId: string, deckName: string) => {
     if (confirm(`Are you sure you want to delete "${deckName}"?`)) {
@@ -76,13 +77,19 @@ export function DeckManager({
     }
   };
 
-  const handlePlayClick = (deckId: string) => {
-    setExpandedDeckId(expandedDeckId === deckId ? null : deckId);
+  const handlePlayClick = (deck: Deck) => {
+    setSelectedDeckForModal(deck);
   };
 
-  const handleOpponentSelect = (deck: Deck, opponent: Opponent) => {
-    onDeckSelected(deck, opponent);
-    setExpandedDeckId(null);
+  const handleOpponentSelect = (opponent: Opponent) => {
+    if (selectedDeckForModal) {
+      onDeckSelected(selectedDeckForModal, opponent);
+      setSelectedDeckForModal(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedDeckForModal(null);
   };
 
   /**
@@ -201,10 +208,10 @@ export function DeckManager({
               {/* Actions */}
               <div className={styles.actions}>
                 <button
-                  onClick={() => handlePlayClick(deck.id)}
-                  className={`${styles.button} ${styles.playButton} ${expandedDeckId === deck.id ? styles.playButtonActive : ''}`}
+                  onClick={() => handlePlayClick(deck)}
+                  className={`${styles.button} ${styles.playButton}`}
                 >
-                  Play {expandedDeckId === deck.id ? '▲' : '▼'}
+                  Play
                 </button>
                 <button
                   onClick={() => onEditDeck(deck)}
@@ -219,32 +226,51 @@ export function DeckManager({
                   Delete
                 </button>
               </div>
-
-              {/* Opponent Selector Dropdown */}
-              {expandedDeckId === deck.id && (
-                <div className={styles.opponentDropdown}>
-                  <h4 className={styles.opponentDropdownTitle}>Select Opponent:</h4>
-                  <div className={styles.opponentList}>
-                    {opponents.map((opponent) => (
-                      <button
-                        key={opponent.id}
-                        onClick={() => handleOpponentSelect(deck, opponent)}
-                        className={styles.opponentButton}
-                      >
-                        <span className={styles.opponentName}>{opponent.name}</span>
-                        <span className={styles.opponentRecord}>
-                          ({opponent.wins}-{opponent.losses})
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
               ))}
             </div>
           )}
         </>
+      )}
+
+      {/* Opponent Selection Modal */}
+      {selectedDeckForModal && (
+        <div className={styles.modalOverlay} onClick={handleCloseModal}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Select Opponent</h3>
+              <button
+                className={styles.modalCloseButton}
+                onClick={handleCloseModal}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <p className={styles.modalSubtitle}>
+              Playing with: <strong>{selectedDeckForModal.name}</strong>
+            </p>
+            <div className={styles.modalOpponentList}>
+              {opponents.map((opponent) => (
+                <button
+                  key={opponent.id}
+                  onClick={() => handleOpponentSelect(opponent)}
+                  className={styles.modalOpponentButton}
+                >
+                  <span className={styles.modalOpponentIcon}>
+                    {getOpponentIcon(opponent)}
+                  </span>
+                  <div className={styles.modalOpponentInfo}>
+                    <span className={styles.modalOpponentName}>{opponent.name}</span>
+                    <span className={styles.modalOpponentRecord}>
+                      Record: {opponent.wins}-{opponent.losses}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

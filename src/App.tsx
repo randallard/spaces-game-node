@@ -433,7 +433,7 @@ function App(): React.ReactElement {
   };
 
   // Handle deck selection for gameplay
-  const handleDeckSelect = (deck: Deck, opponent?: Opponent) => {
+  const handleDeckSelect = async (deck: Deck, opponent?: Opponent) => {
     // If opponent is provided, update it in game state
     const selectedOpponent = opponent || state.opponent;
 
@@ -453,14 +453,38 @@ function App(): React.ReactElement {
         ...state,
         opponent,
         gameMode: 'deck',
+        boardSize: deck.boards.length > 0 ? deck.boards[0]?.boardSize ?? 2 : 2,
         phase: { type: 'all-rounds-results', results: [] }, // Will be overwritten below
       });
     }
 
-    selectPlayerDeck(deck);
-
     // Determine board size from the deck
     const deckSize = deck.boards.length > 0 ? deck.boards[0]?.boardSize : state.boardSize;
+
+    // If opponent is CPU, check if they have a deck for this size
+    if (selectedOpponent?.type === 'cpu') {
+      const expectedDeckName = `${selectedOpponent.name} ${deckSize}×${deckSize} Deck`;
+      const cpuDeckExists = (cpuDecks || []).some(d => d.name === expectedDeckName && d.boards.length === 10);
+
+      // If CPU doesn't have a deck for this size, generate it
+      if (!cpuDeckExists) {
+        console.log(`[handleDeckSelect] CPU deck not found for ${selectedOpponent.name} ${deckSize}×${deckSize}, generating...`);
+
+        // Show generating modal
+        setGeneratingSize(deckSize ?? 2);
+        setIsGeneratingCpuBoards(true);
+
+        // Generate CPU boards/decks
+        await handleGenerateCpuBoards(deckSize ?? 2);
+
+        // Hide generating modal after a brief delay
+        setTimeout(() => {
+          setIsGeneratingCpuBoards(false);
+        }, 500);
+      }
+    }
+
+    selectPlayerDeck(deck);
 
     // Opponent selects a deck
     let opponentDeck: Deck;

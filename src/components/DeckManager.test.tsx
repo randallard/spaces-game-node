@@ -182,7 +182,7 @@ describe('DeckManager', () => {
     });
   });
 
-  describe('Play button and opponent selection', () => {
+  describe('Play button and opponent selection modal', () => {
     it('should display play button for each deck', () => {
       const decks = [createMockDeck('deck-1', 'My Deck')];
 
@@ -192,7 +192,7 @@ describe('DeckManager', () => {
       expect(playButtons.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should show opponent dropdown when play button clicked', () => {
+    it('should show opponent selection modal when play button clicked', () => {
       const decks = [createMockDeck('deck-1', 'My Deck')];
 
       render(<DeckManager {...defaultProps} decks={decks} />);
@@ -200,9 +200,22 @@ describe('DeckManager', () => {
       const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
       fireEvent.click(playButton);
 
-      expect(screen.getByText('Select Opponent:')).toBeInTheDocument();
+      expect(screen.getByText('Select Opponent')).toBeInTheDocument();
       expect(screen.getByText('CPU Sam')).toBeInTheDocument();
       expect(screen.getByText('CPU Tougher')).toBeInTheDocument();
+    });
+
+    it('should display deck name in modal subtitle', () => {
+      const decks = [createMockDeck('deck-1', 'My Awesome Deck')];
+
+      render(<DeckManager {...defaultProps} decks={decks} />);
+
+      const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
+      fireEvent.click(playButton);
+
+      expect(screen.getByText('Playing with:')).toBeInTheDocument();
+      const deckNames = screen.getAllByText('My Awesome Deck');
+      expect(deckNames.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should call onDeckSelected with deck and opponent when opponent selected', () => {
@@ -220,7 +233,7 @@ describe('DeckManager', () => {
       expect(mockOnDeckSelected).toHaveBeenCalledWith(decks[0], mockOpponents[0]);
     });
 
-    it('should hide dropdown after opponent is selected', () => {
+    it('should hide modal after opponent is selected', () => {
       const decks = [createMockDeck('deck-1', 'My Deck')];
 
       render(<DeckManager {...defaultProps} decks={decks} />);
@@ -228,28 +241,47 @@ describe('DeckManager', () => {
       const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
       fireEvent.click(playButton);
 
-      expect(screen.getByText('Select Opponent:')).toBeInTheDocument();
+      expect(screen.getByText('Select Opponent')).toBeInTheDocument();
 
       const opponentButton = screen.getByText('CPU Sam');
       fireEvent.click(opponentButton);
 
-      expect(screen.queryByText('Select Opponent:')).not.toBeInTheDocument();
+      expect(screen.queryByText('Select Opponent')).not.toBeInTheDocument();
     });
 
-    it('should toggle dropdown when play button clicked multiple times', () => {
+    it('should close modal when clicking overlay', () => {
       const decks = [createMockDeck('deck-1', 'My Deck')];
 
       render(<DeckManager {...defaultProps} decks={decks} />);
 
       const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
-
-      // Open dropdown
       fireEvent.click(playButton);
-      expect(screen.getByText('Select Opponent:')).toBeInTheDocument();
 
-      // Close dropdown
+      expect(screen.getByText('Select Opponent')).toBeInTheDocument();
+
+      // Click overlay (the parent div with modalOverlay class)
+      const modal = screen.getByText('Select Opponent').closest('[class*="modalOverlay"]');
+      if (modal) {
+        fireEvent.click(modal);
+      }
+
+      expect(screen.queryByText('Select Opponent')).not.toBeInTheDocument();
+    });
+
+    it('should close modal when clicking close button', () => {
+      const decks = [createMockDeck('deck-1', 'My Deck')];
+
+      render(<DeckManager {...defaultProps} decks={decks} />);
+
+      const playButton = screen.getAllByRole('button', { name: /Play/ })[0]!;
       fireEvent.click(playButton);
-      expect(screen.queryByText('Select Opponent:')).not.toBeInTheDocument();
+
+      expect(screen.getByText('Select Opponent')).toBeInTheDocument();
+
+      const closeButton = screen.getByLabelText('Close');
+      fireEvent.click(closeButton);
+
+      expect(screen.queryByText('Select Opponent')).not.toBeInTheDocument();
     });
   });
 
