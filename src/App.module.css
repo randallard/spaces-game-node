@@ -442,6 +442,18 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
+.lockedCard {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+}
+
+.lockedCard:hover {
+  border-color: #e5e7eb;
+  transform: none;
+  box-shadow: none;
+}
+
 .modeCard h3 {
   margin: 0 0 var(--spacing-md) 0;
   font-size: 1.5rem;
