@@ -361,11 +361,11 @@ body {
   }
 
   .opponentsPanel {
-    order: 2;
+    order: 1;
   }
 
   .boardsPanel {
-    order: 1;
+    order: 2;
   }
 }
 
