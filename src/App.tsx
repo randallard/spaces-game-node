@@ -908,23 +908,9 @@ function App(): React.ReactElement {
                 </div>
               </div>
 
-              {/* Right Panel - Boards and Decks */}
+              {/* Right Panel - Decks and Boards */}
               <div className={styles.boardsPanel}>
                 <div style={{ marginBottom: '2rem' }}>
-                  <h2 className={styles.panelTitle}>Boards</h2>
-                  <div className={styles.boardsContent}>
-                    <SavedBoards
-                      boards={savedBoards || []}
-                      onBoardSelected={() => { }} // No selection in management mode
-                      onBoardSaved={handleBoardSave}
-                      onBoardDeleted={handleBoardDelete}
-                      currentRound={0} // Not in a round
-                      userName={state.user.name}
-                      opponentName=""
-                    />
-                  </div>
-                </div>
-                <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <h2 className={styles.panelTitle}>Decks</h2>
                     <button
@@ -937,6 +923,20 @@ function App(): React.ReactElement {
                   <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
                     {savedDecks?.length || 0} deck(s) created
                   </p>
+                </div>
+                <div>
+                  <h2 className={styles.panelTitle}>Boards</h2>
+                  <div className={styles.boardsContent}>
+                    <SavedBoards
+                      boards={savedBoards || []}
+                      onBoardSelected={() => { }} // No selection in management mode
+                      onBoardSaved={handleBoardSave}
+                      onBoardDeleted={handleBoardDelete}
+                      currentRound={0} // Not in a round
+                      userName={state.user.name}
+                      opponentName=""
+                    />
+                  </div>
                 </div>
               </div>
             </div>
