@@ -171,14 +171,39 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
     const totalPlayerScore = results.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0);
     const totalOpponentScore = results.reduce((sum, r) => sum + (r.opponentPoints ?? 0), 0);
 
-    setState((prev) => ({
-      ...prev,
-      roundHistory: results,
-      playerScore: totalPlayerScore,
-      opponentScore: totalOpponentScore,
-      phase: { type: 'all-rounds-results', results },
-      checksum: '', // Checksum managed externally
-    }));
+    // Determine winner
+    let winner: 'player' | 'opponent' | 'tie';
+    if (totalPlayerScore > totalOpponentScore) {
+      winner = 'player';
+    } else if (totalOpponentScore > totalPlayerScore) {
+      winner = 'opponent';
+    } else {
+      winner = 'tie';
+    }
+
+    setState((prev) => {
+      // Update user stats
+      const updatedStats = {
+        ...prev.user.stats,
+        totalGames: prev.user.stats.totalGames + 1,
+        wins: prev.user.stats.wins + (winner === 'player' ? 1 : 0),
+        losses: prev.user.stats.losses + (winner === 'opponent' ? 1 : 0),
+        ties: prev.user.stats.ties + (winner === 'tie' ? 1 : 0),
+      };
+
+      return {
+        ...prev,
+        roundHistory: results,
+        playerScore: totalPlayerScore,
+        opponentScore: totalOpponentScore,
+        phase: { type: 'all-rounds-results', results },
+        user: {
+          ...prev.user,
+          stats: updatedStats,
+        },
+        checksum: '', // Checksum managed externally
+      };
+    });
   }, []);
 
   /**
@@ -200,12 +225,25 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
           winner = 'tie';
         }
 
+        // Update user stats
+        const updatedStats = {
+          ...prev.user.stats,
+          totalGames: prev.user.stats.totalGames + 1,
+          wins: prev.user.stats.wins + (winner === 'player' ? 1 : 0),
+          losses: prev.user.stats.losses + (winner === 'opponent' ? 1 : 0),
+          ties: prev.user.stats.ties + (winner === 'tie' ? 1 : 0),
+        };
+
         return {
           ...prev,
           currentRound: nextRound,
           phase: { type: 'game-over', winner },
           playerSelectedBoard: null,
           opponentSelectedBoard: null,
+          user: {
+            ...prev.user,
+            stats: updatedStats,
+          },
           checksum: '', // Checksum managed externally
         };
       }
@@ -226,11 +264,26 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
    * End game with winner
    */
   const endGame = useCallback((winner: 'player' | 'opponent' | 'tie'): void => {
-    setState((prev) => ({
-      ...prev,
-      phase: { type: 'game-over', winner },
-      checksum: '', // Checksum managed externally
-    }));
+    setState((prev) => {
+      // Update user stats
+      const updatedStats = {
+        ...prev.user.stats,
+        totalGames: prev.user.stats.totalGames + 1,
+        wins: prev.user.stats.wins + (winner === 'player' ? 1 : 0),
+        losses: prev.user.stats.losses + (winner === 'opponent' ? 1 : 0),
+        ties: prev.user.stats.ties + (winner === 'tie' ? 1 : 0),
+      };
+
+      return {
+        ...prev,
+        phase: { type: 'game-over', winner },
+        user: {
+          ...prev.user,
+          stats: updatedStats,
+        },
+        checksum: '', // Checksum managed externally
+      };
+    });
   }, []);
 
   /**
