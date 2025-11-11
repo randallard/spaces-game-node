@@ -6,7 +6,7 @@ import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-
 import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsForSize, generateCpuDeckForSize } from '@/utils/default-cpu-data';
 import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
 import { updateOpponentStats } from '@/utils/opponent-helpers';
-import { getNextUnlock, isDeckModeUnlocked } from '@/utils/feature-unlocks';
+import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
 import {
   UserProfile,
   OpponentManager,
@@ -23,6 +23,7 @@ import {
   TutorialNameEntry,
   WelcomeModal,
   GeneratingModal,
+  FeatureUnlockModal,
 } from '@/components';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
@@ -209,6 +210,11 @@ function App(): React.ReactElement {
   const [isGeneratingCpuBoards, setIsGeneratingCpuBoards] = useState(false);
   const [generatingSize, setGeneratingSize] = useState<number>(2);
 
+  // Feature unlock modal state
+  const [showFeatureUnlockModal, setShowFeatureUnlockModal] = useState(false);
+  const [unlockedBoardSizes, setUnlockedBoardSizes] = useState<number[]>([]);
+  const [deckModeJustUnlocked, setDeckModeJustUnlocked] = useState(false);
+
   // Save user to localStorage when it changes
   useEffect(() => {
     if (state.user.name) {
@@ -216,6 +222,38 @@ function App(): React.ReactElement {
       setSavedUser(state.user);
     }
   }, [state.user, setSavedUser]);
+
+  // Detect feature unlocks when totalGames changes
+  useEffect(() => {
+    const currentGames = state.user.stats.totalGames;
+
+    // Only check for unlocks if we're in game-over or all-rounds-results phase
+    // This ensures we show the modal right after a game completes
+    if (currentGames === 0 || (state.phase.type !== 'game-over' && state.phase.type !== 'all-rounds-results')) {
+      return;
+    }
+
+    const previousGames = currentGames - 1;
+
+    // Get unlocks before and after
+    const previousUnlocks = getFeatureUnlocks({ ...state.user, stats: { ...state.user.stats, totalGames: previousGames } });
+    const currentUnlocks = getFeatureUnlocks(state.user);
+
+    // Find newly unlocked board sizes
+    const newBoardSizes = currentUnlocks.boardSizes.filter(
+      size => !previousUnlocks.boardSizes.includes(size)
+    );
+
+    // Check if deck mode was just unlocked
+    const newDeckMode = currentUnlocks.deckMode && !previousUnlocks.deckMode;
+
+    // Show modal if anything was unlocked
+    if (newBoardSizes.length > 0 || newDeckMode) {
+      setUnlockedBoardSizes(newBoardSizes);
+      setDeckModeJustUnlocked(newDeckMode);
+      setShowFeatureUnlockModal(true);
+    }
+  }, [state.user.stats.totalGames, state.user, state.phase.type]);
 
   // Update opponent record when game ends
   useEffect(() => {
@@ -1327,6 +1365,15 @@ function App(): React.ReactElement {
         <GeneratingModal
           opponentName={state.opponent.name}
           boardSize={generatingSize}
+        />
+      )}
+
+      {/* Feature Unlock Modal */}
+      {showFeatureUnlockModal && (
+        <FeatureUnlockModal
+          unlockedBoardSizes={unlockedBoardSizes}
+          deckModeUnlocked={deckModeJustUnlocked}
+          onContinue={() => setShowFeatureUnlockModal(false)}
         />
       )}
     </div>
