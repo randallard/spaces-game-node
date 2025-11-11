@@ -51,6 +51,9 @@ export function BoardSizeSelector({
   const { boardSizes: unlockedSizes } = getFeatureUnlocks(user ?? null);
   const nextUnlock = getNextUnlock(user ?? null);
 
+  // Check if playing against human opponent who hasn't completed a game yet
+  const isFirstTimeHumanOpponent = opponent?.type === 'human' && !opponent?.hasCompletedGame;
+
   // All preset sizes
   const allPresetSizes = [
     { size: 2, label: 'Classic', description: 'Quick strategic gameplay' },
@@ -65,11 +68,24 @@ export function BoardSizeSelector({
   ];
 
   // Filter to only show unlocked sizes
-  const presetSizes = allPresetSizes.filter(preset => unlockedSizes.includes(preset.size));
+  // For first-time human opponents, restrict to 2x2 and 3x3 only
+  const allowedSizes = isFirstTimeHumanOpponent
+    ? unlockedSizes.filter(size => size === 2 || size === 3)
+    : unlockedSizes;
+  const presetSizes = allPresetSizes.filter(preset => allowedSizes.includes(preset.size));
 
   // Check board availability for a given size
   const getBoardAvailability = (size: number) => {
     const playerHasBoards = playerBoards.some((b) => b.boardSize === size);
+
+    // For human opponents, only player needs boards (opponent will share theirs via URL)
+    if (opponent?.type === 'human') {
+      return {
+        playerHasBoards,
+        cpuHasBoards: true, // Not needed for human opponents
+        bothHaveBoards: playerHasBoards,
+      };
+    }
 
     // CPU needs at least 3 boards for the size to be considered "ready"
     // This matches the check in App.tsx cpuHasBoardsForSize function
@@ -106,6 +122,10 @@ export function BoardSizeSelector({
       setCustomError(`Please enter a number between 2 and 99`);
       return;
     }
+    if (isFirstTimeHumanOpponent && size !== 2 && size !== 3) {
+      setCustomError(`For your first game with ${opponent?.name}, only 2×2 and 3×3 boards are available.`);
+      return;
+    }
     if (!unlockedSizes.includes(size)) {
       setCustomError(`Board size ${size}×${size} is not unlocked yet. Complete more games to unlock!`);
       return;
@@ -120,8 +140,15 @@ export function BoardSizeSelector({
         Select the board size for this game. All boards used in this game must match this size.
       </p>
 
+      {/* First-time human opponent notification */}
+      {isFirstTimeHumanOpponent && (
+        <div style={{ textAlign: 'center', margin: '1rem 0', padding: '0.75rem', backgroundColor: '#e0f2fe', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+          👥 First game with {opponent?.name}! Only 2×2 and 3×3 boards are available. Larger boards will unlock after your first game together.
+        </div>
+      )}
+
       {/* Next unlock notification */}
-      {nextUnlock && (
+      {nextUnlock && !isFirstTimeHumanOpponent && (
         <div style={{ textAlign: 'center', margin: '1rem 0', padding: '0.75rem', backgroundColor: '#fef3c7', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
           🎯 Next unlock: <strong>{nextUnlock.description}</strong> ({nextUnlock.gamesRemaining} {nextUnlock.gamesRemaining === 1 ? 'game' : 'games'} remaining)
         </div>

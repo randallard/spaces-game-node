@@ -61,3 +61,6 @@ export type { GeneratingModalProps } from './GeneratingModal';
 
 export { FeatureUnlockModal } from './FeatureUnlockModal';
 export type { FeatureUnlockModalProps } from './FeatureUnlockModal';
+
+export { ShareChallenge } from './ShareChallenge';
+export type { ShareChallengeProps } from './ShareChallenge';

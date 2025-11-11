@@ -10,6 +10,7 @@ export type Opponent = {
   type: OpponentType;
   wins: number;
   losses: number;
+  hasCompletedGame?: boolean; // Track if at least one game has been completed (for human opponents)
 };
 
 export type OpponentStats = {
