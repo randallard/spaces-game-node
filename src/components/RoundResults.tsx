@@ -387,7 +387,7 @@ export function RoundResults({
       }
     }
 
-    setExplanations(prev => [...prev, ...allExplanations]);
+    setExplanations(prev => [...allExplanations, ...prev]);
     setCurrentStep(prev => prev + 1);
   }, [currentStep, getStepExplanation, playerLastStep, opponentLastStep, result.simulationDetails, explanationStyle, playerName, opponentName]);
 
