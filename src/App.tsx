@@ -914,11 +914,19 @@ function App(): React.ReactElement {
                         </div>
                         <button
                           onClick={() => {
-                            // Save the selected opponent and go to game mode selection
+                            // Reset game state and save the selected opponent
                             loadState({
                               ...state,
                               opponent,
                               phase: { type: 'game-mode-selection' },
+                              currentRound: 1,
+                              playerScore: 0,
+                              opponentScore: 0,
+                              roundHistory: [],
+                              playerSelectedBoard: null,
+                              opponentSelectedBoard: null,
+                              playerSelectedDeck: null,
+                              opponentSelectedDeck: null,
                             });
                           }}
                           className={styles.playButton}
