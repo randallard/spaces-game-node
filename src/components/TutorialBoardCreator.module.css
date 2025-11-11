@@ -35,6 +35,32 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* Tutorial Grid Override - Fixed Size for 2x2 */
+.tutorialGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin: 0 auto 1rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Tutorial Cell - Fixed Minimum Size */
+.tutorialCell {
+  aspect-ratio: 1;
+  width: 100%;
+  min-width: 140px;
+  min-height: 140px;
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 1rem;
+}
+
 @media (max-width: 640px) {
   .instructionBanner {
     font-size: 1rem;
@@ -45,5 +71,29 @@
     position: static;
     margin-top: var(--spacing-xl);
     width: 100%;
+  }
+
+  /* Ensure grid doesn't shrink too small on mobile */
+  .tutorialGrid {
+    max-width: 340px;
+    gap: 0.25rem;
+  }
+
+  /* Slightly smaller cells on very small screens, but still tappable */
+  .tutorialCell {
+    min-width: 150px;
+    min-height: 150px;
+  }
+}
+
+@media (max-width: 400px) {
+  /* For very small screens */
+  .tutorialGrid {
+    max-width: 300px;
+  }
+
+  .tutorialCell {
+    min-width: 130px;
+    min-height: 130px;
   }
 }
