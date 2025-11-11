@@ -58,3 +58,6 @@ export type { WelcomeModalProps } from './WelcomeModal';
 
 export { GeneratingModal } from './GeneratingModal';
 export type { GeneratingModalProps } from './GeneratingModal';
+
+export { FeatureUnlockModal } from './FeatureUnlockModal';
+export type { FeatureUnlockModalProps } from './FeatureUnlockModal';
