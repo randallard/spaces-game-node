@@ -77,8 +77,8 @@ describe('validateBoard', () => {
     });
   });
 
-  it('should allow 0-3 traps', () => {
-    // 0 traps
+  it('should allow 0-(n²-1) traps', () => {
+    // 0 traps (2x2 board allows max 3 traps)
     const board0 = createValidBoard();
     board0.grid = [
       ['piece', 'empty'],
@@ -92,7 +92,7 @@ describe('validateBoard', () => {
 
     expect(validateBoard(board0).valid).toBe(true);
 
-    // 3 traps
+    // 3 traps (max for 2x2 board: 2*2-1 = 3)
     const board3 = createValidBoard();
     board3.grid = [
       ['piece', 'trap'],
@@ -106,15 +106,43 @@ describe('validateBoard', () => {
     ];
 
     expect(validateBoard(board3).valid).toBe(true);
+
+    // 8 traps on 3x3 board (max for 3x3 board: 3*3-1 = 8)
+    const board8 = createValidBoard();
+    board8.boardSize = 3;
+    board8.grid = [
+      ['piece', 'trap', 'trap'],
+      ['trap', 'trap', 'trap'],
+      ['trap', 'trap', 'trap'],
+    ];
+    board8.sequence = [
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: 0, col: 1 }, type: 'trap', order: 2 },
+      { position: { row: 0, col: 2 }, type: 'trap', order: 3 },
+      { position: { row: 1, col: 0 }, type: 'trap', order: 4 },
+      { position: { row: 1, col: 1 }, type: 'trap', order: 5 },
+      { position: { row: 1, col: 2 }, type: 'trap', order: 6 },
+      { position: { row: 2, col: 0 }, type: 'trap', order: 7 },
+      { position: { row: 2, col: 1 }, type: 'trap', order: 8 },
+      { position: { row: 2, col: 2 }, type: 'trap', order: 9 },
+    ];
+
+    expect(validateBoard(board8).valid).toBe(true);
   });
 
-  it('should reject more than 3 traps', () => {
+  it('should reject more than (n²-1) traps', () => {
+    // 2x2 board with 4 traps (exceeds max of 3)
     const board = createValidBoard();
     board.grid = [
-      ['piece', 'trap'],
+      ['trap', 'trap'],
       ['trap', 'trap'],
     ];
-    board.grid.push(['trap', 'empty']); // Add 4th trap
+    board.sequence = [
+      { position: { row: 0, col: 0 }, type: 'trap', order: 1 },
+      { position: { row: 0, col: 1 }, type: 'trap', order: 2 },
+      { position: { row: 1, col: 0 }, type: 'trap', order: 3 },
+      { position: { row: 1, col: 1 }, type: 'trap', order: 4 },
+    ];
 
     const result = validateBoard(board);
     expect(result.valid).toBe(false);
@@ -140,17 +168,15 @@ describe('validateBoard', () => {
   it('should allow maximum 2(boardSize²) sequence items', () => {
     const board = createValidBoard();
     // For a 2x2 board, max is 2(2²) = 8 sequence items
-    // Create board with 1 piece + 3 traps = 4 items (well under the limit)
+    // Create board with multiple piece moves (1 piece + 1 trap = 2 items, well under the limit)
     board.grid = [
       ['piece', 'trap'],
-      ['trap', 'trap'],
+      ['empty', 'empty'],
     ];
 
     board.sequence = [
       { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
       { position: { row: 0, col: 1 }, type: 'trap', order: 2 },
-      { position: { row: 1, col: 0 }, type: 'trap', order: 3 },
-      { position: { row: 1, col: 1 }, type: 'trap', order: 4 },
     ];
 
     const result = validateBoard(board);
@@ -304,17 +330,36 @@ describe('Quick validation helpers', () => {
   });
 
   describe('hasTooManyTraps', () => {
-    it('should return false when board has 0-3 traps', () => {
+    it('should return false when board has 0-(n²-1) traps', () => {
+      // 2x2 board with 1 trap (under max of 3)
       expect(hasTooManyTraps(createValidBoard())).toBe(false);
-    });
 
-    it('should return true when board has more than 3 traps', () => {
-      const board = createValidBoard();
-      board.grid = [
+      // 2x2 board with 3 traps (at max)
+      const board2x2Max = createValidBoard();
+      board2x2Max.grid = [
         ['piece', 'trap'],
         ['trap', 'trap'],
       ];
-      board.grid.push(['trap', 'empty']); // 4th trap
+      expect(hasTooManyTraps(board2x2Max)).toBe(false);
+
+      // 3x3 board with 8 traps (at max)
+      const board3x3 = createValidBoard();
+      board3x3.boardSize = 3;
+      board3x3.grid = [
+        ['piece', 'trap', 'trap'],
+        ['trap', 'trap', 'trap'],
+        ['trap', 'trap', 'trap'],
+      ];
+      expect(hasTooManyTraps(board3x3)).toBe(false);
+    });
+
+    it('should return true when board has more than (n²-1) traps', () => {
+      // 2x2 board with 4 traps (exceeds max of 3)
+      const board = createValidBoard();
+      board.grid = [
+        ['trap', 'trap'],
+        ['trap', 'trap'],
+      ];
       expect(hasTooManyTraps(board)).toBe(true);
     });
   });
