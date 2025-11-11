@@ -50,12 +50,14 @@ export type GamePhase =
   | { type: 'tutorial-results'; result: RoundResult; playerBoard: Board }
   | { type: 'tutorial-name-entry'; playerCreature: CreatureId; opponentCreature: CreatureId; firstBoard: Board; playerWon: boolean; cpuSamName: string }
   | { type: 'board-management' }
+  | { type: 'add-opponent' } // Add a new opponent to the list (doesn't start a game)
   | { type: 'game-mode-selection' } // Choose round-by-round or deck mode
   | { type: 'board-size-selection'; gameMode: GameMode } // Choose 2x2 or 3x3
   | { type: 'opponent-selection'; gameMode: GameMode } // Pass game mode
   | { type: 'deck-management' } // Create/manage decks
   | { type: 'deck-selection' } // Select deck to play
   | { type: 'board-selection'; round: number } // Round-by-round mode
+  | { type: 'share-challenge'; round: number } // Share challenge URL with human opponent
   | { type: 'waiting-for-opponent'; round: number }
   | { type: 'round-results'; round: number; result: RoundResult } // Single round result
   | { type: 'all-rounds-results'; results: RoundResult[] } // All 10 rounds at once

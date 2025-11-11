@@ -80,6 +80,8 @@ export function updateOpponentStats(
     ...opponent,
     wins: won ? opponent.wins + 1 : opponent.wins,
     losses: won ? opponent.losses : opponent.losses + 1,
+    // Mark human opponents as having completed at least one game
+    ...(opponent.type === 'human' && { hasCompletedGame: true }),
   };
 }
 

@@ -7,6 +7,8 @@ import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsFo
 import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
 import { updateOpponentStats } from '@/utils/opponent-helpers';
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
+import { generateChallengeUrl, getChallengeFromUrl, clearChallengeFromUrl } from '@/utils/challenge-url';
+import { decodeMinimalBoard } from '@/utils/board-encoding';
 import {
   UserProfile,
   OpponentManager,
@@ -24,6 +26,7 @@ import {
   WelcomeModal,
   GeneratingModal,
   FeatureUnlockModal,
+  ShareChallenge,
 } from '@/components';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
@@ -215,6 +218,9 @@ function App(): React.ReactElement {
   const [unlockedBoardSizes, setUnlockedBoardSizes] = useState<number[]>([]);
   const [deckModeJustUnlocked, setDeckModeJustUnlocked] = useState(false);
 
+  // Incoming challenge state (preserved through tutorial if user is new)
+  const [incomingChallenge, setIncomingChallenge] = useState<ReturnType<typeof getChallengeFromUrl>>(null);
+
   // Save user to localStorage when it changes
   useEffect(() => {
     if (state.user.name) {
@@ -254,6 +260,56 @@ function App(): React.ReactElement {
       setShowFeatureUnlockModal(true);
     }
   }, [state.user.stats.totalGames, state.user, state.phase.type]);
+
+  // Check for incoming challenge in URL on mount
+  useEffect(() => {
+    const challengeData = getChallengeFromUrl();
+
+    if (challengeData) {
+      // Store the challenge data
+      setIncomingChallenge(challengeData);
+
+      // If user already exists, show them the challenge immediately
+      if (state.user.name) {
+        try {
+          // Decode the opponent's board
+          const opponentBoard = decodeMinimalBoard(challengeData.playerBoard);
+
+          console.log('[APP] Received challenge:', challengeData);
+
+          // Clear URL
+          clearChallengeFromUrl();
+
+          // Show alert for now (will be replaced with proper UI)
+          if (window.confirm(`You've received a challenge for a ${challengeData.boardSize}×${challengeData.boardSize} board! Would you like to respond?`)) {
+            // Set up game state to respond to challenge
+            loadState({
+              ...state,
+              boardSize: challengeData.boardSize,
+              gameMode: challengeData.gameMode,
+              currentRound: challengeData.round,
+              opponentSelectedBoard: opponentBoard,
+              playerScore: 0,
+              opponentScore: 0,
+              roundHistory: [],
+              phase: { type: 'board-selection', round: challengeData.round },
+            });
+          }
+
+          // Clear the challenge from state
+          setIncomingChallenge(null);
+        } catch (error) {
+          console.error('[APP] Failed to parse challenge:', error);
+          clearChallengeFromUrl();
+          setIncomingChallenge(null);
+        }
+      }
+      // If user doesn't exist yet, they'll go through tutorial first
+      // The challenge will be preserved in state and handled after tutorial
+    }
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Update opponent record when game ends
   useEffect(() => {
@@ -599,44 +655,66 @@ function App(): React.ReactElement {
       return;
     }
 
+    selectPlayerBoard(board);
+
+    // Check if we're responding to a challenge (opponent board already selected for round 1)
+    if (state.opponentSelectedBoard && state.currentRound === 1) {
+      // Responding to challenge round 1 - simulate immediately with the received board
+      setIsSimulatingRound(true);
+
+      setTimeout(() => {
+        const result = simulateRound(state.currentRound, board, state.opponentSelectedBoard!);
+
+        // Add creature data to result if available
+        if (savedUser?.playerCreature) {
+          result.playerCreature = savedUser.playerCreature;
+        }
+        if (savedUser?.opponentCreature) {
+          result.opponentCreature = savedUser.opponentCreature;
+        }
+
+        completeRound(result);
+        setIsSimulatingRound(false);
+      }, 500);
+      return;
+    }
+
+    // Check if opponent is human OR if we don't have an opponent (challenge response round 2+)
+    // In both cases, go to share screen
+    if (state.opponent?.type === 'human' || !state.opponent) {
+      // For human opponents or challenge responses, go to share-challenge phase
+      setPhase({ type: 'share-challenge', round: state.currentRound });
+      return;
+    }
+
+    // CPU opponent flow - proceed with automatic simulation
     // Show loading state immediately
     setIsSimulatingRound(true);
 
-    selectPlayerBoard(board);
-
-    // Opponent selects a board (CPU chooses random, human would choose via URL)
+    // Opponent selects a board (CPU chooses random)
     let opponentBoard: Board = board; // Fallback to same board
 
-    if (state.opponent?.type === 'cpu') {
-      // Filter boards by opponent name and size
-      // Board names start with opponent name (e.g., "CPU Left Column" or "CPU Tougher Board 1")
-      const opponentBoardsForSize = (cpuBoards || []).filter(
-        b => b.boardSize === state.boardSize && b.name.startsWith(state.opponent!.name)
-      );
+    // Filter boards by opponent name and size
+    // Board names start with opponent name (e.g., "CPU Left Column" or "CPU Tougher Board 1")
+    const opponentBoardsForSize = (cpuBoards || []).filter(
+      b => b.boardSize === state.boardSize && b.name.startsWith(state.opponent!.name)
+    );
 
-      // CPU selects random board from its own boards
-      if (opponentBoardsForSize.length > 0) {
-        const randomIndex = Math.floor(Math.random() * opponentBoardsForSize.length);
-        opponentBoard = opponentBoardsForSize[randomIndex] || board;
-      } else {
-        // Fallback: log error and use player's board
-        console.error(`[handleBoardSelect] ${state.opponent.name} boards not found for size ${state.boardSize}×${state.boardSize}`);
-        opponentBoard = board;
-      }
-
-      // Ensure opponent board is playable
-      if (!isBoardPlayable(opponentBoard)) {
-        // Try to find another playable board from this opponent
-        const playableBoard = opponentBoardsForSize.find(b => isBoardPlayable(b));
-        opponentBoard = playableBoard || board;
-      }
+    // CPU selects random board from its own boards
+    if (opponentBoardsForSize.length > 0) {
+      const randomIndex = Math.floor(Math.random() * opponentBoardsForSize.length);
+      opponentBoard = opponentBoardsForSize[randomIndex] || board;
     } else {
-      // Human opponent - would normally choose via URL sharing
-      // For now, select random board from player's boards of same size
-      const boards = (savedBoards || []).filter(b => b.boardSize === state.boardSize);
-      if (boards.length > 0) {
-        opponentBoard = boards[Math.floor(Math.random() * boards.length)] || board;
-      }
+      // Fallback: log error and use player's board
+      console.error(`[handleBoardSelect] ${state.opponent?.name ?? 'CPU'} boards not found for size ${state.boardSize}×${state.boardSize}`);
+      opponentBoard = board;
+    }
+
+    // Ensure opponent board is playable
+    if (!isBoardPlayable(opponentBoard)) {
+      // Try to find another playable board from this opponent
+      const playableBoard = opponentBoardsForSize.find(b => isBoardPlayable(b));
+      opponentBoard = playableBoard || board;
     }
 
     selectOpponentBoard(opponentBoard);
@@ -660,7 +738,39 @@ function App(): React.ReactElement {
 
   // Handle continuing to next round
   const handleContinue = () => {
-    advanceToNextRound();
+    // Check if we're responding to a challenge and need to add opponent
+    if (!state.opponent && state.currentRound === 1) {
+      // Ask for opponent's name to add them to the list
+      const opponentName = window.prompt("What would you like to call your opponent?");
+
+      if (opponentName && opponentName.trim()) {
+        // Create human opponent
+        const newOpponent: Opponent = {
+          type: 'human',
+          id: `human-${Date.now()}`,
+          name: opponentName.trim(),
+          wins: 0,
+          losses: 0,
+        };
+
+        // Save opponent to localStorage
+        setSavedOpponents([...(savedOpponents || []), newOpponent]);
+
+        // Update game state with opponent
+        loadState({
+          ...state,
+          opponent: newOpponent,
+        });
+
+        // Now advance to next round
+        advanceToNextRound();
+      } else {
+        // User cancelled or entered empty name, just continue without saving
+        advanceToNextRound();
+      }
+    } else {
+      advanceToNextRound();
+    }
   };
 
   // Handle play again
@@ -856,8 +966,46 @@ function App(): React.ReactElement {
       phase: { type: 'board-management' },
     });
 
-    // Show welcome modal
-    setShowWelcomeModal(true);
+    // Check if there was an incoming challenge
+    if (incomingChallenge) {
+      try {
+        // Decode the opponent's board
+        const opponentBoard = decodeMinimalBoard(incomingChallenge.playerBoard);
+
+        console.log('[APP] Processing challenge after tutorial:', incomingChallenge);
+
+        // Clear URL
+        clearChallengeFromUrl();
+
+        // Show alert for now (will be replaced with proper UI)
+        if (window.confirm(`Welcome! You've received a challenge for a ${incomingChallenge.boardSize}×${incomingChallenge.boardSize} board! Would you like to respond?`)) {
+          // Set up game state to respond to challenge
+          loadState({
+            ...state,
+            user: newUser,
+            boardSize: incomingChallenge.boardSize,
+            gameMode: incomingChallenge.gameMode,
+            currentRound: incomingChallenge.round,
+            opponentSelectedBoard: opponentBoard,
+            phase: { type: 'board-selection', round: incomingChallenge.round },
+          });
+        } else {
+          // User declined, show welcome modal
+          setShowWelcomeModal(true);
+        }
+
+        // Clear the challenge from state
+        setIncomingChallenge(null);
+      } catch (error) {
+        console.error('[APP] Failed to parse challenge after tutorial:', error);
+        setIncomingChallenge(null);
+        // Show welcome modal on error
+        setShowWelcomeModal(true);
+      }
+    } else {
+      // No challenge, show welcome modal as usual
+      setShowWelcomeModal(true);
+    }
   };
 
   // Render phase-specific content
@@ -868,6 +1016,7 @@ function App(): React.ReactElement {
           <TutorialIntro
             onNext={handleTutorialIntroNext}
             onSkip={handleTutorialSkip}
+            hasIncomingChallenge={!!incomingChallenge}
           />
         );
 
@@ -978,11 +1127,10 @@ function App(): React.ReactElement {
                       <p>No opponents yet</p>
                       <button
                         onClick={() => {
-                          // Clear any selected opponent when adding new one
+                          // Go to add-opponent phase to add a new opponent to the list
                           loadState({
                             ...state,
-                            opponent: null,
-                            phase: { type: 'game-mode-selection' },
+                            phase: { type: 'add-opponent' },
                           });
                         }}
                         className={styles.addOpponentButton}
@@ -994,11 +1142,10 @@ function App(): React.ReactElement {
                   {savedOpponents && savedOpponents.length > 0 && (
                     <button
                       onClick={() => {
-                        // Clear any selected opponent when adding new one
+                        // Go to add-opponent phase to add a new opponent to the list
                         loadState({
                           ...state,
-                          opponent: null,
-                          phase: { type: 'game-mode-selection' },
+                          phase: { type: 'add-opponent' },
                         });
                       }}
                       className={styles.addOpponentButton}
@@ -1029,9 +1176,37 @@ function App(): React.ReactElement {
           </div>
         );
 
+      case 'add-opponent':
+        return (
+          <OpponentManager
+            onOpponentSelected={(opponent) => {
+              // Save opponent to localStorage
+              const existingIndex = (savedOpponents || []).findIndex((o) => o.id === opponent.id);
+              if (existingIndex >= 0) {
+                const updated = [...(savedOpponents || [])];
+                updated[existingIndex] = opponent;
+                setSavedOpponents(updated);
+              } else {
+                setSavedOpponents([...(savedOpponents || []), opponent]);
+              }
+
+              // Return to board management screen
+              loadState({
+                ...state,
+                phase: { type: 'board-management' },
+              });
+            }}
+            userName={state.user.name}
+          />
+        );
+
       case 'game-mode-selection': {
         const deckModeUnlocked = isDeckModeUnlocked(savedUser);
         const nextUnlock = getNextUnlock(savedUser);
+
+        // Check if playing against human opponent who hasn't completed a game yet
+        const isFirstTimeHumanOpponent = state.opponent?.type === 'human' && !state.opponent?.hasCompletedGame;
+        const deckModeAllowed = deckModeUnlocked && !isFirstTimeHumanOpponent;
 
         return (
           <div className={styles.gameModeSelection}>
@@ -1041,7 +1216,12 @@ function App(): React.ReactElement {
               </div>
             )}
             <h2>Choose Game Mode</h2>
-            {nextUnlock && (
+            {isFirstTimeHumanOpponent && state.opponent && (
+              <div style={{ textAlign: 'center', marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#e0f2fe', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+                👥 First game with {state.opponent.name}! Only Round by Round mode is available. Deck mode will unlock after your first game together.
+              </div>
+            )}
+            {nextUnlock && !isFirstTimeHumanOpponent && (
               <div style={{ textAlign: 'center', marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
                 🎯 Next unlock: <strong>{nextUnlock.description}</strong> ({nextUnlock.gamesRemaining} {nextUnlock.gamesRemaining === 1 ? 'game' : 'games'} remaining)
               </div>
@@ -1055,15 +1235,20 @@ function App(): React.ReactElement {
                 <p>Classic mode - Select a board each round (5 rounds)</p>
               </button>
               <button
-                onClick={deckModeUnlocked ? () => handleGameModeSelect('deck') : undefined}
-                className={`${styles.modeCard} ${!deckModeUnlocked ? styles.lockedCard : ''}`}
-                disabled={!deckModeUnlocked}
+                onClick={deckModeAllowed ? () => handleGameModeSelect('deck') : undefined}
+                className={`${styles.modeCard} ${!deckModeAllowed ? styles.lockedCard : ''}`}
+                disabled={!deckModeAllowed}
               >
-                <h3>Deck Mode {!deckModeUnlocked && '🔒'}</h3>
+                <h3>Deck Mode {!deckModeAllowed && '🔒'}</h3>
                 <p>Fast mode - Create a deck of 10 boards and play all at once</p>
                 {!deckModeUnlocked && (
                   <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#9ca3af' }}>
                     Complete {3 - (savedUser?.stats.totalGames ?? 0)} more {3 - (savedUser?.stats.totalGames ?? 0) === 1 ? 'game' : 'games'} to unlock
+                  </p>
+                )}
+                {deckModeUnlocked && isFirstTimeHumanOpponent && (
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+                    Complete your first game with {state.opponent?.name} to unlock
                   </p>
                 )}
               </button>
@@ -1171,18 +1356,37 @@ function App(): React.ReactElement {
           ? (savedBoards || []).filter(board => board.boardSize === state.boardSize)
           : (savedBoards || []);
 
+        // Check if responding to a challenge
+        const isRespondingToChallenge = !!state.opponentSelectedBoard;
+
         return (
           <div style={{ position: 'relative' }}>
             <div style={{ marginBottom: '2rem' }}>
-              <h2>Round {state.phase.round} of 5</h2>
-              <p>
-                Score: {state.user.name} {state.playerScore} - {state.opponent?.name}{' '}
-                {state.opponentScore}
-              </p>
-              {state.boardSize && (
-                <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                  Board Size: {state.boardSize}×{state.boardSize}
-                </p>
+              {isRespondingToChallenge ? (
+                <>
+                  <h2>Respond to Challenge - Round {state.phase.round}</h2>
+                  <p style={{ marginBottom: '0.5rem' }}>
+                    Select your board to compete against the challenge!
+                  </p>
+                  {state.boardSize && (
+                    <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                      Board Size: {state.boardSize}×{state.boardSize}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h2>Round {state.phase.round} of 5</h2>
+                  <p>
+                    Score: {state.user.name} {state.playerScore} - {state.opponent?.name}{' '}
+                    {state.opponentScore}
+                  </p>
+                  {state.boardSize && (
+                    <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                      Board Size: {state.boardSize}×{state.boardSize}
+                    </p>
+                  )}
+                </>
               )}
             </div>
             <SavedBoards
@@ -1237,6 +1441,29 @@ function App(): React.ReactElement {
               </div>
             )}
           </div>
+        );
+      }
+
+      case 'share-challenge': {
+        // Generate challenge URL for the selected board
+        if (!state.playerSelectedBoard || !state.boardSize) {
+          return null;
+        }
+
+        const challengeUrl = generateChallengeUrl(
+          state.playerSelectedBoard,
+          state.phase.round,
+          state.gameMode || 'round-by-round'
+        );
+
+        return (
+          <ShareChallenge
+            challengeUrl={challengeUrl}
+            opponentName={state.opponent?.name || 'Your Friend'}
+            boardSize={state.boardSize}
+            round={state.phase.round}
+            onCancel={handleGoHome}
+          />
         );
       }
 

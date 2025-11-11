@@ -14,13 +14,15 @@ export interface TutorialIntroProps {
   onNext: (playerCreature: CreatureId, cpuSamData: { name: string; creature: CreatureId }) => void;
   /** Callback when player clicks Skip */
   onSkip: () => void;
+  /** Whether user arrived via a challenge URL */
+  hasIncomingChallenge?: boolean;
 }
 
 /**
  * Tutorial introduction screen
  * Shows CPU Sam challenge, creature selection, and customization options
  */
-export function TutorialIntro({ onNext, onSkip }: TutorialIntroProps): ReactElement {
+export function TutorialIntro({ onNext, onSkip, hasIncomingChallenge = false }: TutorialIntroProps): ReactElement {
   const creatures = getAllCreatures();
 
   // Get random creature IDs for defaults
@@ -58,10 +60,23 @@ export function TutorialIntro({ onNext, onSkip }: TutorialIntroProps): ReactElem
 
         {/* Challenge Text */}
         <div className={styles.challengeText}>
-          <p className={styles.mainText}>
-            <strong>{cpuSamName}</strong> thinks their bot can get to the goal before yours!
-          </p>
-          <p className={styles.mainText}>Let me show you how to take them on!</p>
+          {hasIncomingChallenge ? (
+            <>
+              <p className={styles.mainText}>
+                Looks like you've been challenged!
+              </p>
+              <p className={styles.mainText}>
+                Let me show you an easy round against <strong>{cpuSamName}</strong> first!
+              </p>
+            </>
+          ) : (
+            <>
+              <p className={styles.mainText}>
+                <strong>{cpuSamName}</strong> thinks their bot can get to the goal before yours!
+              </p>
+              <p className={styles.mainText}>Let me show you how to take them on!</p>
+            </>
+          )}
         </div>
 
         {/* CPU Sam Customization Link */}
