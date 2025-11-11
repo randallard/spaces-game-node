@@ -48,8 +48,8 @@ export function BoardSizeSelector({
   const [generatingSize, setGeneratingSize] = useState<number | null>(null);
 
   // Get unlocked board sizes
-  const { boardSizes: unlockedSizes } = getFeatureUnlocks(user);
-  const nextUnlock = getNextUnlock(user);
+  const { boardSizes: unlockedSizes } = getFeatureUnlocks(user ?? null);
+  const nextUnlock = getNextUnlock(user ?? null);
 
   // All preset sizes
   const allPresetSizes = [
