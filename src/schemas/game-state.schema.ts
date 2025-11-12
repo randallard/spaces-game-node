@@ -74,6 +74,7 @@ export const GameStateSchema = z.object({
   phase: GamePhaseSchema,
   user: UserProfileSchema,
   opponent: OpponentSchema.nullable(),
+  gameId: z.string().nullable(),
   gameMode: GameModeSchema.nullable(),
   boardSize: z.union([z.literal(2), z.literal(3)]).nullable(),
   currentRound: z.number().int().min(0).max(10), // Support 10 rounds for deck mode

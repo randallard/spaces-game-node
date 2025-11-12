@@ -94,6 +94,7 @@ export function createInitialState(user: UserProfile | null): GameState {
     phase,
     user: user || createEmptyUser(),
     opponent: null,
+    gameId: null,
     gameMode: null,
     boardSize: null,
     currentRound: 1,

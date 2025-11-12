@@ -35,6 +35,7 @@ const mockGameState: GameState = {
     wins: 0,
     losses: 0,
   },
+  gameId: null,
   gameMode: 'round-by-round',
   boardSize: 3,
   currentRound: 1,

@@ -5,9 +5,9 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-simulation';
 import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsForSize, generateCpuDeckForSize } from '@/utils/default-cpu-data';
 import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
-import { updateOpponentStats } from '@/utils/opponent-helpers';
+import { updateOpponentStats, createHumanOpponent } from '@/utils/opponent-helpers';
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
-import { generateChallengeUrl, getChallengeFromUrl, clearChallengeFromUrl } from '@/utils/challenge-url';
+import { generateChallengeUrl, generateFinalResultsUrl, getChallengeFromUrl, clearChallengeFromUrl } from '@/utils/challenge-url';
 import { decodeMinimalBoard } from '@/utils/board-encoding';
 import {
   UserProfile,
@@ -28,9 +28,19 @@ import {
   FeatureUnlockModal,
   ShareChallenge,
 } from '@/components';
-import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId } from '@/types';
+import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId, RoundResult } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
 import { CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID, CPU_OPPONENT_NAME } from '@/constants/game-rules';
+import { z } from 'zod';
+
+// Type for storing round results with metadata for retrieval
+type StoredRoundResult = RoundResult & {
+  gameId: string; // Unique game session ID
+  opponentId: string;
+  opponentName: string;
+  boardSize: number;
+  timestamp: number;
+};
 
 function App(): React.ReactElement {
   // LocalStorage for persistence
@@ -67,6 +77,13 @@ function App(): React.ReactElement {
   const [cpuBoards, setCpuBoards] = useLocalStorage<Board[] | null>(
     'spaces-game-cpu-boards',
     BoardSchema.array(),
+    []
+  );
+
+  // LocalStorage for round results (keep last 100 rounds across all games)
+  const [savedRoundResults, setSavedRoundResults] = useLocalStorage<StoredRoundResult[]>(
+    'spaces-game-round-results',
+    z.any().array(), // Use any for now since we don't have a StoredRoundResult schema
     []
   );
 
@@ -261,55 +278,181 @@ function App(): React.ReactElement {
     }
   }, [state.user.stats.totalGames, state.user, state.phase.type]);
 
-  // Check for incoming challenge in URL on mount
-  useEffect(() => {
-    const challengeData = getChallengeFromUrl();
+  // Helper function to save a round result to localStorage
+  const saveRoundResult = (result: RoundResult, gameId: string | null, opponent: Opponent | null, boardSize: number) => {
+    if (!opponent || !gameId) {
+      console.warn('[saveRoundResult] Missing opponent or gameId, not saving');
+      return;
+    }
 
-    if (challengeData) {
-      // Store the challenge data
-      setIncomingChallenge(challengeData);
+    const storedResult: StoredRoundResult = {
+      ...result,
+      gameId,
+      opponentId: opponent.id,
+      opponentName: opponent.name,
+      boardSize,
+      timestamp: Date.now(),
+    };
 
-      // If user already exists, show them the challenge immediately
-      if (state.user.name) {
-        try {
-          // Decode the opponent's board
-          const opponentBoard = decodeMinimalBoard(challengeData.playerBoard);
+    console.log('[saveRoundResult] Saving round', result.round, 'for gameId:', gameId);
 
-          console.log('[APP] Received challenge:', challengeData);
+    // Add to saved results and keep only last 100
+    const updatedResults = [storedResult, ...(savedRoundResults || [])].slice(0, 100);
+    setSavedRoundResults(updatedResults);
 
-          // Clear URL
-          clearChallengeFromUrl();
+    console.log('[saveRoundResult] Total saved results now:', updatedResults.filter(r => r.gameId === gameId).length, 'for this game');
+  };
 
-          // Show alert for now (will be replaced with proper UI)
-          if (window.confirm(`You've received a challenge for a ${challengeData.boardSize}×${challengeData.boardSize} board! Would you like to respond?`)) {
-            // Set up game state to respond to challenge
-            loadState({
-              ...state,
-              boardSize: challengeData.boardSize,
-              gameMode: challengeData.gameMode,
-              currentRound: challengeData.round,
-              opponentSelectedBoard: opponentBoard,
-              playerScore: 0,
-              opponentScore: 0,
-              roundHistory: [],
-              phase: { type: 'board-selection', round: challengeData.round },
-            });
+  // Helper function to load round results for a specific game session
+  const loadRoundResults = (gameId: string | null): RoundResult[] => {
+    if (!gameId || !savedRoundResults) return [];
+
+    // Filter results for this game session, sorted by round
+    return savedRoundResults
+      .filter(r => r.gameId === gameId)
+      .sort((a, b) => a.round - b.round)
+      .map(({ gameId, opponentId, opponentName, boardSize, timestamp, ...roundResult }) => roundResult);
+  };
+
+  // Function to handle incoming challenges
+  const handleIncomingChallenge = (challengeData: ReturnType<typeof getChallengeFromUrl>) => {
+    if (!challengeData) return;
+
+    // Store the challenge data
+    setIncomingChallenge(challengeData);
+
+    // If user already exists, show them the challenge immediately
+    if (state.user.name) {
+      try {
+        console.log('[APP] Received challenge:', challengeData);
+
+        // Clear URL
+        clearChallengeFromUrl();
+
+        // Check if this is final results
+        if (challengeData.isFinalResults) {
+          // This is final results share - go directly to game-over screen
+          const currentOpponent = state.opponent;
+
+          // Determine winner (note: scores are flipped because they're from opponent's perspective)
+          const opponentFinalScore = challengeData.playerScore || 0;
+          const playerFinalScore = challengeData.opponentScore || 0;
+
+          let winner: 'player' | 'opponent' | 'tie';
+          if (playerFinalScore > opponentFinalScore) {
+            winner = 'player';
+          } else if (opponentFinalScore > playerFinalScore) {
+            winner = 'opponent';
+          } else {
+            winner = 'tie';
           }
 
-          // Clear the challenge from state
+          // Load round history from localStorage (optimistically)
+          const roundHistory = loadRoundResults(challengeData.gameId);
+
+          loadState({
+            ...state,
+            opponent: currentOpponent || null,
+            playerScore: playerFinalScore,
+            opponentScore: opponentFinalScore,
+            roundHistory,
+            phase: { type: 'game-over', winner },
+          });
+
           setIncomingChallenge(null);
-        } catch (error) {
-          console.error('[APP] Failed to parse challenge:', error);
-          clearChallengeFromUrl();
-          setIncomingChallenge(null);
+          return;
         }
+
+        // Decode the opponent's board
+        const opponentBoard = decodeMinimalBoard(challengeData.playerBoard);
+
+        // Find or create opponent using playerId from challenge
+        let opponent = (savedOpponents || []).find(o => o.id === challengeData.playerId);
+
+        if (!opponent) {
+          // Create new opponent from challenge data
+          // Note: Use the playerId from the challenge as the ID to maintain consistency
+          opponent = {
+            ...createHumanOpponent(challengeData.playerName),
+            id: challengeData.playerId, // Override with the ID from challenge to ensure consistency
+          };
+          // Save to localStorage
+          setSavedOpponents([...(savedOpponents || []), opponent]);
+        }
+
+        // Check if we're continuing an ongoing game (same gameId)
+        const isOngoingGame = state.gameId === challengeData.gameId;
+
+        // Get scores from URL or use current scores
+        const playerScore = challengeData.opponentScore !== undefined ? challengeData.opponentScore :
+                           (isOngoingGame ? state.playerScore : 0);
+        const opponentScore = challengeData.playerScore !== undefined ? challengeData.playerScore :
+                             (isOngoingGame ? state.opponentScore : 0);
+
+        console.log('[handleIncomingChallenge] Ongoing game?', isOngoingGame);
+        console.log('[handleIncomingChallenge] Current roundHistory length:', state.roundHistory.length);
+        console.log('[handleIncomingChallenge] Loading from localStorage for gameId:', challengeData.gameId);
+
+        // Show alert
+        const message = isOngoingGame
+          ? `${opponent.name} has responded! Ready for Round ${challengeData.round}?`
+          : `You've received a challenge from ${opponent.name} for a ${challengeData.boardSize}×${challengeData.boardSize} board! Would you like to respond?`;
+
+        if (window.confirm(message)) {
+          // Load round history from localStorage using gameId
+          const roundHistory = loadRoundResults(challengeData.gameId);
+          console.log('[handleIncomingChallenge] Loaded roundHistory from localStorage:', roundHistory.length, 'rounds');
+          console.log('[handleIncomingChallenge] Rounds:', roundHistory.map(r => `R${r.round}: ${r.winner}`));
+
+          // Set up game state to respond to challenge
+          loadState({
+            ...state,
+            opponent,
+            gameId: challengeData.gameId, // Use gameId from challenge
+            boardSize: challengeData.boardSize,
+            gameMode: challengeData.gameMode,
+            currentRound: challengeData.round,
+            opponentSelectedBoard: opponentBoard,
+            playerSelectedBoard: null, // Clear previous board selection
+            playerScore,
+            opponentScore,
+            roundHistory,
+            phase: { type: 'board-selection', round: challengeData.round },
+          });
+        }
+
+        // Clear the challenge from state
+        setIncomingChallenge(null);
+      } catch (error) {
+        console.error('[APP] Failed to parse challenge:', error);
+        clearChallengeFromUrl();
+        setIncomingChallenge(null);
       }
-      // If user doesn't exist yet, they'll go through tutorial first
-      // The challenge will be preserved in state and handled after tutorial
     }
-    // Only run once on mount
+    // If user doesn't exist yet, they'll go through tutorial first
+    // The challenge will be preserved in state and handled after tutorial
+  };
+
+  // Check for incoming challenge in URL on mount and when hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const challengeData = getChallengeFromUrl();
+      if (challengeData) {
+        handleIncomingChallenge(challengeData);
+      }
+    };
+
+    // Check on mount
+    handleHashChange();
+
+    // Listen for hash changes (when user pastes new URL or navigates)
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [state.user.name]); // Re-run when user changes (in case they complete tutorial)
 
   // Update opponent record when game ends
   useEffect(() => {
@@ -479,10 +622,14 @@ function App(): React.ReactElement {
       setSavedOpponents([...(savedOpponents || []), opponent]);
     }
 
+    // Generate game ID for human opponents (for tracking across challenges)
+    const gameId = opponent.type === 'human' ? `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : null;
+
     // Select opponent with game mode and reset game state for new game
     loadState({
       ...state,
       opponent,
+      gameId,
       gameMode,
       // boardSize should already be set at this point
       phase: gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 },
@@ -657,9 +804,9 @@ function App(): React.ReactElement {
 
     selectPlayerBoard(board);
 
-    // Check if we're responding to a challenge (opponent board already selected for round 1)
-    if (state.opponentSelectedBoard && state.currentRound === 1) {
-      // Responding to challenge round 1 - simulate immediately with the received board
+    // Check if we're responding to a challenge (opponent board already selected)
+    if (state.opponentSelectedBoard) {
+      // Responding to challenge - simulate immediately with the received board
       setIsSimulatingRound(true);
 
       setTimeout(() => {
@@ -674,6 +821,7 @@ function App(): React.ReactElement {
         }
 
         completeRound(result);
+        saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
         setIsSimulatingRound(false);
       }, 500);
       return;
@@ -732,45 +880,53 @@ function App(): React.ReactElement {
       }
 
       completeRound(result);
+      saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
       setIsSimulatingRound(false);
     }, 500); // Shorter delay for better UX
   };
 
   // Handle continuing to next round
   const handleContinue = () => {
+    console.log('[handleContinue] Current round:', state.currentRound);
+    console.log('[handleContinue] Round history length:', state.roundHistory.length);
+    console.log('[handleContinue] Round history:', state.roundHistory.map(r => `R${r.round}: ${r.winner}`));
+
     // Check if we're responding to a challenge and need to add opponent
+    // Note: With the new ID system, opponent should already be created when accepting challenge
+    // This is just a fallback for edge cases
     if (!state.opponent && state.currentRound === 1) {
-      // Ask for opponent's name to add them to the list
-      const opponentName = window.prompt("What would you like to call your opponent?");
+      console.warn('[APP] Missing opponent after round 1 - this should not happen with ID system');
 
-      if (opponentName && opponentName.trim()) {
-        // Create human opponent
-        const newOpponent: Opponent = {
-          type: 'human',
-          id: `human-${Date.now()}`,
-          name: opponentName.trim(),
-          wins: 0,
-          losses: 0,
-        };
-
-        // Save opponent to localStorage
-        setSavedOpponents([...(savedOpponents || []), newOpponent]);
-
-        // Update game state with opponent
-        loadState({
-          ...state,
-          opponent: newOpponent,
-        });
-
-        // Now advance to next round
-        advanceToNextRound();
-      } else {
-        // User cancelled or entered empty name, just continue without saving
-        advanceToNextRound();
-      }
-    } else {
+      // Advance to next round for board selection (to send back)
       advanceToNextRound();
+      return;
     }
+
+    // Check if this was the final round (round 5)
+    if (state.currentRound === 5) {
+      // If opponent is human:
+      if (state.opponent?.type === 'human') {
+        // Check if we INITIATED the game (no opponentSelectedBoard means we went first)
+        // In that case, wait for their response - don't share yet, just advance to game-over
+        if (!state.opponentSelectedBoard) {
+          // Player 1 (initiator) - advance to game-over and wait for player 2's final URL
+          advanceToNextRound();
+          return;
+        }
+
+        // Player 2 (responder) - advance to game-over to show all results
+        // They should NOT see the share screen - player 1 is waiting for the full results URL
+        advanceToNextRound();
+        return;
+      }
+
+      // CPU opponent - just advance to game-over
+      advanceToNextRound();
+      return;
+    }
+
+    // Not final round yet - advance to next round to select board
+    advanceToNextRound();
   };
 
   // Handle play again
@@ -979,14 +1135,33 @@ function App(): React.ReactElement {
 
         // Show alert for now (will be replaced with proper UI)
         if (window.confirm(`Welcome! You've received a challenge for a ${incomingChallenge.boardSize}×${incomingChallenge.boardSize} board! Would you like to respond?`)) {
+          // Find or create opponent using playerId from challenge
+          let opponent = (savedOpponents || []).find(o => o.id === incomingChallenge.playerId);
+
+          if (!opponent) {
+            // Create new opponent from challenge data
+            // Note: Use the playerId from the challenge as the ID to maintain consistency
+            opponent = {
+              ...createHumanOpponent(incomingChallenge.playerName),
+              id: incomingChallenge.playerId, // Override with the ID from challenge to ensure consistency
+            };
+            // Save to localStorage
+            setSavedOpponents([...(savedOpponents || []), opponent]);
+          }
+
           // Set up game state to respond to challenge
           loadState({
             ...state,
             user: newUser,
+            opponent,
+            gameId: incomingChallenge.gameId,
             boardSize: incomingChallenge.boardSize,
             gameMode: incomingChallenge.gameMode,
             currentRound: incomingChallenge.round,
             opponentSelectedBoard: opponentBoard,
+            playerScore: incomingChallenge.opponentScore || 0,
+            opponentScore: incomingChallenge.playerScore || 0,
+            roundHistory: [],
             phase: { type: 'board-selection', round: incomingChallenge.round },
           });
         } else {
@@ -1101,10 +1276,14 @@ function App(): React.ReactElement {
                         </div>
                         <button
                           onClick={() => {
+                            // Generate game ID for human opponents (for tracking across challenges)
+                            const gameId = opponent.type === 'human' ? `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : null;
+
                             // Reset game state and save the selected opponent
                             loadState({
                               ...state,
                               opponent,
+                              gameId,
                               phase: { type: 'game-mode-selection' },
                               currentRound: 1,
                               playerScore: 0,
@@ -1446,14 +1625,19 @@ function App(): React.ReactElement {
 
       case 'share-challenge': {
         // Generate challenge URL for the selected board
-        if (!state.playerSelectedBoard || !state.boardSize) {
+        if (!state.playerSelectedBoard || !state.boardSize || !state.gameId) {
           return null;
         }
 
         const challengeUrl = generateChallengeUrl(
           state.playerSelectedBoard,
           state.phase.round,
-          state.gameMode || 'round-by-round'
+          state.gameMode || 'round-by-round',
+          state.gameId,
+          state.user.id,
+          state.user.name,
+          state.playerScore,
+          state.opponentScore
         );
 
         return (
@@ -1463,6 +1647,36 @@ function App(): React.ReactElement {
             boardSize={state.boardSize}
             round={state.phase.round}
             onCancel={handleGoHome}
+          />
+        );
+      }
+
+      case 'share-final-results': {
+        // Generate final results URL after round 5
+        if (!state.boardSize || !state.gameId) {
+          return null;
+        }
+
+        const finalResultsUrl = generateFinalResultsUrl(
+          state.boardSize,
+          state.playerScore,
+          state.opponentScore,
+          state.gameMode || 'round-by-round',
+          state.gameId,
+          state.user.id,
+          state.user.name
+        );
+
+        return (
+          <ShareChallenge
+            challengeUrl={finalResultsUrl}
+            opponentName={state.opponent?.name || 'Your Friend'}
+            boardSize={state.boardSize}
+            round={5}
+            onCancel={() => {
+              // After sharing final results, go to game-over
+              advanceToNextRound();
+            }}
           />
         );
       }
@@ -1513,7 +1727,11 @@ function App(): React.ReactElement {
           />
         );
 
-      case 'game-over':
+      case 'game-over': {
+        // Check if player should share final results with opponent
+        // Player 2 (responder) should share results after game ends
+        const shouldShareResults = state.opponent?.type === 'human' && state.opponentSelectedBoard && state.gameId && state.boardSize;
+
         return (
           <GameOver
             winner={state.phase.winner}
@@ -1524,12 +1742,14 @@ function App(): React.ReactElement {
             roundHistory={state.roundHistory}
             playerStats={state.user.stats}
             onNewGame={handlePlayAgain}
+            {...(shouldShareResults && { onShare: () => setPhase({ type: 'share-final-results' }) })}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
           />
         );
+      }
 
       default:
         return <p>Unknown phase</p>;

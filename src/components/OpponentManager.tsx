@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, type ReactElement } from 'react';
-import { createCpuOpponent } from '@/utils/opponent-helpers';
+import { createCpuOpponent, createHumanOpponent } from '@/utils/opponent-helpers';
 import type { Opponent } from '@/types';
 import styles from './OpponentManager.module.css';
 
@@ -66,13 +66,7 @@ export function OpponentManager({
         return;
       }
 
-      const humanOpponent: Opponent = {
-        type: 'human',
-        id: `human-${Date.now()}`,
-        name: opponentName.trim(),
-        wins: 0,
-        losses: 0,
-      };
+      const humanOpponent = createHumanOpponent(opponentName.trim());
 
       onOpponentSelected(humanOpponent);
     },
