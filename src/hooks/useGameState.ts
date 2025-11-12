@@ -294,6 +294,7 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
       phase: { type: 'user-setup' },
       user: prev.user, // Preserve user profile
       opponent: null,
+      gameId: null,
       gameMode: null,
       boardSize: null,
       currentRound: 1,

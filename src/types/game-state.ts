@@ -58,6 +58,7 @@ export type GamePhase =
   | { type: 'deck-selection' } // Select deck to play
   | { type: 'board-selection'; round: number } // Round-by-round mode
   | { type: 'share-challenge'; round: number } // Share challenge URL with human opponent
+  | { type: 'share-final-results' } // Share final results URL after round 5
   | { type: 'waiting-for-opponent'; round: number }
   | { type: 'round-results'; round: number; result: RoundResult } // Single round result
   | { type: 'all-rounds-results'; results: RoundResult[] } // All 10 rounds at once
@@ -74,6 +75,9 @@ export type GameState = {
   // User and opponent
   user: UserProfile;
   opponent: Opponent | null;
+
+  // Game session ID (generated when starting a game with human opponent)
+  gameId: string | null; // null until game starts
 
   // Game mode
   gameMode: GameMode | null; // null until selected

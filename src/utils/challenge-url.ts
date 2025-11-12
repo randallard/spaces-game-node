@@ -20,6 +20,18 @@ export interface ChallengeData {
   round: number;
   /** Game mode */
   gameMode: 'round-by-round' | 'deck';
+  /** Game session ID (unique per 5-round game) */
+  gameId: string;
+  /** Sender's player ID */
+  playerId: string;
+  /** Sender's player name */
+  playerName: string;
+  /** Player's current score (optional, for tracking through rounds) */
+  playerScore?: number;
+  /** Opponent's current score (optional, for tracking through rounds) */
+  opponentScore?: number;
+  /** Is this a final results share (no board, just scores) */
+  isFinalResults?: boolean;
 }
 
 /**
@@ -28,12 +40,22 @@ export interface ChallengeData {
  * @param board - The player's board to share
  * @param round - Current round number
  * @param gameMode - Game mode (round-by-round or deck)
+ * @param gameId - Unique game session ID
+ * @param playerId - Sender's player ID
+ * @param playerName - Sender's player name
+ * @param playerScore - Current player score (optional)
+ * @param opponentScore - Current opponent score (optional)
  * @returns Full challenge URL
  */
 export function generateChallengeUrl(
   board: Board,
   round: number,
-  gameMode: 'round-by-round' | 'deck' = 'round-by-round'
+  gameMode: 'round-by-round' | 'deck',
+  gameId: string,
+  playerId: string,
+  playerName: string,
+  playerScore?: number,
+  opponentScore?: number
 ): string {
   // Encode the board using minimal encoding
   const encodedBoard = encodeMinimalBoard(board);
@@ -44,6 +66,11 @@ export function generateChallengeUrl(
     boardSize: board.boardSize,
     round,
     gameMode,
+    gameId,
+    playerId,
+    playerName,
+    ...(playerScore !== undefined && { playerScore }),
+    ...(opponentScore !== undefined && { opponentScore }),
   };
 
   // Serialize to compact JSON
@@ -51,6 +78,54 @@ export function generateChallengeUrl(
 
   // Compress using LZ-String for URL-safe compression
   // This makes the URL harder to read and significantly smaller
+  const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+
+  // Get current URL origin and path
+  const baseUrl = window.location.origin + window.location.pathname;
+
+  // Return full URL with compressed hash fragment
+  return `${baseUrl}#c=${compressed}`;
+}
+
+/**
+ * Generate a final results URL (after round 5 completion)
+ *
+ * @param boardSize - Board size used
+ * @param playerScore - Final player score
+ * @param opponentScore - Final opponent score
+ * @param gameMode - Game mode used
+ * @param gameId - Game session ID
+ * @param playerId - Sender's player ID
+ * @param playerName - Sender's player name
+ * @returns Full results URL
+ */
+export function generateFinalResultsUrl(
+  boardSize: number,
+  playerScore: number,
+  opponentScore: number,
+  gameMode: 'round-by-round' | 'deck',
+  gameId: string,
+  playerId: string,
+  playerName: string
+): string {
+  // Create final results data
+  const challengeData: ChallengeData = {
+    playerBoard: '', // No board needed for final results
+    boardSize,
+    round: 5,
+    gameMode,
+    gameId,
+    playerId,
+    playerName,
+    playerScore,
+    opponentScore,
+    isFinalResults: true,
+  };
+
+  // Serialize to compact JSON
+  const jsonStr = JSON.stringify(challengeData);
+
+  // Compress using LZ-String
   const compressed = LZString.compressToEncodedURIComponent(jsonStr);
 
   // Get current URL origin and path
@@ -91,44 +166,28 @@ export function parseChallengeUrl(url: string): ChallengeData | null {
       const challengeData = JSON.parse(decompressed) as ChallengeData;
 
       // Validate the data
-      if (!challengeData.playerBoard || !challengeData.round || !challengeData.gameMode) {
-        console.error('Invalid challenge data structure');
+      if (!challengeData.round || !challengeData.gameMode || !challengeData.gameId || !challengeData.playerId || !challengeData.playerName) {
+        console.error('Invalid challenge data structure: missing required fields');
         return null;
       }
 
-      // Validate board encoding by attempting to decode it
-      decodeMinimalBoard(challengeData.playerBoard);
+      // For final results, playerBoard can be empty
+      if (!challengeData.isFinalResults) {
+        if (!challengeData.playerBoard) {
+          console.error('Invalid challenge data: missing playerBoard');
+          return null;
+        }
+        // Validate board encoding by attempting to decode it
+        decodeMinimalBoard(challengeData.playerBoard);
+      }
 
       return challengeData;
     }
 
     // Fallback: try old uncompressed format (for backwards compatibility during development)
-    const challengeParam = params.get('challenge');
-    const roundParam = params.get('r');
-    const modeParam = params.get('m');
-
-    if (!challengeParam || !roundParam || !modeParam) {
-      return null;
-    }
-
-    // Parse values
-    const playerBoard = challengeParam;
-    const round = parseInt(roundParam);
-    const gameMode = modeParam === 'd' ? 'deck' : 'round-by-round';
-
-    if (isNaN(round) || round < 1) {
-      return null;
-    }
-
-    // Decode the board to get board size (and validate encoding)
-    const board = decodeMinimalBoard(playerBoard);
-
-    return {
-      playerBoard,
-      boardSize: board.boardSize,
-      round,
-      gameMode,
-    };
+    // Old format URLs are no longer supported with the new ID system
+    console.error('Old challenge URL format detected - please generate a new challenge URL');
+    return null;
   } catch (error) {
     console.error('Failed to parse challenge URL:', error);
     return null;
