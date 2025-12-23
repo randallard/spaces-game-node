@@ -452,4 +452,156 @@ describe('SavedBoards', () => {
       expect(screen.getByText('Board 1')).toBeInTheDocument();
     });
   });
+
+  describe('Custom board size', () => {
+    beforeEach(() => {
+      // Mock feature unlocks to allow custom sizes
+      vi.mock('@/utils/feature-unlocks', () => ({
+        getFeatureUnlocks: vi.fn(() => ({
+          boardSizes: [2, 3, 4, 5, 6, 7, 8, 9, 10],
+          deckMode: true,
+        })),
+      }));
+    });
+
+    it('should allow entering custom board size', () => {
+      const boards: Board[] = [];
+
+      render(<SavedBoards {...defaultProps} boards={boards} />);
+
+      // Open creator
+      const createButton = screen.getByText('Create Your First Board');
+      fireEvent.click(createButton);
+
+      // Enter custom size
+      const customInput = screen.getByPlaceholderText(/Enter size \(2-99\)/i);
+      expect(customInput).toBeInTheDocument();
+
+      fireEvent.change(customInput, { target: { value: '7' } });
+
+      // Button should show custom size
+      expect(screen.getByText(/7×7/)).toBeInTheDocument();
+    });
+
+    it('should validate custom board size is within range', () => {
+      const boards: Board[] = [];
+
+      render(<SavedBoards {...defaultProps} boards={boards} />);
+
+      // Open creator
+      const createButton = screen.getByText('Create Your First Board');
+      fireEvent.click(createButton);
+
+      // Enter invalid size (too small)
+      const customInput = screen.getByPlaceholderText(/Enter size \(2-99\)/i);
+      fireEvent.change(customInput, { target: { value: '1' } });
+
+      const useButton = screen.getByText(/1×1/);
+      fireEvent.click(useButton);
+
+      // Should show error
+      expect(screen.getByText(/Please enter a number between 2 and 99/)).toBeInTheDocument();
+    });
+
+    it('should validate custom board size is not too large', () => {
+      const boards: Board[] = [];
+
+      render(<SavedBoards {...defaultProps} boards={boards} />);
+
+      // Open creator
+      const createButton = screen.getByText('Create Your First Board');
+      fireEvent.click(createButton);
+
+      // Enter invalid size (too large)
+      const customInput = screen.getByPlaceholderText(/Enter size \(2-99\)/i);
+      fireEvent.change(customInput, { target: { value: '100' } });
+
+      const useButton = screen.getByText(/100×100/);
+      fireEvent.click(useButton);
+
+      // Should show error
+      expect(screen.getByText(/Please enter a number between 2 and 99/)).toBeInTheDocument();
+    });
+
+    it('should clear custom error when correcting input', () => {
+      const boards: Board[] = [];
+
+      render(<SavedBoards {...defaultProps} boards={boards} />);
+
+      // Open creator
+      const createButton = screen.getByText('Create Your First Board');
+      fireEvent.click(createButton);
+
+      // Enter invalid size
+      const customInput = screen.getByPlaceholderText(/Enter size \(2-99\)/i);
+      fireEvent.change(customInput, { target: { value: '1' } });
+
+      const useButton = screen.getByText(/1×1/);
+      fireEvent.click(useButton);
+
+      // Error should be shown
+      expect(screen.getByText(/Please enter a number between 2 and 99/)).toBeInTheDocument();
+
+      // Enter valid size
+      fireEvent.change(customInput, { target: { value: '5' } });
+
+      // Error should be cleared
+      expect(screen.queryByText(/Please enter a number between 2 and 99/)).not.toBeInTheDocument();
+    });
+
+    it('should disable Use Custom button when no size is entered', () => {
+      const boards: Board[] = [];
+
+      render(<SavedBoards {...defaultProps} boards={boards} />);
+
+      // Open creator
+      const createButton = screen.getByText('Create Your First Board');
+      fireEvent.click(createButton);
+
+      // Button should be disabled
+      const useButton = screen.getByText(/Use Custom/);
+      expect(useButton).toBeDisabled();
+    });
+
+    it('should create board with valid custom size', () => {
+      const boards: Board[] = [];
+
+      render(<SavedBoards {...defaultProps} boards={boards} />);
+
+      // Open creator
+      const createButton = screen.getByText('Create Your First Board');
+      fireEvent.click(createButton);
+
+      // Enter valid custom size
+      const customInput = screen.getByPlaceholderText(/Enter size \(2-99\)/i);
+      fireEvent.change(customInput, { target: { value: '7' } });
+
+      const useButton = screen.getByText(/7×7/);
+      fireEvent.click(useButton);
+
+      // Should transition to board creator
+      expect(screen.getByText(/Choose a starting column below or click a Start button/)).toBeInTheDocument();
+    });
+
+    it('should allow canceling from size selection back to list', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+
+      render(<SavedBoards {...defaultProps} boards={boards} />);
+
+      // Open creator
+      const createButton = screen.getByText('+ Create New Board');
+      fireEvent.click(createButton);
+
+      // Should show size selection
+      expect(screen.getByText('Select Board Size')).toBeInTheDocument();
+
+      // Cancel
+      const cancelButton = screen.getByText('Cancel');
+      fireEvent.click(cancelButton);
+
+      // Should return to list
+      expect(screen.getByText('Board 1')).toBeInTheDocument();
+      expect(screen.queryByText('Select Board Size')).not.toBeInTheDocument();
+    });
+  });
 });

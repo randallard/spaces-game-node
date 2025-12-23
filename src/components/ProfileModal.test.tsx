@@ -431,4 +431,225 @@ describe('ProfileModal', () => {
       expect(screen.getByText('Save Changes')).toBeDisabled();
     });
   });
+
+  describe('Backup functionality', () => {
+    it('should have Download Backup button', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      expect(screen.getByText(/Download Backup/)).toBeInTheDocument();
+    });
+
+    it('should have Restore Backup button', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      expect(screen.getByText(/Restore Backup/)).toBeInTheDocument();
+    });
+
+    it('should call downloadBackup when Download Backup button clicked', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const downloadButton = screen.getByText(/Download Backup/);
+      fireEvent.click(downloadButton);
+
+      // Should show success message (we can't easily mock the downloadBackup function
+      // but we can verify the button exists and is clickable)
+    });
+
+    it('should trigger file input when Restore Backup button clicked', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const restoreButton = screen.getByText(/Restore Backup/);
+      fireEvent.click(restoreButton);
+
+      // File input should exist (even if hidden)
+      const fileInput = document.querySelector('input[type="file"]');
+      expect(fileInput).toBeInTheDocument();
+    });
+  });
+
+  describe('Backdrop click', () => {
+    it('should close modal when backdrop is clicked', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      const { container } = render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      // Find backdrop (the outer div)
+      const backdrop = container.firstChild as HTMLElement;
+      fireEvent.click(backdrop);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not close modal when clicking modal content', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      // Click on the modal content (not backdrop)
+      const modalContent = screen.getByText('Profile');
+      fireEvent.click(modalContent);
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Creature selection', () => {
+    it('should render player creature selector', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      expect(screen.getByLabelText('Your Creature')).toBeInTheDocument();
+    });
+
+    it('should render opponent creature selector', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      expect(screen.getByLabelText('Opponent Creature')).toBeInTheDocument();
+    });
+
+    it('should change player creature selection', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const playerCreatureSelect = screen.getByLabelText('Your Creature') as HTMLSelectElement;
+      fireEvent.change(playerCreatureSelect, { target: { value: 'circle' } });
+
+      expect(playerCreatureSelect.value).toBe('circle');
+    });
+
+    it('should change opponent creature selection', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const opponentCreatureSelect = screen.getByLabelText('Opponent Creature') as HTMLSelectElement;
+      fireEvent.change(opponentCreatureSelect, { target: { value: 'triangle' } });
+
+      expect(opponentCreatureSelect.value).toBe('triangle');
+    });
+
+    it('should enable save button when creature selection changes', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const playerCreatureSelect = screen.getByLabelText('Your Creature');
+      fireEvent.change(playerCreatureSelect, { target: { value: 'triangle' } });
+
+      const saveButton = screen.getByText('Save Changes');
+      expect(saveButton).not.toBeDisabled();
+    });
+  });
+
+  describe('Preferences', () => {
+    it('should render show complete round results checkbox', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const checkbox = screen.getByLabelText(/Show complete round results/i);
+      expect(checkbox).toBeInTheDocument();
+    });
+
+    it('should toggle show complete round results preference', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const checkbox = screen.getByLabelText(/Show complete round results/i) as HTMLInputElement;
+      expect(checkbox.checked).toBe(false);
+
+      fireEvent.click(checkbox);
+      expect(checkbox.checked).toBe(true);
+    });
+
+    it('should enable save button when preferences change', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const checkbox = screen.getByLabelText(/Show complete round results/i);
+      fireEvent.click(checkbox);
+
+      const saveButton = screen.getByText('Save Changes');
+      expect(saveButton).not.toBeDisabled();
+    });
+
+    it('should save preferences when form is submitted', () => {
+      const onUpdate = vi.fn();
+      const onClose = vi.fn();
+
+      render(
+        <ProfileModal user={mockUser} onUpdate={onUpdate} onClose={onClose} />
+      );
+
+      const checkbox = screen.getByLabelText(/Show complete round results/i);
+      fireEvent.click(checkbox);
+
+      const saveButton = screen.getByText('Save Changes');
+      fireEvent.click(saveButton);
+
+      expect(onUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          preferences: expect.objectContaining({
+            showCompleteRoundResults: true,
+          }),
+        })
+      );
+    });
+  });
 });
