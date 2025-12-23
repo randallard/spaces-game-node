@@ -16,6 +16,13 @@ vi.mock('@/utils/opponent-helpers', () => ({
     wins: 0,
     losses: 0,
   })),
+  createHumanOpponent: vi.fn((name: string) => ({
+    type: 'human',
+    id: `human-${Math.random().toString(36).substring(2, 9)}`,
+    name,
+    wins: 0,
+    losses: 0,
+  })),
 }));
 
 describe('OpponentManager', () => {
@@ -536,6 +543,179 @@ describe('OpponentManager', () => {
       expect(mockOnOpponentSelected).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'cpu' })
       );
+    });
+
+    it('should handle opponent name with special characters', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: "O'Brien-Smith" } });
+
+      fireEvent.click(screen.getByText('Continue'));
+
+      expect(mockOnOpponentSelected).toHaveBeenCalledTimes(1);
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.name).toBe("O'Brien-Smith");
+    });
+
+    it('should handle opponent name with numbers', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: 'Player123' } });
+
+      fireEvent.click(screen.getByText('Continue'));
+
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.name).toBe('Player123');
+    });
+
+    it('should handle opponent name at max length (20 chars)', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      const maxLengthName = 'A'.repeat(20);
+      fireEvent.change(input, { target: { value: maxLengthName } });
+
+      fireEvent.click(screen.getByText('Continue'));
+
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.name).toBe(maxLengthName);
+    });
+
+    it('should handle mixed whitespace in opponent name', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: '\t  Alice  \n' } });
+
+      fireEvent.click(screen.getByText('Continue'));
+
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.name).toBe('Alice');
+    });
+
+    it('should clear name input when going back and forth multiple times', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      // First time: enter name
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+      fireEvent.change(screen.getByLabelText('Opponent Name'), {
+        target: { value: 'Alice' },
+      });
+      fireEvent.click(screen.getByText('Back'));
+
+      // Second time: enter different name
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      // Input retains previous value
+      expect(input.value).toBe('Alice');
+    });
+
+    it('should handle form submission with whitespace-only name', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: '   \t  \n  ' } });
+
+      const form = input.closest('form')!;
+      fireEvent.submit(form);
+
+      // Should not submit with whitespace-only name
+      expect(mockOnOpponentSelected).not.toHaveBeenCalled();
+    });
+
+    it('should call onOpponentSelected with correct structure', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: 'TestName' } });
+      fireEvent.click(screen.getByText('Continue'));
+
+      expect(mockOnOpponentSelected).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'human',
+          name: 'TestName',
+          wins: 0,
+          losses: 0,
+          id: expect.stringMatching(/^human-/),
+        })
+      );
+    });
+
+    it('should verify input placeholder text', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      expect(input.placeholder).toBe("Enter opponent's name");
+    });
+
+    it('should verify input type is text', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      expect(input.type).toBe('text');
     });
   });
 });

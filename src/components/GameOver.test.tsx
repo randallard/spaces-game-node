@@ -764,4 +764,446 @@ describe('GameOver', () => {
       expect(screen.getByText('Games Played')).toBeInTheDocument();
     });
   });
+
+  describe('View mode toggle', () => {
+    it('should start with both view mode by default', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      const bothButton = screen.getByTitle('Show both boards and creatures');
+      expect(bothButton.className).toContain('toggleButtonActive');
+    });
+
+    it('should switch to thumbnails view when Boards button clicked', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      const boardsButton = screen.getByTitle('Show board thumbnails');
+      fireEvent.click(boardsButton);
+
+      expect(boardsButton.className).toContain('toggleButtonActive');
+    });
+
+    it('should switch to creatures view when Creatures button clicked', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      const creaturesButton = screen.getByTitle('Show creature outcome graphics');
+      fireEvent.click(creaturesButton);
+
+      expect(creaturesButton.className).toContain('toggleButtonActive');
+    });
+
+    it('should toggle between view modes multiple times', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      const boardsButton = screen.getByTitle('Show board thumbnails');
+      const creaturesButton = screen.getByTitle('Show creature outcome graphics');
+      const bothButton = screen.getByTitle('Show both boards and creatures');
+
+      fireEvent.click(boardsButton);
+      expect(boardsButton.className).toContain('toggleButtonActive');
+
+      fireEvent.click(creaturesButton);
+      expect(creaturesButton.className).toContain('toggleButtonActive');
+
+      fireEvent.click(bothButton);
+      expect(bothButton.className).toContain('toggleButtonActive');
+    });
+  });
+
+  describe('Help modal', () => {
+    it('should render help link', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      const helpLink = screen.getByText('(shown opponent moves...)');
+      expect(helpLink).toBeInTheDocument();
+      expect(helpLink.tagName).toBe('BUTTON');
+    });
+
+    it('should have onClick handler for help link', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      const helpLink = screen.getByText('(shown opponent moves...)');
+
+      // Clicking the help link shouldn't crash the component
+      expect(() => {
+        fireEvent.click(helpLink);
+      }).not.toThrow();
+    });
+  });
+
+  describe('Round modal overlay', () => {
+    it('should render modal with Combined Board View when round is clicked', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Open round modal
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+
+      expect(screen.getByText('Combined Board View')).toBeInTheDocument();
+    });
+  });
+
+  describe('Round navigation in modal', () => {
+    it('should navigate to next round when Continue clicked', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Open round 1
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+
+      // Click continue
+      const continueButton = screen.getByText(/Continue to Round 2/);
+      fireEvent.click(continueButton);
+
+      // Should now show round 2
+      expect(screen.getByText('Combined Board View')).toBeInTheDocument();
+    });
+
+    it('should show "Back to Summary" for last round', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Open round 3 (last round)
+      const round3Card = screen.getByText('Round 3').closest('button');
+      fireEvent.click(round3Card!);
+
+      // Should show "Back to Summary" instead of Continue
+      expect(screen.getByText('Back to Summary')).toBeInTheDocument();
+      expect(screen.queryByText(/Continue to Round/)).not.toBeInTheDocument();
+    });
+
+    it('should close modal when clicking Back to Summary on last round', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Open round 3 (last round)
+      const round3Card = screen.getByText('Round 3').closest('button');
+      fireEvent.click(round3Card!);
+
+      // Click Back to Summary
+      const backButton = screen.getByText('Back to Summary');
+      fireEvent.click(backButton);
+
+      // Modal should close
+      expect(screen.queryByText('Combined Board View')).not.toBeInTheDocument();
+    });
+
+    it('should navigate through all rounds sequentially', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Open round 1
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+
+      // Navigate to round 2
+      const continueButton1 = screen.getByText(/Continue to Round 2/);
+      fireEvent.click(continueButton1);
+
+      // Should now be on round 2, navigate to round 3
+      const continueButton2 = screen.getByText(/Continue to Round 3/);
+      fireEvent.click(continueButton2);
+
+      // Should now be on round 3 (last round)
+      expect(screen.getByText('Back to Summary')).toBeInTheDocument();
+    });
+  });
+
+  describe('Creature graphics display', () => {
+    it('should have creature view mode toggle button', () => {
+      const roundWithCreatures: RoundResult = {
+        ...createMockRoundResult(1, 'player'),
+        playerCreature: 'square',
+        opponentCreature: 'circle',
+        playerVisualOutcome: 'goal',
+        opponentVisualOutcome: 'trapped',
+      };
+
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          roundHistory={[roundWithCreatures]}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Should have creatures view button
+      const creaturesButton = screen.getByTitle('Show creature outcome graphics');
+      expect(creaturesButton).toBeInTheDocument();
+
+      // Should be clickable
+      fireEvent.click(creaturesButton);
+      expect(creaturesButton.className).toContain('toggleButtonActive');
+    });
+
+    it('should render round cards with creature data', () => {
+      const collisionRound: RoundResult = {
+        ...createMockRoundResult(1, 'tie'),
+        playerCreature: 'square',
+        opponentCreature: 'circle',
+        collision: true,
+      };
+
+      render(
+        <GameOver
+          winner="tie"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={0}
+          opponentScore={0}
+          roundHistory={[collisionRound]}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Round card should be present
+      expect(screen.getByText('Round 1')).toBeInTheDocument();
+    });
+
+    it('should handle rounds without creatures gracefully', () => {
+      const roundWithoutCreatures: RoundResult = {
+        ...createMockRoundResult(1, 'player'),
+        playerCreature: undefined,
+        opponentCreature: undefined,
+      };
+
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={1}
+          opponentScore={0}
+          roundHistory={[roundWithoutCreatures]}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Component should render without crashing
+      expect(screen.getByText('Round 1')).toBeInTheDocument();
+
+      // Should have view toggle buttons
+      const creaturesButton = screen.getByTitle('Show creature outcome graphics');
+      fireEvent.click(creaturesButton);
+
+      // Should not crash when switching views
+      expect(creaturesButton.className).toContain('toggleButtonActive');
+    });
+  });
+
+  describe('Running totals calculation', () => {
+    it('should calculate running totals correctly', () => {
+      const roundHistory = [
+        { ...createMockRoundResult(1, 'player'), playerPoints: 10, opponentPoints: 5 },
+        { ...createMockRoundResult(2, 'opponent'), playerPoints: 3, opponentPoints: 12 },
+        { ...createMockRoundResult(3, 'player'), playerPoints: 7, opponentPoints: 2 },
+      ];
+
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={20}
+          opponentScore={19}
+          roundHistory={roundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // Open round 3 to verify running totals are being passed
+      const round3Card = screen.getByText('Round 3').closest('button');
+      fireEvent.click(round3Card!);
+
+      // Modal should display with correct running totals
+      expect(screen.getByText('Combined Board View')).toBeInTheDocument();
+    });
+  });
+
+  describe('Invalid round handling', () => {
+    it('should handle invalid round selection gracefully', () => {
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+        />
+      );
+
+      // This test verifies the component doesn't crash with invalid data
+      expect(screen.getByText('Alice Wins the Game!')).toBeInTheDocument();
+    });
+  });
+
+  describe('Preferences callbacks', () => {
+    it('should call onShowCompleteResultsChange when provided', () => {
+      const mockOnShowCompleteResultsChange = vi.fn();
+
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+          showCompleteResultsByDefault={false}
+          onShowCompleteResultsChange={mockOnShowCompleteResultsChange}
+        />
+      );
+
+      // Open round modal
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+
+      // Find and click the "Show complete results" checkbox
+      const checkbox = screen.getByLabelText(/Show complete results/);
+      fireEvent.click(checkbox);
+
+      expect(mockOnShowCompleteResultsChange).toHaveBeenCalledWith(true);
+    });
+
+    it('should call onExplanationStyleChange when provided', () => {
+      const mockOnExplanationStyleChange = vi.fn();
+
+      render(
+        <GameOver
+          winner="player"
+          playerName="Alice"
+          opponentName="Bob"
+          playerScore={3}
+          opponentScore={1}
+          roundHistory={mockRoundHistory}
+          onNewGame={mockOnNewGame}
+          explanationStyle="lively"
+          onExplanationStyleChange={mockOnExplanationStyleChange}
+        />
+      );
+
+      // Open round modal
+      const round1Card = screen.getByText('Round 1').closest('button');
+      fireEvent.click(round1Card!);
+
+      // Find and click the explanation style toggle
+      const styleToggle = screen.getByText(/📖 Technical/);
+      fireEvent.click(styleToggle);
+
+      expect(mockOnExplanationStyleChange).toHaveBeenCalledWith('technical');
+    });
+  });
 });

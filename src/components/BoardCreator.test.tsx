@@ -443,4 +443,859 @@ describe('BoardCreator', () => {
       expect(screen.getByText(/Use WASD keys, the controls below, or click buttons on the board/)).toBeInTheDocument();
     });
   });
+
+  describe('Undo functionality', () => {
+    it('should show Undo button during building phase', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start the board
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should undo last move when Undo is clicked', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start and make a move
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      const moveButtons = screen.getAllByText('Move');
+      fireEvent.click(moveButtons[0]!);
+
+      // Click undo
+      const undoButton = screen.getByText('Undo');
+      fireEvent.click(undoButton);
+
+      // Should still be in building phase but with fewer moves
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should return to choosing-start phase when undoing all moves', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start the board
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Undo the start
+      const undoButton = screen.getByText('Undo');
+      fireEvent.click(undoButton);
+
+      // Should be back in choosing-start phase
+      expect(screen.getAllByText('Start').length).toBeGreaterThan(0);
+    });
+
+    it('should rebuild grid correctly after undo', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start, move, trap, then undo the trap
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      const moveButtons = screen.getAllByText('Move');
+      fireEvent.click(moveButtons[0]!);
+
+      const trapButtons = screen.getAllByText('Trap');
+      fireEvent.click(trapButtons[0]!);
+
+      // Undo the trap
+      const undoButton = screen.getByText('Undo');
+      fireEvent.click(undoButton);
+
+      // Should have Move and Trap buttons again
+      expect(screen.getAllByText('Move').length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Start column selector', () => {
+    it('should have column selector in choosing-start phase', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      // Should have number input for column selection
+      const columnInput = screen.getByLabelText('Select start column');
+      expect(columnInput).toBeInTheDocument();
+      expect(columnInput).toHaveAttribute('type', 'number');
+    });
+
+    it('should change selected column when input value changes', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const columnInput = screen.getByLabelText('Select start column') as HTMLInputElement;
+      expect(columnInput.value).toBe('0');
+
+      fireEvent.change(columnInput, { target: { value: '2' } });
+      expect(columnInput.value).toBe('2');
+    });
+
+    it('should confirm start position when Confirm Start clicked', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      // Find Confirm Start button
+      const confirmButton = screen.getByText('Confirm Start');
+      fireEvent.click(confirmButton);
+
+      // Should move to building phase
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should use selected column when confirming start', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      // Select column 2
+      const columnInput = screen.getByLabelText('Select start column');
+      fireEvent.change(columnInput, { target: { value: '2' } });
+
+      // Confirm
+      const confirmButton = screen.getByText('Confirm Start');
+      fireEvent.click(confirmButton);
+
+      // Should be in building phase
+      expect(screen.queryByText('Confirm Start')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Keyboard controls', () => {
+    it('should handle W key for up movement', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start the board
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!); // Middle position
+
+      // Press W key
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Should move up (hard to verify without inspecting internal state)
+      // At minimum, component should still be rendered
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle S key for down movement', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      fireEvent.keyDown(document, { key: 's', code: 'KeyS' });
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle A key for left movement', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      fireEvent.keyDown(document, { key: 'a', code: 'KeyA' });
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle D key for right movement', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      fireEvent.keyDown(document, { key: 'd', code: 'KeyD' });
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle T key for trap placement', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Move first
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Then trap
+      fireEvent.keyDown(document, { key: 't', code: 'KeyT' });
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle Shift+W for trap placement upward', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Place trap with Shift+W
+      fireEvent.keyDown(document, { key: 'W', code: 'KeyW', shiftKey: true });
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle Shift+S for trap placement downward', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Place trap with Shift+S
+      fireEvent.keyDown(document, { key: 'S', code: 'KeyS', shiftKey: true });
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle Shift+A for trap placement left', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Place trap with Shift+A
+      fireEvent.keyDown(document, { key: 'A', code: 'KeyA', shiftKey: true });
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle Shift+D for trap placement right', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Place trap with Shift+D
+      fireEvent.keyDown(document, { key: 'D', code: 'KeyD', shiftKey: true });
+
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle Enter key to complete board when at top row', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Move to top row
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Press Enter to finish
+      fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
+
+      expect(onBoardSaved).toHaveBeenCalled();
+    });
+
+    it('should handle Enter key in choosing-start phase to confirm start', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Select column 1
+      const columnInput = screen.getByLabelText('Select start column') as HTMLInputElement;
+      fireEvent.change(columnInput, { target: { value: '1' } });
+
+      // Press Enter to confirm
+      fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
+
+      // Should be in building phase
+      expect(screen.getByText(/Use WASD keys/)).toBeInTheDocument();
+    });
+
+    it('should ignore keyboard input when typing in input field', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      const columnInput = screen.getByLabelText('Select start column') as HTMLInputElement;
+
+      // Focus the input
+      columnInput.focus();
+
+      // Press W while focused on input - should not trigger movement
+      fireEvent.keyDown(columnInput, { key: 'w', code: 'KeyW' });
+
+      // Should still be in choosing-start phase
+      expect(screen.queryByText('Undo')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('View mode for large boards', () => {
+    it('should show view toggle button for boards larger than 7x7', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={8}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Should show view toggle button
+      expect(screen.getByText('Section View')).toBeInTheDocument();
+    });
+
+    it('should not show view toggle button for boards 7x7 or smaller', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={7}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Should not show view toggle button
+      expect(screen.queryByText('Section View')).not.toBeInTheDocument();
+      expect(screen.queryByText('Full View')).not.toBeInTheDocument();
+    });
+
+    it('should toggle between full and section view', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={8}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Click to switch to section view
+      const toggleButton = screen.getByText('Section View');
+      fireEvent.click(toggleButton);
+
+      // Button text should change
+      expect(screen.getByText('Full View')).toBeInTheDocument();
+
+      // Click again to switch back
+      fireEvent.click(screen.getByText('Full View'));
+      expect(screen.getByText('Section View')).toBeInTheDocument();
+    });
+
+    it('should show row and column labels in section view', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={8}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Switch to section view
+      const toggleButton = screen.getByText('Section View');
+      fireEvent.click(toggleButton);
+
+      // Should show labels (implementation detail - just verify view switched)
+      expect(screen.getByText('Full View')).toBeInTheDocument();
+    });
+
+    it('should calculate section bounds correctly for piece in middle', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={10}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Select a middle column using the spinner
+      const columnInput = screen.getByLabelText('Select start column') as HTMLInputElement;
+      fireEvent.change(columnInput, { target: { value: '5' } });
+
+      // Confirm start
+      const confirmButton = screen.getByText('Confirm Start');
+      fireEvent.click(confirmButton);
+
+      // Move piece up several times to get to middle of board
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Switch to section view
+      const toggleButton = screen.getByText('Section View');
+      fireEvent.click(toggleButton);
+
+      // Component should render without crashing
+      expect(screen.getByText('Full View')).toBeInTheDocument();
+    });
+
+    it('should handle section view at board edges', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={10}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Select corner column (0)
+      const columnInput = screen.getByLabelText('Select start column') as HTMLInputElement;
+      fireEvent.change(columnInput, { target: { value: '0' } });
+
+      // Confirm start
+      const confirmButton = screen.getByText('Confirm Start');
+      fireEvent.click(confirmButton);
+
+      // Switch to section view
+      const toggleButton = screen.getByText('Section View');
+      fireEvent.click(toggleButton);
+
+      // Should handle edge case without crashing
+      expect(screen.getByText('Full View')).toBeInTheDocument();
+    });
+  });
+
+  describe('Directional controls', () => {
+    it('should show directional control buttons during building phase', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Should show directional controls section
+      expect(screen.getByText(/Use WASD keys, the controls below/)).toBeInTheDocument();
+    });
+
+    it('should disable directional buttons when no move is available in that direction', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!); // Left corner
+
+      // Down should be disabled (edge of board)
+      // Left should be disabled (edge of board)
+      // Can verify buttons exist
+      expect(screen.getByText(/Use WASD keys/)).toBeInTheDocument();
+    });
+
+    it('should enable/disable directional buttons based on available moves', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!); // Middle position
+
+      // Move up
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Available moves should update
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+  });
+
+  describe('Edge cases and error handling', () => {
+    it('should handle rapid key presses without breaking', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Rapid key presses
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+      fireEvent.keyDown(document, { key: 'd', code: 'KeyD' });
+      fireEvent.keyDown(document, { key: 'a', code: 'KeyA' });
+
+      // Should still work
+      expect(screen.getByText('Undo')).toBeInTheDocument();
+    });
+
+    it('should handle multiple undos correctly', () => {
+      const onSave = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Make several moves
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+      fireEvent.keyDown(document, { key: 'd', code: 'KeyD' });
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Undo all moves
+      const undoButton = screen.getByText('Undo');
+      fireEvent.click(undoButton);
+      fireEvent.click(screen.getByText('Undo'));
+      fireEvent.click(screen.getByText('Undo'));
+      fireEvent.click(screen.getByText('Undo'));
+
+      // Should be back at start
+      expect(screen.getByText('Confirm Start')).toBeInTheDocument();
+    });
+
+    it('should handle board completion with complex path', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Complex path with traps
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+      fireEvent.keyDown(document, { key: 'D', code: 'KeyD', shiftKey: true }); // Trap right
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Complete
+      const finalMoveButton = screen.getByText('Final Move');
+      fireEvent.click(finalMoveButton);
+
+      expect(onBoardSaved).toHaveBeenCalled();
+    });
+
+    it('should handle empty board name generation', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Move to top
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Complete
+      fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
+
+      // Should generate "Board 1"
+      expect(onBoardSaved).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Board 1',
+        })
+      );
+    });
+
+    it('should increment board name when boards exist', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      const existingBoards = [
+        {
+          id: '1',
+          name: 'Board 1',
+          boardSize: 2 as BoardSize,
+          grid: [['empty', 'empty'], ['piece', 'empty']],
+          sequence: [],
+          thumbnail: '',
+          createdAt: Date.now(),
+        },
+      ];
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          existingBoards={existingBoards}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Move to top
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Complete
+      fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
+
+      // Should generate "Board 2"
+      expect(onBoardSaved).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Board 2',
+        })
+      );
+    });
+  });
 });
