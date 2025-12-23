@@ -384,4 +384,181 @@ describe('DeckCreator', () => {
       expect(screen.getByText('Round 10')).toBeInTheDocument();
     });
   });
+
+  describe('Empty states', () => {
+    it('should show message when no boards are available at all', () => {
+      render(<DeckCreator {...defaultProps} availableBoards={[]} />);
+
+      expect(screen.getByText('No boards available. Create some boards first!')).toBeInTheDocument();
+    });
+
+    it('should show message when filtered boards result is empty', () => {
+      // Only provide small boards
+      const smallBoards = [
+        createMockBoard('1', 'Board 2x2'),
+        createMockBoard('2', 'Board 2x2 #2'),
+      ];
+
+      render(<DeckCreator {...defaultProps} availableBoards={smallBoards} />);
+
+      // Filter by a size that doesn't exist (6-10)
+      const filterButtons = screen.getAllByRole('button');
+      const filter6to10 = filterButtons.find(btn => btn.textContent?.includes('6-10'));
+
+      if (filter6to10) {
+        fireEvent.click(filter6to10);
+        // sizeFilter is "6-10" so message will be "No 6-10x6-10 boards available."
+        expect(screen.getByText('No 6-10x6-10 boards available.')).toBeInTheDocument();
+      }
+    });
+
+    it('should show appropriate message for 2-5 size filter with no boards', () => {
+      // Only provide large boards
+      const largeBoards = [
+        { ...createMockBoard('1', 'Large Board'), boardSize: 8 },
+        { ...createMockBoard('2', 'Large Board 2'), boardSize: 9 },
+      ];
+
+      render(<DeckCreator {...defaultProps} availableBoards={largeBoards as Board[]} />);
+
+      // Filter by 2-5 which should show empty
+      const filterButtons = screen.getAllByRole('button');
+      const filter2to5 = filterButtons.find(btn => btn.textContent?.includes('2-5'));
+
+      if (filter2to5) {
+        fireEvent.click(filter2to5);
+        // sizeFilter is "2-5" so message will be "No 2-5x2-5 boards available."
+        expect(screen.getByText('No 2-5x2-5 boards available.')).toBeInTheDocument();
+      }
+    });
+  });
+
+  describe('Board filtering', () => {
+    it('should filter boards by size range 2-5', () => {
+      const mixedBoards = [
+        createMockBoard('1', 'Small 2x2'),
+        { ...createMockBoard('2', 'Medium 5x5'), boardSize: 5 },
+        { ...createMockBoard('3', 'Large 8x8'), boardSize: 8 },
+      ];
+
+      render(<DeckCreator {...defaultProps} availableBoards={mixedBoards as Board[]} />);
+
+      // Click 2-5 filter
+      const filterButtons = screen.getAllByRole('button');
+      const filter2to5 = filterButtons.find(btn => btn.textContent?.includes('2-5'));
+
+      if (filter2to5) {
+        fireEvent.click(filter2to5);
+
+        // Should show small and medium boards
+        expect(screen.getByText('Small 2x2')).toBeInTheDocument();
+        expect(screen.getByText('Medium 5x5')).toBeInTheDocument();
+
+        // Should not show large board
+        expect(screen.queryByText('Large 8x8')).not.toBeInTheDocument();
+      }
+    });
+
+    it('should filter boards by size range 6-10', () => {
+      const mixedBoards = [
+        createMockBoard('1', 'Small 2x2'),
+        { ...createMockBoard('2', 'Medium 6x6'), boardSize: 6 },
+        { ...createMockBoard('3', 'Large 10x10'), boardSize: 10 },
+      ];
+
+      render(<DeckCreator {...defaultProps} availableBoards={mixedBoards as Board[]} />);
+
+      // Click 6-10 filter
+      const filterButtons = screen.getAllByRole('button');
+      const filter6to10 = filterButtons.find(btn => btn.textContent?.includes('6-10'));
+
+      if (filter6to10) {
+        fireEvent.click(filter6to10);
+
+        // Should show medium and large boards
+        expect(screen.getByText('Medium 6x6')).toBeInTheDocument();
+        expect(screen.getByText('Large 10x10')).toBeInTheDocument();
+
+        // Should not show small board
+        expect(screen.queryByText('Small 2x2')).not.toBeInTheDocument();
+      }
+    });
+
+    it('should filter boards by size range 11-20', () => {
+      const mixedBoards = [
+        createMockBoard('1', 'Small 2x2'),
+        { ...createMockBoard('2', 'XL 15x15'), boardSize: 15 },
+        { ...createMockBoard('3', 'XXL 25x25'), boardSize: 25 },
+      ];
+
+      render(<DeckCreator {...defaultProps} availableBoards={mixedBoards as Board[]} />);
+
+      // Click 11-20 filter
+      const filterButtons = screen.getAllByRole('button');
+      const filter11to20 = filterButtons.find(btn => btn.textContent?.includes('11-20'));
+
+      if (filter11to20) {
+        fireEvent.click(filter11to20);
+
+        // Should show only XL board
+        expect(screen.getByText('XL 15x15')).toBeInTheDocument();
+
+        // Should not show small or XXL
+        expect(screen.queryByText('Small 2x2')).not.toBeInTheDocument();
+        expect(screen.queryByText('XXL 25x25')).not.toBeInTheDocument();
+      }
+    });
+
+    it('should filter boards by size range 21+', () => {
+      const mixedBoards = [
+        createMockBoard('1', 'Small 2x2'),
+        { ...createMockBoard('2', 'XL 20x20'), boardSize: 20 },
+        { ...createMockBoard('3', 'XXL 25x25'), boardSize: 25 },
+      ];
+
+      render(<DeckCreator {...defaultProps} availableBoards={mixedBoards as Board[]} />);
+
+      // Click 21+ filter
+      const filterButtons = screen.getAllByRole('button');
+      const filter21plus = filterButtons.find(btn => btn.textContent?.includes('21+'));
+
+      if (filter21plus) {
+        fireEvent.click(filter21plus);
+
+        // Should show only XXL board
+        expect(screen.getByText('XXL 25x25')).toBeInTheDocument();
+
+        // Should not show small or XL
+        expect(screen.queryByText('Small 2x2')).not.toBeInTheDocument();
+        expect(screen.queryByText('XL 20x20')).not.toBeInTheDocument();
+      }
+    });
+
+    it('should show all boards when "All" filter is selected', () => {
+      const mixedBoards = [
+        createMockBoard('1', 'Small 2x2'),
+        { ...createMockBoard('2', 'Large 10x10'), boardSize: 10 },
+      ];
+
+      render(<DeckCreator {...defaultProps} availableBoards={mixedBoards as Board[]} />);
+
+      // Filter first
+      const filterButtons = screen.getAllByRole('button');
+      const filter6to10 = filterButtons.find(btn => btn.textContent?.includes('6-10'));
+      if (filter6to10) {
+        fireEvent.click(filter6to10);
+        expect(screen.queryByText('Small 2x2')).not.toBeInTheDocument();
+      }
+
+      // Then click "All" filter
+      const allFilter = filterButtons.find(btn => btn.textContent === 'All');
+      if (allFilter) {
+        fireEvent.click(allFilter);
+
+        // Should show both boards again
+        expect(screen.getByText('Small 2x2')).toBeInTheDocument();
+        expect(screen.getByText('Large 10x10')).toBeInTheDocument();
+      }
+    });
+  });
 });

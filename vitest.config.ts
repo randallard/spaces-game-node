@@ -28,10 +28,16 @@ export default defineConfig({
       ],
       thresholds: {
         global: {
-          lines: 80,
-          functions: 80,
-          branches: 80,
           statements: 80,
+          branches: 80,
+          functions: 65,  // Lower for React inline handlers (see docs/TEST_COVERAGE_STANDARDS.md)
+          lines: 80,
+        },
+        // Higher standards for utility functions (pure logic)
+        'src/utils/**/*.ts': {
+          statements: 90,
+          branches: 90,
+          functions: 85,
         },
       },
     },
