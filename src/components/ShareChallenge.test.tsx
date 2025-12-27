@@ -274,4 +274,317 @@ describe('ShareChallenge', () => {
       expect(buttons.length).toBeGreaterThanOrEqual(2); // At least Cancel and Copy Link
     });
   });
+
+  describe('Clipboard functionality', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    });
+
+    it('should copy URL to clipboard when copy button is clicked', async () => {
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: writeTextMock,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      render(<ShareChallenge {...defaultProps} />);
+
+      const copyButton = screen.getByText(/Copy Link/);
+      fireEvent.click(copyButton);
+
+      await vi.waitFor(() => {
+        expect(writeTextMock).toHaveBeenCalledWith('https://example.com/challenge/abc123');
+      });
+    });
+
+    it('should show success message after copying', async () => {
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: writeTextMock,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      render(<ShareChallenge {...defaultProps} opponentName="Alice" />);
+
+      const copyButton = screen.getByText(/Copy Link/);
+      fireEvent.click(copyButton);
+
+      await vi.waitFor(() => {
+        expect(screen.getByText(/Link copied! Send it to Alice/)).toBeInTheDocument();
+      });
+    });
+
+    it('should hide success message after 3 seconds', async () => {
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: writeTextMock,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      render(<ShareChallenge {...defaultProps} opponentName="Alice" />);
+
+      const copyButton = screen.getByText(/Copy Link/);
+      fireEvent.click(copyButton);
+
+      await vi.waitFor(() => {
+        expect(screen.getByText(/Link copied! Send it to Alice/)).toBeInTheDocument();
+      });
+
+      vi.advanceTimersByTime(3000);
+
+      await vi.waitFor(() => {
+        expect(screen.queryByText(/Link copied!/)).not.toBeInTheDocument();
+      });
+    });
+
+    it('should use execCommand fallback when clipboard API fails', async () => {
+      const writeTextMock = vi.fn().mockRejectedValue(new Error('Clipboard API not available'));
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: writeTextMock,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      // Mock document.execCommand
+      const execCommandMock = vi.fn().mockReturnValue(true);
+      const originalExecCommand = document.execCommand;
+      document.execCommand = execCommandMock;
+
+      // Mock the DOM manipulation for fallback copy
+      const mockInput = {
+        value: '',
+        select: vi.fn(),
+        style: {},
+      } as any;
+
+      // Store original functions
+      const originalCreateElement = document.createElement;
+      const originalAppendChild = document.body.appendChild;
+      const originalRemoveChild = document.body.removeChild;
+
+      render(<ShareChallenge {...defaultProps} />);
+
+      // Now set up the mocks for createElement, appendChild, removeChild
+      // Only mock for 'input' elements
+      document.createElement = vi.fn().mockImplementation((tagName: string) => {
+        if (tagName === 'input') {
+          return mockInput;
+        }
+        return originalCreateElement.call(document, tagName);
+      }) as any;
+
+      document.body.appendChild = vi.fn().mockImplementation((node: any) => {
+        if (node === mockInput) {
+          return mockInput;
+        }
+        return originalAppendChild.call(document.body, node);
+      }) as any;
+
+      document.body.removeChild = vi.fn().mockImplementation((node: any) => {
+        if (node === mockInput) {
+          return mockInput;
+        }
+        return originalRemoveChild.call(document.body, node);
+      }) as any;
+
+      const copyButton = screen.getByText(/Copy Link/);
+      fireEvent.click(copyButton);
+
+      await vi.waitFor(() => {
+        expect(mockInput.select).toHaveBeenCalled();
+        expect(execCommandMock).toHaveBeenCalledWith('copy');
+      });
+
+      await vi.waitFor(() => {
+        expect(screen.getByText(/Link copied!/)).toBeInTheDocument();
+      });
+
+      // Restore original functions
+      document.createElement = originalCreateElement as any;
+      document.body.appendChild = originalAppendChild;
+      document.body.removeChild = originalRemoveChild;
+      document.execCommand = originalExecCommand;
+    });
+
+    it('should show error message when both clipboard and fallback fail', async () => {
+      const writeTextMock = vi.fn().mockRejectedValue(new Error('Clipboard API not available'));
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: writeTextMock,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      // Mock execCommand to fail
+      document.execCommand = vi.fn().mockImplementation(() => {
+        throw new Error('execCommand failed');
+      });
+
+      render(<ShareChallenge {...defaultProps} />);
+
+      const copyButton = screen.getByText(/Copy Link/);
+      fireEvent.click(copyButton);
+
+      await vi.waitFor(() => {
+        expect(screen.getByText(/Failed to copy link. Please copy manually./)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Native share functionality', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.useRealTimers();
+    });
+
+    it('should render native share button when navigator.share is available', () => {
+      Object.defineProperty(navigator, 'share', {
+        value: vi.fn(),
+        writable: true,
+        configurable: true,
+      });
+
+      render(<ShareChallenge {...defaultProps} />);
+
+      expect(screen.getByText(/Share Challenge/)).toBeInTheDocument();
+    });
+
+    it('should call navigator.share with correct data', async () => {
+      const shareMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'share', {
+        value: shareMock,
+        writable: true,
+        configurable: true,
+      });
+
+      render(<ShareChallenge {...defaultProps} opponentName="Bob" boardSize={3} round={2} />);
+
+      const shareButton = screen.getByText(/Share Challenge/);
+      fireEvent.click(shareButton);
+
+      await vi.waitFor(() => {
+        expect(shareMock).toHaveBeenCalledWith({
+          title: 'Spaces Game Challenge - Round 2',
+          text: 'Bob, I challenge you to beat my 3×3 board!',
+          url: 'https://example.com/challenge/abc123',
+        });
+      });
+    });
+
+    it('should show success message after sharing', async () => {
+      const shareMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'share', {
+        value: shareMock,
+        writable: true,
+        configurable: true,
+      });
+
+      render(<ShareChallenge {...defaultProps} />);
+
+      const shareButton = screen.getByText(/Share Challenge/);
+      fireEvent.click(shareButton);
+
+      await vi.waitFor(() => {
+        expect(screen.getByText(/Link copied!/)).toBeInTheDocument();
+      });
+    });
+
+    it('should not show error when user cancels share (AbortError)', async () => {
+      const abortError = new Error('User cancelled');
+      abortError.name = 'AbortError';
+      const shareMock = vi.fn().mockRejectedValue(abortError);
+
+      Object.defineProperty(navigator, 'share', {
+        value: shareMock,
+        writable: true,
+        configurable: true,
+      });
+
+      render(<ShareChallenge {...defaultProps} />);
+
+      const shareButton = screen.getByText(/Share Challenge/);
+      fireEvent.click(shareButton);
+
+      await vi.waitFor(() => {
+        expect(shareMock).toHaveBeenCalled();
+      });
+
+      // Should not show any error message
+      expect(screen.queryByText(/Failed to copy link/)).not.toBeInTheDocument();
+    });
+
+    it('should fallback to clipboard when share fails with non-AbortError', async () => {
+      const shareError = new Error('Share failed');
+      shareError.name = 'ShareError';
+      const shareMock = vi.fn().mockRejectedValue(shareError);
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+
+      Object.defineProperty(navigator, 'share', {
+        value: shareMock,
+        writable: true,
+        configurable: true,
+      });
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: writeTextMock,
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      render(<ShareChallenge {...defaultProps} />);
+
+      const shareButton = screen.getByText(/Share Challenge/);
+      fireEvent.click(shareButton);
+
+      await vi.waitFor(() => {
+        expect(shareMock).toHaveBeenCalled();
+        expect(writeTextMock).toHaveBeenCalledWith('https://example.com/challenge/abc123');
+      });
+    });
+
+    it('should not render native share button when navigator.share is not available', () => {
+      // Create a fresh component without the share API
+      // We need to delete the property to ensure 'share' in navigator returns false
+      const originalShare = navigator.share;
+
+      // Delete the property completely
+      delete (navigator as any).share;
+
+      render(<ShareChallenge {...defaultProps} />);
+
+      // Native share button should not be present
+      expect(screen.queryByText(/Share Challenge/)).not.toBeInTheDocument();
+
+      // Only copy button should be present
+      const copyButton = screen.getByText(/Copy Link/);
+      expect(copyButton).toBeInTheDocument();
+
+      // Restore the original value
+      if (originalShare !== undefined) {
+        (navigator as any).share = originalShare;
+      }
+    });
+  });
 });

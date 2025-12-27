@@ -390,6 +390,9 @@ describe('useUrlSync', () => {
     });
 
     it('should return false on clipboard error', async () => {
+      // Mock console.error to suppress expected error logging
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       vi.mocked(navigator.clipboard.writeText).mockRejectedValue(
         new Error('Clipboard error')
       );
@@ -399,6 +402,9 @@ describe('useUrlSync', () => {
       const success = await result.current.copyShareUrl();
 
       expect(success).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to copy URL:', expect.any(Error));
+
+      consoleErrorSpy.mockRestore();
     });
   });
 

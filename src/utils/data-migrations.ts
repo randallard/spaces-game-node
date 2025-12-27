@@ -3,6 +3,8 @@
  * @module utils/data-migrations
  */
 
+import { v4 as uuidv4 } from 'uuid';
+
 /**
  * Migrate a board object to add missing boardSize field
  * All boards created before boardSize field should default to 2x2
@@ -136,7 +138,31 @@ export function migrateBoards(boards: any): any {
 }
 
 /**
+ * Migrate a deck to ensure it has a valid UUID
+ */
+function migrateDeckId(deck: any): any {
+  if (!deck || typeof deck !== 'object') {
+    return deck;
+  }
+
+  // Check if ID is a valid UUID format
+  const isValidUuid = typeof deck.id === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(deck.id);
+
+  if (!isValidUuid) {
+    console.log('[Migration] Deck has invalid UUID, generating new one:', deck.id);
+    return {
+      ...deck,
+      id: uuidv4(),
+    };
+  }
+
+  return deck;
+}
+
+/**
  * Migrate decks array to add missing boardSize to boards in each deck
+ * and ensure all decks have valid UUIDs
  */
 export function migrateDecks(data: any): any {
   if (!Array.isArray(data)) {
@@ -147,11 +173,18 @@ export function migrateDecks(data: any): any {
     if (!deck || typeof deck !== 'object') {
       return deck;
     }
-    return {
-      ...deck,
-      boards: Array.isArray(deck.boards)
-        ? deck.boards.map(migrateBoard)
-        : deck.boards,
+
+    // First migrate the deck ID
+    let migrated = migrateDeckId(deck);
+
+    // Then migrate boards
+    migrated = {
+      ...migrated,
+      boards: Array.isArray(migrated.boards)
+        ? migrated.boards.map(migrateBoard)
+        : migrated.boards,
     };
+
+    return migrated;
   });
 }

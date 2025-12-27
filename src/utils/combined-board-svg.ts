@@ -72,22 +72,35 @@ function buildGridData(
   // Only show opponent trap if player actually hit it at that specific position
   const playerTrapPosition = result.simulationDetails?.playerTrapPosition;
 
+  console.log('[buildGridData] Processing opponent sequence, opponentMaxStep:', opponentMaxStep);
   opponentBoard.sequence.forEach((move, step) => {
-    if (opponentMaxStep !== undefined && step > opponentMaxStep) return; // Skip steps beyond opponentMaxStep
-    if (move.type === 'final') return; // Skip final moves
+    console.log(`[buildGridData] Opponent step ${step}: type=${move.type}, pos=(${move.position.row},${move.position.col}), opponentMaxStep=${opponentMaxStep}`);
+    if (opponentMaxStep !== undefined && step > opponentMaxStep) {
+      console.log(`[buildGridData] Skipping opponent step ${step} because step > opponentMaxStep`);
+      return; // Skip steps beyond opponentMaxStep
+    }
+    if (move.type === 'final') {
+      console.log(`[buildGridData] Skipping opponent step ${step} because it's a final move`);
+      return; // Skip final moves
+    }
 
     const rotated = rotatePosition(move.position.row, move.position.col, size);
     const { row, col } = rotated;
+    console.log(`[buildGridData] Rotated opponent position: (${row},${col})`);
 
     if (row >= 0 && row < size && col >= 0 && col < size) {
       const square = grid[row]![col]!;
 
       if (move.type === 'piece') {
+        console.log(`[buildGridData] Adding opponent piece at (${row},${col}), step ${step}`);
         square.opponentVisits.push(step);
       } else if (move.type === 'trap') {
         // Only show opponent trap if player hit a trap at this exact position
         if (playerTrapPosition && playerTrapPosition.row === row && playerTrapPosition.col === col) {
+          console.log(`[buildGridData] Adding opponent trap at (${row},${col}), step ${step}`);
           square.opponentTrapStep = step;
+        } else {
+          console.log(`[buildGridData] Skipping opponent trap at (${row},${col}) - player didn't hit it there`);
         }
       }
     }
@@ -178,23 +191,6 @@ export function generateCombinedBoardSvg(
     }
   }
 
-  // Draw collision markers
-  for (let i = 0; i < size; i++) {
-    for (let j = 0; j < size; j++) {
-      const square = grid[i]![j]!;
-      if (square.collision) {
-        const x = j * cellSize + 20;
-        const y = i * cellSize;
-
-        // 4 asterisks around the collision square
-        svg += `<text x="${x}" y="${y}" font-size="20" fill="rgb(220, 38, 38)" text-anchor="middle">*</text>`; // Top
-        svg += `<text x="${x}" y="${y + 40}" font-size="20" fill="rgb(249, 115, 22)" text-anchor="middle">*</text>`; // Bottom
-        svg += `<text x="${x - 20}" y="${y + 20}" font-size="20" fill="rgb(220, 38, 38)" text-anchor="middle">*</text>`; // Left
-        svg += `<text x="${x + 20}" y="${y + 20}" font-size="20" fill="rgb(249, 115, 22)" text-anchor="middle">*</text>`; // Right
-      }
-    }
-  }
-
   // Draw pieces
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
@@ -218,17 +214,21 @@ export function generateCombinedBoardSvg(
         // Purple half circle (right)
         svg += `<path d="M ${centerX + radius},${centerY + verticalOffset} a ${radius},${radius} 0 0 0 -${radius},0 v ${radius * 2} a ${radius},${radius} 0 0 0 ${radius},0" fill="rgb(147, 51, 234)"/>`;
 
-        // Only show player number
+        // Show both player and opponent numbers
         const playerStep = Math.max(...square.playerVisits);
+        const opponentStep = Math.max(...square.opponentVisits);
         svg += `<text x="${centerX - radius / 2}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${playerStep + 1}</text>`;
+        svg += `<text x="${centerX + radius / 2}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${opponentStep + 1}</text>`;
       } else if (hasPlayer) {
         // Only player visited
         const step = Math.max(...square.playerVisits);
         svg += `<circle cx="${centerX}" cy="${centerY}" r="15" fill="rgb(37, 99, 235)"/>`;
         svg += `<text x="${centerX}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${step + 1}</text>`;
       } else if (hasOpponent) {
-        // Only opponent visited - no number shown
+        // Only opponent visited - show number
+        const step = Math.max(...square.opponentVisits);
         svg += `<circle cx="${centerX}" cy="${centerY}" r="15" fill="rgb(147, 51, 234)"/>`;
+        svg += `<text x="${centerX}" y="${centerY}" font-size="16" fill="white" text-anchor="middle" dy=".3em">${step + 1}</text>`;
       }
     }
   }
@@ -251,17 +251,19 @@ export function generateCombinedBoardSvg(
         svg += `</g>`;
         svg += `<text x="${x + 5}" y="${y + 20}" font-size="16" fill="rgb(220, 38, 38)" text-anchor="middle" dy=".3em">${square.playerTrapStep! + 1}</text>`;
 
-        // Opponent trap (orange, rotated -3 degrees) without number
+        // Opponent trap (orange, rotated -3 degrees) with number
         svg += `<g transform="translate(${x + 5} ${y + 5}) rotate(-3 15 15)">`;
         svg += `<path d="M0 0 l30 30 m0 -30 l-30 30" stroke="rgb(249, 115, 22)" stroke-width="4" opacity="0.6"/>`;
         svg += `</g>`;
+        svg += `<text x="${x + 25}" y="${y + 20}" font-size="16" fill="rgb(249, 115, 22)" text-anchor="middle" dy=".3em">${square.opponentTrapStep! + 1}</text>`;
       } else if (hasPlayerTrap) {
         // Only player trap with number
         svg += `<path d="M${x + 5} ${y + 5} l30 30 m0 -30 l-30 30" stroke="rgb(220, 38, 38)" stroke-width="4" opacity="0.6"/>`;
         svg += `<text x="${x + 35}" y="${y + 20}" font-size="16" fill="rgb(220, 38, 38)" text-anchor="middle" dy=".3em">${square.playerTrapStep! + 1}</text>`;
       } else if (hasOpponentTrap) {
-        // Only opponent trap without number
+        // Only opponent trap with number
         svg += `<path d="M${x + 5} ${y + 5} l30 30 m0 -30 l-30 30" stroke="rgb(249, 115, 22)" stroke-width="4" opacity="0.6"/>`;
+        svg += `<text x="${x + 35}" y="${y + 20}" font-size="16" fill="rgb(249, 115, 22)" text-anchor="middle" dy=".3em">${square.opponentTrapStep! + 1}</text>`;
       }
     }
   }

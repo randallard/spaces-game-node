@@ -47,6 +47,8 @@ export interface DeckManagerProps {
   onDeleteDeck: (deckId: string) => void;
   /** User's name */
   userName: string;
+  /** Pre-selected opponent (if already chosen) */
+  selectedOpponent?: Opponent | null;
 }
 
 /**
@@ -67,6 +69,7 @@ export function DeckManager({
   onCreateDeck,
   onEditDeck,
   onDeleteDeck,
+  selectedOpponent,
 }: DeckManagerProps): ReactElement {
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [selectedDeckForModal, setSelectedDeckForModal] = useState<Deck | null>(null);
@@ -78,7 +81,13 @@ export function DeckManager({
   };
 
   const handlePlayClick = (deck: Deck) => {
-    setSelectedDeckForModal(deck);
+    // If opponent is already selected, directly call onDeckSelected
+    if (selectedOpponent) {
+      onDeckSelected(deck, selectedOpponent);
+    } else {
+      // Otherwise, show opponent selection modal
+      setSelectedDeckForModal(deck);
+    }
   };
 
   const handleOpponentSelect = (opponent: Opponent) => {

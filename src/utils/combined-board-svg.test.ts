@@ -254,8 +254,11 @@ describe('generateCombinedBoardSvg', () => {
     const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
     const svg = result_obj.svg;
 
-    // Collision markers are asterisks in red/orange
-    expect(svg).toContain('*');
+    // Both players should have pieces at the same location (split circle)
+    // Blue half circle (player)
+    expect(svg).toContain('fill="rgb(37, 99, 235)"');
+    // Purple half circle (opponent)
+    expect(svg).toContain('fill="rgb(147, 51, 234)"');
   });
 
   it('should show split circle when both players visit same square', () => {
