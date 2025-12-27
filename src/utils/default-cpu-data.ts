@@ -203,7 +203,7 @@ export function createDefault2x2Deck(boards: Board[]): Deck {
   }
 
   return {
-    id: `cpu-deck-2x2-${Date.now()}`,
+    id: uuidv4(),
     name: 'CPU Sam 2×2 Deck',
     boards: deckBoards,
     createdAt: Date.now(),
@@ -226,7 +226,7 @@ export function createDefault3x3Deck(boards: Board[]): Deck {
   }
 
   return {
-    id: `cpu-deck-3x3-${Date.now()}`,
+    id: uuidv4(),
     name: 'CPU Sam 3×3 Deck',
     boards: deckBoards,
     createdAt: Date.now(),
@@ -469,7 +469,7 @@ export function initializeCpuTougherData(): {
 
   // Create decks cycling through the 3 boards
   const deck2x2: Deck = {
-    id: `cpu-tougher-deck-2x2-${Date.now()}`,
+    id: uuidv4(),
     name: 'CPU Tougher 2×2 Deck',
     boards: [
       boards2x2[0]!,
@@ -487,7 +487,7 @@ export function initializeCpuTougherData(): {
   };
 
   const deck3x3: Deck = {
-    id: `cpu-tougher-deck-3x3-${Date.now()}`,
+    id: uuidv4(),
     name: 'CPU Tougher 3×3 Deck',
     boards: [
       boards3x3[0]!,
@@ -684,6 +684,9 @@ export function generateCpuBoardsForSize(
       order: order1,
     });
 
+    const board1Traps = board1Sequence.filter((s) => s.type === 'trap').map((s) => `(${s.position.row},${s.position.col})`);
+    console.log(`[CPU Tougher Board 1] Size: ${boardSize}x${boardSize}, Column: ${col1}, Traps: ${board1Traps.join(', ')}`);
+
     boards.push({
       id: uuidv4(),
       name: `${opponentName} Board 1`,
@@ -694,8 +697,8 @@ export function generateCpuBoardsForSize(
       createdAt: now,
     });
 
-    // Board 2: Near-left column with traps at bottom on both sides
-    const col2 = boardSize === 2 ? 0 : 1; // Second from left (or left edge for 2x2)
+    // Board 2: Left edge column with traps at bottom on right side
+    const col2 = 0; // Left edge column
     const board2Grid = createEmptyGrid();
     const board2Sequence: Board['sequence'] = [];
     let order2 = 1;
@@ -742,6 +745,9 @@ export function generateCpuBoardsForSize(
       order: order2,
     });
 
+    const board2Traps = board2Sequence.filter((s) => s.type === 'trap').map((s) => `(${s.position.row},${s.position.col})`);
+    console.log(`[CPU Tougher Board 2] Size: ${boardSize}x${boardSize}, Column: ${col2}, Traps: ${board2Traps.join(', ')}`);
+
     boards.push({
       id: uuidv4(),
       name: `${opponentName} Board 2`,
@@ -758,59 +764,86 @@ export function generateCpuBoardsForSize(
     const board3Sequence: Board['sequence'] = [];
     let order3 = 1;
 
-    // Start at bottom
-    board3Grid[boardSize - 1]![col3] = 'piece';
-    board3Sequence.push({
-      position: { row: boardSize - 1, col: col3 },
-      type: 'piece',
-      order: order3++,
-    });
-
-    // Go up to middle
-    const trapRow = Math.floor(boardSize / 2);
-    for (let row = boardSize - 2; row > trapRow; row--) {
-      board3Grid[row]![col3] = 'piece';
+    // For 2x2, use a different strategy: trap at top instead of bottom
+    if (boardSize === 2) {
+      // Start at bottom right (1, 1)
+      board3Grid[1]![1] = 'piece';
       board3Sequence.push({
-        position: { row, col: col3 },
+        position: { row: 1, col: 1 },
         type: 'piece',
         order: order3++,
       });
-    }
 
-    // Place piece at trap row
-    board3Grid[trapRow]![col3] = 'piece';
-    board3Sequence.push({
-      position: { row: trapRow, col: col3 },
-      type: 'piece',
-      order: order3++,
-    });
-
-    // Add traps on both sides at trap row
-    if (col3 > 0) {
-      board3Grid[trapRow]![col3 - 1] = 'trap';
+      // Move to top right (0, 1)
+      board3Grid[0]![1] = 'piece';
       board3Sequence.push({
-        position: { row: trapRow, col: col3 - 1 },
-        type: 'trap',
-        order: order3++,
-      });
-    }
-    if (col3 < boardSize - 1) {
-      board3Grid[trapRow]![col3 + 1] = 'trap';
-      board3Sequence.push({
-        position: { row: trapRow, col: col3 + 1 },
-        type: 'trap',
-        order: order3++,
-      });
-    }
-
-    // Continue to top
-    for (let row = trapRow - 1; row >= 0; row--) {
-      board3Grid[row]![col3] = 'piece';
-      board3Sequence.push({
-        position: { row, col: col3 },
+        position: { row: 0, col: 1 },
         type: 'piece',
         order: order3++,
       });
+
+      // Place trap at top left (0, 0)
+      board3Grid[0]![0] = 'trap';
+      board3Sequence.push({
+        position: { row: 0, col: 0 },
+        type: 'trap',
+        order: order3++,
+      });
+    } else {
+      // For larger boards: Start at bottom, traps in middle
+      board3Grid[boardSize - 1]![col3] = 'piece';
+      board3Sequence.push({
+        position: { row: boardSize - 1, col: col3 },
+        type: 'piece',
+        order: order3++,
+      });
+
+      // Go up to middle
+      const trapRow = Math.floor(boardSize / 2);
+      for (let row = boardSize - 2; row > trapRow; row--) {
+        board3Grid[row]![col3] = 'piece';
+        board3Sequence.push({
+          position: { row, col: col3 },
+          type: 'piece',
+          order: order3++,
+        });
+      }
+
+      // Place piece at trap row
+      board3Grid[trapRow]![col3] = 'piece';
+      board3Sequence.push({
+        position: { row: trapRow, col: col3 },
+        type: 'piece',
+        order: order3++,
+      });
+
+      // Add traps on both sides at trap row
+      if (col3 > 0) {
+        board3Grid[trapRow]![col3 - 1] = 'trap';
+        board3Sequence.push({
+          position: { row: trapRow, col: col3 - 1 },
+          type: 'trap',
+          order: order3++,
+        });
+      }
+      if (col3 < boardSize - 1) {
+        board3Grid[trapRow]![col3 + 1] = 'trap';
+        board3Sequence.push({
+          position: { row: trapRow, col: col3 + 1 },
+          type: 'trap',
+          order: order3++,
+        });
+      }
+
+      // Continue to top
+      for (let row = trapRow - 1; row >= 0; row--) {
+        board3Grid[row]![col3] = 'piece';
+        board3Sequence.push({
+          position: { row, col: col3 },
+          type: 'piece',
+          order: order3++,
+        });
+      }
     }
 
     board3Sequence.push({
@@ -818,6 +851,9 @@ export function generateCpuBoardsForSize(
       type: 'final',
       order: order3,
     });
+
+    const board3Traps = board3Sequence.filter((s) => s.type === 'trap').map((s) => `(${s.position.row},${s.position.col})`);
+    console.log(`[CPU Tougher Board 3] Size: ${boardSize}x${boardSize}, Column: ${col3}, Traps: ${board3Traps.join(', ')}`);
 
     boards.push({
       id: uuidv4(),

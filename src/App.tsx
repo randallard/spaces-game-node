@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styles from './App.module.css';
 import { useGameState } from '@/hooks/useGameState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -153,9 +153,11 @@ function App(): React.ReactElement {
 
       // Only add boards if they don't exist (at least 3)
       if (cpuTougherBoards2x2.length < 3) {
+        console.log('[APP] Adding CPU Tougher 2x2 boards:', tougherData.boards2x2.map(b => b.name));
         newCpuBoards.push(...tougherData.boards2x2);
       }
       if (cpuTougherBoards3x3.length < 3) {
+        console.log('[APP] Adding CPU Tougher 3x3 boards:', tougherData.boards3x3.map(b => b.name));
         newCpuBoards.push(...tougherData.boards3x3);
       }
 
@@ -235,6 +237,9 @@ function App(): React.ReactElement {
   const [unlockedBoardSizes, setUnlockedBoardSizes] = useState<number[]>([]);
   const [deckModeJustUnlocked, setDeckModeJustUnlocked] = useState(false);
 
+  // Track which game counts we've already shown unlock notifications for
+  const shownUnlocksRef = useRef<Set<number>>(new Set());
+
   // Incoming challenge state (preserved through tutorial if user is new)
   const [incomingChallenge, setIncomingChallenge] = useState<ReturnType<typeof getChallengeFromUrl>>(null);
 
@@ -253,6 +258,11 @@ function App(): React.ReactElement {
     // Only check for unlocks if we're in game-over or all-rounds-results phase
     // This ensures we show the modal right after a game completes
     if (currentGames === 0 || (state.phase.type !== 'game-over' && state.phase.type !== 'all-rounds-results')) {
+      return;
+    }
+
+    // Skip if we've already shown unlocks for this game count
+    if (shownUnlocksRef.current.has(currentGames)) {
       return;
     }
 
@@ -275,6 +285,8 @@ function App(): React.ReactElement {
       setUnlockedBoardSizes(newBoardSizes);
       setDeckModeJustUnlocked(newDeckMode);
       setShowFeatureUnlockModal(true);
+      // Mark this game count as shown
+      shownUnlocksRef.current.add(currentGames);
     }
   }, [state.user.stats.totalGames, state.user, state.phase.type]);
 
@@ -460,8 +472,14 @@ function App(): React.ReactElement {
 
     // Check if we're in an end-game phase
     if (state.phase.type === 'game-over' || state.phase.type === 'all-rounds-results') {
-      // Determine if opponent won
+      // Determine if opponent won (ties don't count as wins or losses)
       const opponentWon = state.opponentScore > state.playerScore;
+      const isTie = state.opponentScore === state.playerScore;
+
+      // Only update opponent stats if there was a winner (not a tie)
+      if (isTie) {
+        return; // Don't update stats for ties
+      }
 
       // Update opponent stats
       const updatedOpponent = updateOpponentStats(state.opponent, opponentWon);
@@ -848,13 +866,18 @@ function App(): React.ReactElement {
       b => b.boardSize === state.boardSize && b.name.startsWith(state.opponent!.name)
     );
 
+    console.log(`[handleBoardSelect] Opponent: ${state.opponent!.name}, Board size: ${state.boardSize}x${state.boardSize}`);
+    console.log(`[handleBoardSelect] Found ${opponentBoardsForSize.length} boards for ${state.opponent!.name}:`, opponentBoardsForSize.map(b => b.name));
+
     // CPU selects random board from its own boards
     if (opponentBoardsForSize.length > 0) {
       const randomIndex = Math.floor(Math.random() * opponentBoardsForSize.length);
       opponentBoard = opponentBoardsForSize[randomIndex] || board;
+      console.log(`[handleBoardSelect] Selected board #${randomIndex + 1}: ${opponentBoard.name}`);
     } else {
       // Fallback: log error and use player's board
       console.error(`[handleBoardSelect] ${state.opponent?.name ?? 'CPU'} boards not found for size ${state.boardSize}×${state.boardSize}`);
+      console.error(`[handleBoardSelect] All CPU boards:`, (cpuBoards || []).map(b => `${b.name} (${b.boardSize}x${b.boardSize})`));
       opponentBoard = board;
     }
 
@@ -1219,6 +1242,7 @@ function App(): React.ReactElement {
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
+            isTutorial={true}
           />
         );
 
@@ -1525,6 +1549,7 @@ function App(): React.ReactElement {
             onEditDeck={handleDeckEdit}
             onDeleteDeck={handleDeckDelete}
             userName={state.user.name}
+            selectedOpponent={state.opponent}
           />
         );
       }

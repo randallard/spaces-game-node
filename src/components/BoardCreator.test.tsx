@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BoardCreator } from './BoardCreator';
-import type { Board } from '@/types';
+import type { Board, BoardSize } from '@/types';
 
 describe('BoardCreator', () => {
   const mockOnBoardSaved = vi.fn();
@@ -446,14 +446,14 @@ describe('BoardCreator', () => {
 
   describe('Undo functionality', () => {
     it('should show Undo button during building phase', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={2}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -466,14 +466,14 @@ describe('BoardCreator', () => {
     });
 
     it('should undo last move when Undo is clicked', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={2}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -494,14 +494,14 @@ describe('BoardCreator', () => {
     });
 
     it('should return to choosing-start phase when undoing all moves', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={2}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -519,14 +519,14 @@ describe('BoardCreator', () => {
     });
 
     it('should rebuild grid correctly after undo', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={2}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -552,14 +552,14 @@ describe('BoardCreator', () => {
 
   describe('Start column selector', () => {
     it('should have column selector in choosing-start phase', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -571,14 +571,14 @@ describe('BoardCreator', () => {
     });
 
     it('should change selected column when input value changes', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -591,14 +591,14 @@ describe('BoardCreator', () => {
     });
 
     it('should confirm start position when Confirm Start clicked', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={2}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -612,14 +612,14 @@ describe('BoardCreator', () => {
     });
 
     it('should use selected column when confirming start', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -639,14 +639,14 @@ describe('BoardCreator', () => {
 
   describe('Keyboard controls', () => {
     it('should handle W key for up movement', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -664,14 +664,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle S key for down movement', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -685,14 +685,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle A key for left movement', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -706,14 +706,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle D key for right movement', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -727,14 +727,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle T key for trap placement', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -752,14 +752,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle Shift+W for trap placement upward', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -774,14 +774,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle Shift+S for trap placement downward', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -796,14 +796,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle Shift+A for trap placement left', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -818,14 +818,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle Shift+D for trap placement right', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -916,14 +916,14 @@ describe('BoardCreator', () => {
 
   describe('View mode for large boards', () => {
     it('should show view toggle button for boards larger than 7x7', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={8}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -936,14 +936,14 @@ describe('BoardCreator', () => {
     });
 
     it('should not show view toggle button for boards 7x7 or smaller', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={7}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -957,14 +957,14 @@ describe('BoardCreator', () => {
     });
 
     it('should toggle between full and section view', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={8}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -985,14 +985,14 @@ describe('BoardCreator', () => {
     });
 
     it('should show row and column labels in section view', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={8}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -1074,14 +1074,14 @@ describe('BoardCreator', () => {
 
   describe('Directional controls', () => {
     it('should show directional control buttons during building phase', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -1094,14 +1094,14 @@ describe('BoardCreator', () => {
     });
 
     it('should disable directional buttons when no move is available in that direction', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -1116,14 +1116,14 @@ describe('BoardCreator', () => {
     });
 
     it('should enable/disable directional buttons based on available moves', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -1141,14 +1141,14 @@ describe('BoardCreator', () => {
 
   describe('Edge cases and error handling', () => {
     it('should handle rapid key presses without breaking', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );
@@ -1167,14 +1167,14 @@ describe('BoardCreator', () => {
     });
 
     it('should handle multiple undos correctly', () => {
-      const onSave = vi.fn();
+      const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
       render(
         <BoardCreator
           boardSize={3}
           existingBoards={[]}
-          onSave={onSave}
+          onBoardSaved={onBoardSaved}
           onCancel={onCancel}
         />
       );

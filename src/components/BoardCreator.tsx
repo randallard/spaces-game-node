@@ -3,7 +3,7 @@
  * @module components/BoardCreator
  */
 
-import { useState, useCallback, useEffect, type ReactElement } from 'react';
+import { useState, useCallback, useEffect, useMemo, type ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Board, CellContent, BoardMove, Position, BoardSize } from '@/types';
 import { validateBoard } from '@/utils/board-validation';
@@ -167,10 +167,77 @@ export function BoardCreator({
     setErrors([]);
   }, [piecePosition, grid, sequence]);
 
+  // Check if there's a trap blocking the path upward to finish
+  const hasTrapAbove = useMemo(() => {
+    if (!piecePosition) return false;
+    const col = piecePosition.col;
+    // Check all rows above the current position for traps
+    for (let row = piecePosition.row - 1; row >= 0; row--) {
+      if (grid[row]?.[col] === 'trap') {
+        return true;
+      }
+    }
+    return false;
+  }, [piecePosition, grid]);
+
   /**
    * Handle final move (when piece is at row 0)
    * ADD a final move at row -1 (off the board, escaped!)
    */
+  /**
+   * Handle "all the way to finish" - move straight up to row 0, then finish
+   */
+  const handleAllTheWayToFinish = useCallback((): void => {
+    if (!piecePosition || hasTrapAbove) return;
+
+    let currentRow = piecePosition.row;
+    const col = piecePosition.col;
+    let newSequence = [...sequence];
+    const newGrid = grid.map(row => [...row]);
+
+    // Move up to row 0, adding pieces along the way
+    while (currentRow > 0) {
+      currentRow--;
+      const nextOrder = newSequence.length + 1;
+      newSequence.push({
+        position: { row: currentRow, col },
+        type: 'piece',
+        order: nextOrder,
+      });
+      newGrid[currentRow]![col] = 'piece';
+    }
+
+    // Add final move
+    const finalOrder = newSequence.length + 1;
+    newSequence.push({
+      position: { row: -1, col },
+      type: 'final',
+      order: finalOrder,
+    });
+
+    setSequence(newSequence);
+    setGrid(newGrid);
+    setPiecePosition({ row: 0, col });
+
+    // Auto-generate board name
+    const boardNumber = existingBoards.length + 1;
+    const boardName = `Board ${boardNumber}`;
+
+    // Create board object
+    const board: Board = {
+      id: uuidv4(),
+      name: boardName,
+      boardSize,
+      grid: newGrid,
+      sequence: newSequence,
+      thumbnail: '',
+      createdAt: Date.now(),
+    };
+
+    // Auto-save
+    onBoardSaved(board);
+  }, [piecePosition, sequence, grid, boardSize, onBoardSaved, hasTrapAbove, existingBoards]);
+
   const handleFinalMove = useCallback((): void => {
     if (!piecePosition || piecePosition.row !== 0) return;
 
@@ -322,6 +389,7 @@ export function BoardCreator({
       })
     : [];
   const canFinish = piecePosition?.row === 0;
+  const canFinishAllTheWay = piecePosition && !hasTrapAbove;
 
   // Get directional moves for control buttons
   const directionalMoves = getDirectionalMoves();
@@ -666,11 +734,19 @@ export function BoardCreator({
             <div className={styles.directionalGrid}>
               {/* Top row */}
               <div className={styles.dirControlEmpty}></div>
-              <div className={styles.dirControlGroup}>
+              <div className={styles.dirControlGroupThree}>
+                <button
+                  onClick={handleAllTheWayToFinish}
+                  disabled={!canFinishAllTheWay}
+                  className={`${styles.dirButtonSmall} ${styles.dirButtonFinish}`}
+                  title={!canFinishAllTheWay ? 'Cannot finish - trap in the way or not yet started' : 'Move all the way up and finish'}
+                >
+                  All the Way to Finish
+                </button>
                 <button
                   onClick={() => directionalMoves.up && handleMove(directionalMoves.up.row, directionalMoves.up.col)}
                   disabled={!directionalMoves.up}
-                  className={styles.dirButton}
+                  className={styles.dirButtonSmall}
                   title="Move Up (W)"
                 >
                   Move ↑
@@ -678,7 +754,7 @@ export function BoardCreator({
                 <button
                   onClick={() => directionalMoves.up && handleTrap(directionalMoves.up.row, directionalMoves.up.col)}
                   disabled={!directionalMoves.up}
-                  className={`${styles.dirButton} ${styles.dirButtonTrap}`}
+                  className={`${styles.dirButtonSmall} ${styles.dirButtonTrap}`}
                   title="Trap Up (Shift+W)"
                 >
                   Trap ↑
@@ -705,7 +781,16 @@ export function BoardCreator({
                   Trap ←
                 </button>
               </div>
-              <div className={styles.dirControlEmpty}></div>
+              <div className={styles.dirControlCenter}>
+                <button
+                  onClick={handleFinalMove}
+                  disabled={!canFinish}
+                  className={styles.dirFinishButton}
+                  title={!canFinish ? 'Move your piece to the top row first' : 'Complete the board (Enter)'}
+                >
+                  Finish
+                </button>
+              </div>
               <div className={styles.dirControlGroup}>
                 <button
                   onClick={() => directionalMoves.right && handleMove(directionalMoves.right.row, directionalMoves.right.col)}

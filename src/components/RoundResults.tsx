@@ -34,6 +34,8 @@ export interface RoundResultsProps {
   explanationStyle?: 'lively' | 'technical';
   /** Optional callback when the explanation style preference changes */
   onExplanationStyleChange?: ((value: 'lively' | 'technical') => void) | undefined;
+  /** Optional flag to enable tutorial mode with instructions */
+  isTutorial?: boolean;
 }
 
 /**
@@ -59,6 +61,7 @@ export function RoundResults({
   onShowCompleteResultsChange,
   explanationStyle = 'lively',
   onExplanationStyleChange,
+  isTutorial = false,
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard } = result;
 
@@ -135,6 +138,10 @@ export function RoundResults({
         result.simulationDetails.opponentHitTrap
       )
       : opponentBoard.sequence.length - 1;
+
+  console.log('[RoundResults] playerLastStep:', playerLastStep, 'opponentLastStep:', opponentLastStep);
+  console.log('[RoundResults] Player sequence length:', playerBoard.sequence.length, 'Opponent sequence length:', opponentBoard.sequence.length);
+  console.log('[RoundResults] simulationDetails:', result.simulationDetails);
 
   const maxSteps = Math.max(playerLastStep, opponentLastStep) + 1;
 
@@ -493,8 +500,38 @@ export function RoundResults({
     }
   };
 
+  /**
+   * Get dynamic tutorial instruction text
+   */
+  const getTutorialInstruction = (): string => {
+    // Show complete results is checked - no need for instructions
+    if (showCompleteResults) {
+      return 'watch the replay to see what happened!';
+    }
+
+    // User hasn't started stepping through
+    if (currentStep === 1) {
+      return 'click the step button to see each move!';
+    }
+
+    // User is stepping through but hasn't finished
+    if (currentStep < maxSteps) {
+      return 'keep clicking step to see what happens next!';
+    }
+
+    // User has finished the replay
+    return 'great! now click continue to finish the tutorial!';
+  };
+
   return (
     <div className={styles.container}>
+      {/* Tutorial Instruction Banner */}
+      {isTutorial && (
+        <div className={styles.tutorialInstructionBanner}>
+          {getTutorialInstruction()}
+        </div>
+      )}
+
       <div className={styles.header}>
         <h2 className={styles.title}>Round {result.round}</h2>
       </div>

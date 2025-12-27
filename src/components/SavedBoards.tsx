@@ -155,27 +155,27 @@ export function SavedBoards({
   };
 
   /**
+   * Get unique board sizes from all boards
+   */
+  const uniqueSizes = useMemo(() => {
+    const sizes = new Set<number>();
+    boards.forEach(board => sizes.add(board.boardSize));
+    return Array.from(sizes).sort((a, b) => a - b);
+  }, [boards]);
+
+  /**
+   * Get count of boards for a specific size
+   */
+  const getBoardCount = (size: number): number => {
+    return boards.filter(board => board.boardSize === size).length;
+  };
+
+  /**
    * Filter boards based on selected size
    */
   const filteredBoards = useMemo(() => {
     if (sizeFilter === 'all') {
       return boards;
-    }
-
-    // Handle range filters
-    if (typeof sizeFilter === 'string') {
-      switch (sizeFilter) {
-        case '2-5':
-          return boards.filter((board) => board.boardSize >= 2 && board.boardSize <= 5);
-        case '6-10':
-          return boards.filter((board) => board.boardSize >= 6 && board.boardSize <= 10);
-        case '11-20':
-          return boards.filter((board) => board.boardSize >= 11 && board.boardSize <= 20);
-        case '21+':
-          return boards.filter((board) => board.boardSize >= 21);
-        default:
-          return boards;
-      }
     }
 
     // Handle specific size filter
@@ -324,39 +324,23 @@ export function SavedBoards({
 
           {/* Size Filter */}
           <div className={styles.filterBar}>
-            <span className={styles.filterLabel}>Filter by size:</span>
-            <div className={styles.filterButtons}>
-              <button
-                onClick={() => setSizeFilter('all')}
-                className={`${styles.filterButton} ${sizeFilter === 'all' ? styles.filterButtonActive : ''}`}
-              >
-                All ({boards.length})
-              </button>
-              <button
-                onClick={() => setSizeFilter('2-5')}
-                className={`${styles.filterButton} ${sizeFilter === '2-5' ? styles.filterButtonActive : ''}`}
-              >
-                2-5 ({boards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})
-              </button>
-              <button
-                onClick={() => setSizeFilter('6-10')}
-                className={`${styles.filterButton} ${sizeFilter === '6-10' ? styles.filterButtonActive : ''}`}
-              >
-                6-10 ({boards.filter(b => b.boardSize >= 6 && b.boardSize <= 10).length})
-              </button>
-              <button
-                onClick={() => setSizeFilter('11-20')}
-                className={`${styles.filterButton} ${sizeFilter === '11-20' ? styles.filterButtonActive : ''}`}
-              >
-                11-20 ({boards.filter(b => b.boardSize >= 11 && b.boardSize <= 20).length})
-              </button>
-              <button
-                onClick={() => setSizeFilter('21+')}
-                className={`${styles.filterButton} ${sizeFilter === '21+' ? styles.filterButtonActive : ''}`}
-              >
-                21+ ({boards.filter(b => b.boardSize >= 21).length})
-              </button>
-            </div>
+            <label htmlFor="size-filter" className={styles.filterLabel}>Filter by size:</label>
+            <select
+              id="size-filter"
+              value={sizeFilter}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSizeFilter(value === 'all' ? 'all' : parseInt(value));
+              }}
+              className={styles.filterSelect}
+            >
+              <option value="all">All ({boards.length})</option>
+              {uniqueSizes.map(size => (
+                <option key={size} value={size}>
+                  {size}×{size} ({getBoardCount(size)})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className={styles.boardsGrid}>

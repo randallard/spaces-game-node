@@ -441,4 +441,413 @@ describe('useGameState', () => {
       expect(result.current.state.checksum).toBe('abc123');
     });
   });
+
+  describe('setGameMode', () => {
+    it('should set game mode to round-by-round', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.setGameMode('round-by-round');
+      });
+
+      expect(result.current.state.gameMode).toBe('round-by-round');
+    });
+
+    it('should set game mode to deck', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.setGameMode('deck');
+      });
+
+      expect(result.current.state.gameMode).toBe('deck');
+    });
+
+    it('should preserve other state when setting game mode', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.setGameMode('deck');
+      });
+
+      expect(result.current.state.user).toEqual(mockUser);
+      expect(result.current.state.currentRound).toBe(1);
+    });
+  });
+
+  describe('setBoardSize', () => {
+    it('should set board size to 2', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.setBoardSize(2);
+      });
+
+      expect(result.current.state.boardSize).toBe(2);
+    });
+
+    it('should set board size to 3', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.setBoardSize(3);
+      });
+
+      expect(result.current.state.boardSize).toBe(3);
+    });
+
+    it('should set board size to 4', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.setBoardSize(4);
+      });
+
+      expect(result.current.state.boardSize).toBe(4);
+    });
+  });
+
+  describe('selectOpponent - deck mode', () => {
+    it('should select opponent and transition to deck selection in deck mode', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.selectOpponent(mockCpuOpponent, 'deck');
+      });
+
+      expect(result.current.state.opponent).toEqual(mockCpuOpponent);
+      expect(result.current.state.gameMode).toBe('deck');
+      expect(result.current.state.phase).toEqual({
+        type: 'deck-selection',
+      });
+      expect(result.current.state.currentRound).toBe(1);
+    });
+  });
+
+  describe('selectPlayerDeck', () => {
+    it('should select player deck', () => {
+      const mockDeck = {
+        id: 'deck-1',
+        name: 'Test Deck',
+        boards: [mockBoard, mockBoard, mockBoard],
+        createdAt: Date.now(),
+      };
+
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.selectPlayerDeck(mockDeck);
+      });
+
+      expect(result.current.state.playerSelectedDeck).toEqual(mockDeck);
+    });
+
+    it('should preserve other state when selecting player deck', () => {
+      const mockDeck = {
+        id: 'deck-1',
+        name: 'Test Deck',
+        boards: [mockBoard],
+        createdAt: Date.now(),
+      };
+
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.selectPlayerDeck(mockDeck);
+      });
+
+      expect(result.current.state.user).toEqual(mockUser);
+      expect(result.current.state.currentRound).toBe(1);
+    });
+  });
+
+  describe('selectOpponentDeck', () => {
+    it('should select opponent deck', () => {
+      const mockDeck = {
+        id: 'deck-2',
+        name: 'Opponent Deck',
+        boards: [mockBoard, mockBoard],
+        createdAt: Date.now(),
+      };
+
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.selectOpponentDeck(mockDeck);
+      });
+
+      expect(result.current.state.opponentSelectedDeck).toEqual(mockDeck);
+    });
+  });
+
+  describe('completeAllRounds', () => {
+    it('should complete all rounds with player win', () => {
+      const results: RoundResult[] = [
+        {
+          round: 1,
+          winner: 'player',
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 0, col: 0 },
+          opponentFinalPosition: { row: 1, col: 1 },
+          playerPoints: 2,
+          opponentPoints: 1,
+        },
+        {
+          round: 2,
+          winner: 'player',
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 0, col: 0 },
+          opponentFinalPosition: { row: 1, col: 1 },
+          playerPoints: 3,
+          opponentPoints: 0,
+        },
+      ];
+
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.completeAllRounds(results);
+      });
+
+      expect(result.current.state.roundHistory).toEqual(results);
+      expect(result.current.state.playerScore).toBe(5);
+      expect(result.current.state.opponentScore).toBe(1);
+      expect(result.current.state.phase).toEqual({
+        type: 'all-rounds-results',
+        results,
+      });
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(1);
+      expect(result.current.state.user.stats.losses).toBe(0);
+      expect(result.current.state.user.stats.ties).toBe(0);
+    });
+
+    it('should complete all rounds with opponent win', () => {
+      const results: RoundResult[] = [
+        {
+          round: 1,
+          winner: 'opponent',
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 1, col: 1 },
+          opponentFinalPosition: { row: 0, col: 0 },
+          playerPoints: 0,
+          opponentPoints: 2,
+        },
+        {
+          round: 2,
+          winner: 'opponent',
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 1, col: 1 },
+          opponentFinalPosition: { row: 0, col: 0 },
+          playerPoints: 1,
+          opponentPoints: 3,
+        },
+      ];
+
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.completeAllRounds(results);
+      });
+
+      expect(result.current.state.playerScore).toBe(1);
+      expect(result.current.state.opponentScore).toBe(5);
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(0);
+      expect(result.current.state.user.stats.losses).toBe(1);
+      expect(result.current.state.user.stats.ties).toBe(0);
+    });
+
+    it('should complete all rounds with tie', () => {
+      const results: RoundResult[] = [
+        {
+          round: 1,
+          winner: 'player',
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 0, col: 0 },
+          opponentFinalPosition: { row: 1, col: 1 },
+          playerPoints: 2,
+          opponentPoints: 1,
+        },
+        {
+          round: 2,
+          winner: 'opponent',
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 1, col: 1 },
+          opponentFinalPosition: { row: 0, col: 0 },
+          playerPoints: 1,
+          opponentPoints: 2,
+        },
+      ];
+
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.completeAllRounds(results);
+      });
+
+      expect(result.current.state.playerScore).toBe(3);
+      expect(result.current.state.opponentScore).toBe(3);
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(0);
+      expect(result.current.state.user.stats.losses).toBe(0);
+      expect(result.current.state.user.stats.ties).toBe(1);
+    });
+
+    it('should handle results with undefined points', () => {
+      const results: RoundResult[] = [
+        {
+          round: 1,
+          winner: 'tie',
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 0, col: 0 },
+          opponentFinalPosition: { row: 0, col: 1 },
+          // No points defined
+        },
+      ];
+
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.completeAllRounds(results);
+      });
+
+      expect(result.current.state.playerScore).toBe(0);
+      expect(result.current.state.opponentScore).toBe(0);
+    });
+  });
+
+  describe('User stats updates', () => {
+    it('should update stats when player wins via endGame', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.endGame('player');
+      });
+
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(1);
+      expect(result.current.state.user.stats.losses).toBe(0);
+      expect(result.current.state.user.stats.ties).toBe(0);
+    });
+
+    it('should update stats when opponent wins via endGame', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.endGame('opponent');
+      });
+
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(0);
+      expect(result.current.state.user.stats.losses).toBe(1);
+      expect(result.current.state.user.stats.ties).toBe(0);
+    });
+
+    it('should update stats when game ends in tie via endGame', () => {
+      const { result } = renderHook(() => useGameState(initialState));
+
+      act(() => {
+        result.current.endGame('tie');
+      });
+
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(0);
+      expect(result.current.state.user.stats.losses).toBe(0);
+      expect(result.current.state.user.stats.ties).toBe(1);
+    });
+
+    it('should update stats when player wins via advanceToNextRound', () => {
+      const stateAfter8Rounds: GameState = {
+        ...initialState,
+        currentRound: 8,
+        playerScore: 5,
+        opponentScore: 3,
+      };
+
+      const { result } = renderHook(() => useGameState(stateAfter8Rounds));
+
+      act(() => {
+        result.current.advanceToNextRound();
+      });
+
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(1);
+      expect(result.current.state.user.stats.losses).toBe(0);
+      expect(result.current.state.user.stats.ties).toBe(0);
+    });
+
+    it('should update stats when opponent wins via advanceToNextRound', () => {
+      const stateAfter8Rounds: GameState = {
+        ...initialState,
+        currentRound: 8,
+        playerScore: 2,
+        opponentScore: 6,
+      };
+
+      const { result } = renderHook(() => useGameState(stateAfter8Rounds));
+
+      act(() => {
+        result.current.advanceToNextRound();
+      });
+
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(0);
+      expect(result.current.state.user.stats.losses).toBe(1);
+      expect(result.current.state.user.stats.ties).toBe(0);
+    });
+
+    it('should update stats when game ends in tie via advanceToNextRound', () => {
+      const stateAfter8Rounds: GameState = {
+        ...initialState,
+        currentRound: 8,
+        playerScore: 4,
+        opponentScore: 4,
+      };
+
+      const { result } = renderHook(() => useGameState(stateAfter8Rounds));
+
+      act(() => {
+        result.current.advanceToNextRound();
+      });
+
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(0);
+      expect(result.current.state.user.stats.losses).toBe(0);
+      expect(result.current.state.user.stats.ties).toBe(1);
+    });
+
+    it('should accumulate stats across multiple games', () => {
+      const stateWithExistingStats: GameState = {
+        ...initialState,
+        user: {
+          ...mockUser,
+          stats: {
+            totalGames: 5,
+            wins: 3,
+            losses: 1,
+            ties: 1,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useGameState(stateWithExistingStats));
+
+      act(() => {
+        result.current.endGame('player');
+      });
+
+      expect(result.current.state.user.stats.totalGames).toBe(6);
+      expect(result.current.state.user.stats.wins).toBe(4);
+      expect(result.current.state.user.stats.losses).toBe(1);
+      expect(result.current.state.user.stats.ties).toBe(1);
+    });
+  });
 });
