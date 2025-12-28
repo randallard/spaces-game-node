@@ -80,6 +80,24 @@ describe('compressGameState', () => {
     // Should be a valid URI component (can contain more than just A-Za-z0-9_-)
     expect(() => decodeURIComponent(compressed)).not.toThrow();
   });
+
+  it('should return empty string when compression fails', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Create a circular reference to cause JSON.stringify to fail
+    const circularState: any = { ...validState };
+    circularState.self = circularState;
+
+    const result = compressGameState(circularState);
+
+    expect(result).toBe('');
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to compress game state'),
+      expect.any(Error)
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
 });
 
 describe('decompressGameState', () => {
@@ -145,6 +163,65 @@ describe('decompressGameState', () => {
 });
 
 describe('compressPayload and decompressPayload', () => {
+  it('should return empty string when compression fails', () => {
+    // Mock LZString to throw an error
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Create a circular reference to cause JSON.stringify to fail
+    const circularPayload: any = { type: 'delta' };
+    circularPayload.self = circularPayload;
+
+    const result = compressPayload(circularPayload);
+
+    expect(result).toBe('');
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to compress payload'),
+      expect.any(Error)
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should return null when decompression returns empty string', () => {
+    // Directly test empty decompression result
+    const result = decompressPayload('invalid-compressed-data');
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null when payload validation fails', () => {
+    // Create a payload that compresses but doesn't validate
+    const invalidPayload = { type: 'unknown_type' };
+    const compressed = compressPayload(invalidPayload as any);
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = decompressPayload(compressed);
+
+    expect(result).toBeNull();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('URL payload validation failed'),
+      expect.anything()
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should return null when decompression throws error', () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Pass malformed data that will cause JSON.parse to fail
+    const result = decompressPayload('LZString-but-not-valid-json');
+
+    expect(result).toBeNull();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to decompress payload'),
+      expect.any(Error)
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
   it('should compress and decompress delta payload', () => {
     const payload: UrlPayload = {
       type: 'delta',
