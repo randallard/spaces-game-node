@@ -10,11 +10,15 @@ import type { Opponent, Board } from '@/types';
  * Generate opponent ID from type and name
  */
 export function generateOpponentId(
-  type: 'human' | 'cpu',
+  type: 'human' | 'cpu' | 'remote-cpu',
   _name: string
 ): string {
   if (type === 'cpu') {
     return CPU_OPPONENT_ID;
+  }
+  if (type === 'remote-cpu') {
+    // For remote CPU, use UUID for uniqueness
+    return `remote-cpu-${uuidv4()}`;
   }
   // For human opponents, use UUID for uniqueness
   return `human-${uuidv4()}`;
@@ -47,11 +51,25 @@ export function createHumanOpponent(name: string): Opponent {
 }
 
 /**
- * Check if opponent is CPU
+ * Create remote CPU opponent
+ */
+export function createRemoteCpuOpponent(name: string): Opponent {
+  return {
+    id: generateOpponentId('remote-cpu', name),
+    name,
+    type: 'remote-cpu',
+    wins: 0,
+    losses: 0,
+  };
+}
+
+/**
+ * Check if opponent is CPU (local or remote)
  */
 export function isCpuOpponent(opponent: Opponent): boolean {
   return (
     opponent.type === 'cpu' ||
+    opponent.type === 'remote-cpu' ||
     opponent.id === CPU_OPPONENT_ID ||
     opponent.id === CPU_TOUGHER_OPPONENT_ID
   );
