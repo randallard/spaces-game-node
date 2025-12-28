@@ -73,6 +73,18 @@ describe('getOpponentIcon', () => {
     expect(getOpponentIcon(opponent)).toBe('🦾');
   });
 
+  it('should return globe emoji for remote CPU opponent', () => {
+    const opponent: Opponent = {
+      id: 'remote-cpu-abc123',
+      name: 'CPU Remote',
+      type: 'remote-cpu',
+      wins: 0,
+      losses: 0,
+    };
+
+    expect(getOpponentIcon(opponent)).toBe('🌐');
+  });
+
   it('should return person emoji for human opponent', () => {
     const opponent: Opponent = {
       id: 'user-123',
