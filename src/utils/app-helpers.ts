@@ -19,6 +19,7 @@ import {
  * ```ts
  * getOpponentIcon({ type: 'cpu', id: 'cpu-sam', ... }) // '🤖'
  * getOpponentIcon({ type: 'cpu', id: CPU_TOUGHER_OPPONENT_ID, ... }) // '🦾'
+ * getOpponentIcon({ type: 'remote-cpu', ... }) // '🌐'
  * getOpponentIcon({ type: 'human', ... }) // '👤'
  * ```
  */
@@ -33,6 +34,10 @@ export function getOpponentIcon(opponent: Opponent): string {
     }
     // CPU Sam gets the robot emoji
     return '🤖';
+  }
+  if (opponent.type === 'remote-cpu') {
+    // Remote CPU gets the globe emoji
+    return '🌐';
   }
   // Human opponents get the person emoji
   return '👤';
