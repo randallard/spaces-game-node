@@ -58,6 +58,62 @@ function ConfirmationModal({ board, usedAllTheWay, onConfirm, onCancel }: Confir
   );
 }
 
+/**
+ * Existing boards sidebar component
+ */
+interface ExistingBoardsSidebarProps {
+  boards: Board[];
+  currentBoardSize: BoardSize;
+}
+
+function ExistingBoardsSidebar({ boards, currentBoardSize }: ExistingBoardsSidebarProps): ReactElement | null {
+  // Filter boards by current size
+  const relevantBoards = boards.filter(b => b.boardSize === currentBoardSize);
+
+  // Don't show if no relevant boards
+  if (relevantBoards.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.existingBoardsSidebar}>
+      <h3 className={styles.sidebarTitle}>
+        Your {currentBoardSize}×{currentBoardSize} Boards ({relevantBoards.length})
+      </h3>
+      <div className={styles.sidebarBoards}>
+        {relevantBoards.map(board => (
+          <ExistingBoardThumbnail key={board.id} board={board} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Individual board thumbnail in sidebar
+ */
+interface ExistingBoardThumbnailProps {
+  board: Board;
+}
+
+function ExistingBoardThumbnail({ board }: ExistingBoardThumbnailProps): ReactElement {
+  const thumbnail = useBoardThumbnail(board);
+
+  return (
+    <div className={styles.sidebarBoardItem}>
+      <img
+        src={thumbnail}
+        alt={board.name}
+        className={styles.sidebarBoardThumbnail}
+      />
+      <div className={styles.sidebarBoardInfo}>
+        <div className={styles.sidebarBoardName}>{board.name}</div>
+        <div className={styles.sidebarBoardMoves}>{board.sequence.length} moves</div>
+      </div>
+    </div>
+  );
+}
+
 export interface BoardCreatorProps {
   /** Callback when board is saved */
   onBoardSaved: (board: Board) => void;
@@ -642,7 +698,11 @@ export function BoardCreator({
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.creatorLayout}>
+      {/* Sidebar with existing boards (only shown on wider screens) */}
+      <ExistingBoardsSidebar boards={existingBoards} currentBoardSize={boardSize} />
+
+      <div className={styles.container}>
       {/* Final Move Button (always visible, disabled until piece reaches row 0) */}
       <button
         onClick={handleFinalMove}
@@ -992,6 +1052,7 @@ export function BoardCreator({
             </button>
           </>
         )}
+      </div>
       </div>
     </div>
   );
