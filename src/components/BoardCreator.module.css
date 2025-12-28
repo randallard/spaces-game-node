@@ -3,7 +3,7 @@
   width: 100%;
   min-height: 100vh;
   display: flex;
-  background-color: #111827;
+  background-color: #f5f5f5;
   gap: 1rem;
 }
 
@@ -12,25 +12,26 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  padding: 2rem;
   gap: 1rem;
-  background-color: #111827;
+  background-color: #f5f5f5;
 }
 
 /* Existing Boards Sidebar */
 .existingBoardsSidebar {
   width: 280px;
-  background-color: #1f2937;
-  padding: 1rem;
+  background-color: white;
+  padding: 1.5rem;
   overflow-y: auto;
   flex-shrink: 0;
-  border-right: 2px solid #374151;
+  border-right: 2px solid #e5e7eb;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .sidebarTitle {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: #6b7280;
   margin: 0 0 1rem 0;
   text-align: center;
   text-transform: uppercase;
@@ -44,23 +45,24 @@
 }
 
 .sidebarBoardItem {
-  background-color: #374151;
-  border-radius: 0.5rem;
+  background-color: white;
+  border-radius: 0.75rem;
   overflow: hidden;
   transition: all 0.2s ease;
-  border: 2px solid transparent;
+  border: 2px solid #e5e7eb;
 }
 
 .sidebarBoardItem:hover {
-  border-color: #4b5563;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-color: #4a90e2;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+  transform: translateY(-2px);
 }
 
 .sidebarBoardThumbnail {
   width: 100%;
   aspect-ratio: 1;
   object-fit: contain;
-  background-color: #4b5563;
+  background-color: #f9fafb;
 }
 
 .sidebarBoardInfo {
@@ -70,7 +72,7 @@
 .sidebarBoardName {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #d1d5db;
+  color: #1a1a1a;
   margin-bottom: 0.25rem;
   white-space: nowrap;
   overflow: hidden;
@@ -79,7 +81,7 @@
 
 .sidebarBoardMoves {
   font-size: 0.625rem;
-  color: #9ca3af;
+  color: #6b7280;
 }
 
 /* Final Move Button (appears at top when piece reaches row 0) */
@@ -91,16 +93,19 @@
   font-size: 1.125rem;
   font-weight: 600;
   color: white;
-  background-color: #10b981;
+  background-color: #52c41a;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(82, 196, 26, 0.2);
 }
 
 .finalMoveButton:hover:not(:disabled) {
-  background-color: #059669;
+  background-color: #45a317;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
 }
 
 .finalMoveButton:disabled {
@@ -162,7 +167,7 @@
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: #6b7280;
   min-height: 24px;
 }
 
@@ -181,7 +186,7 @@
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: #6b7280;
   flex: 1;
 }
 
@@ -199,14 +204,15 @@
 .cell {
   aspect-ratio: 1;
   width: 100%;
-  background-color: #374151;
-  border: 1px solid #4b5563;
-  border-radius: 0.25rem;
+  background-color: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   font-size: clamp(0.5rem, 2vw, 1.5rem);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Piece Display */
@@ -260,17 +266,19 @@
 .startButton {
   padding: 0.5rem 1rem;
   font-size: clamp(0.5rem, 1.5vw, 0.875rem);
-  font-weight: 500;
+  font-weight: 600;
   color: white;
-  background-color: #4b5563;
+  background-color: #4a90e2;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .startButton:hover {
-  background-color: #6b7280;
+  background-color: #357abd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
 }
 
 /* Action Buttons (Move/Trap on adjacent squares) */
@@ -289,35 +297,40 @@
   font-weight: 600;
   color: white;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .moveButton {
-  background-color: #3b82f6;
+  background-color: #4a90e2;
 }
 
 .moveButton:hover {
-  background-color: #2563eb;
+  background-color: #357abd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
 }
 
 .trapButton {
-  background-color: #ef4444;
+  background-color: #f5222d;
 }
 
 .trapButton:hover {
   background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
 }
 
 /* Instruction Text */
 .instruction {
   font-size: 0.875rem;
-  color: #d1d5db;
+  color: #374151;
   text-align: center;
-  padding: 0.5rem 1rem;
-  background-color: #1f2937;
-  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+  background-color: #eff6ff;
+  border: 2px solid #bfdbfe;
+  border-radius: 0.75rem;
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
@@ -747,28 +760,29 @@
 }
 
 .confirmationContent {
-  background-color: #1f2937;
+  background-color: white;
   border-radius: 1rem;
   padding: 2rem;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  border: 2px solid #e5e7eb;
 }
 
 .confirmationTitle {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #10b981;
+  color: #52c41a;
   text-align: center;
   margin: 0;
 }
 
 .confirmationSubtitle {
   font-size: 1rem;
-  color: #d1d5db;
+  color: #6b7280;
   text-align: center;
   margin: 0;
 }
@@ -777,10 +791,10 @@
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
-  background-color: #374151;
-  border-radius: 0.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.75rem;
   padding: 1rem;
-  border: 2px solid #4b5563;
+  border: 2px solid #e5e7eb;
 }
 
 .thumbnailPreview {
@@ -801,17 +815,17 @@
   padding: 0.875rem 1.5rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: white;
-  background-color: #6b7280;
+  color: #6b7280;
+  background-color: #f3f4f6;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .confirmationCancel:hover {
-  background-color: #4b5563;
+  background-color: #e5e7eb;
 }
 
 .confirmationConfirm {
@@ -820,15 +834,17 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: white;
-  background-color: #10b981;
+  background-color: #52c41a;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .confirmationConfirm:hover {
-  background-color: #059669;
+  background-color: #45a317;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
 }
 
 /* Responsive */
