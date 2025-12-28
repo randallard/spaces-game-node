@@ -9,6 +9,7 @@ import { updateOpponentStats, createHumanOpponent } from '@/utils/opponent-helpe
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
 import { generateChallengeUrl, generateFinalResultsUrl, getChallengeFromUrl, clearChallengeFromUrl } from '@/utils/challenge-url';
 import { decodeMinimalBoard } from '@/utils/board-encoding';
+import { fetchRemoteCpuBoards } from '@/utils/remote-cpu-boards';
 import {
   UserProfile,
   OpponentManager,
@@ -76,6 +77,13 @@ function App(): React.ReactElement {
   // Separate storage for CPU boards and decks (hidden from player)
   const [cpuBoards, setCpuBoards] = useLocalStorage<Board[] | null>(
     'spaces-game-cpu-boards',
+    BoardSchema.array(),
+    []
+  );
+
+  // Storage for remote CPU boards (fetched from GitHub Pages)
+  const [remoteCpuBoards, setRemoteCpuBoards] = useLocalStorage<Board[] | null>(
+    'spaces-game-remote-cpu-boards',
     BoardSchema.array(),
     []
   );
@@ -569,6 +577,45 @@ function App(): React.ReactElement {
           // CPU already has boards, proceed to next phase
           setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
         }
+      } else if (state.opponent && state.opponent.type === 'remote-cpu') {
+        // Fetch boards from remote server for remote CPU
+        // Show generating modal
+        setGeneratingSize(size);
+        setIsGeneratingCpuBoards(true);
+
+        try {
+          // Fetch boards for this size
+          const boards = await fetchRemoteCpuBoards(size);
+
+          if (boards.length > 0) {
+            // Filter out boards already in storage to avoid duplicates
+            const existingBoardIds = new Set((remoteCpuBoards || []).map(b => b.id));
+            const newBoards = boards.filter(b => !existingBoardIds.has(b.id));
+
+            if (newBoards.length > 0) {
+              setRemoteCpuBoards([...(remoteCpuBoards || []), ...newBoards]);
+            }
+
+            console.log(`[handleBoardSizeSelect] Fetched ${boards.length} remote CPU boards for ${size}×${size}`);
+          } else {
+            console.warn(`[handleBoardSizeSelect] No remote CPU boards fetched for ${size}×${size}`);
+            alert(`Could not fetch boards from remote server. Please check your connection and try again.`);
+            setIsGeneratingCpuBoards(false);
+            return;
+          }
+        } catch (error) {
+          console.error('[handleBoardSizeSelect] Error fetching remote CPU boards:', error);
+          alert(`Failed to fetch boards from remote server. Please try again.`);
+          setIsGeneratingCpuBoards(false);
+          return;
+        }
+
+        // Hide generating modal after a brief delay
+        setTimeout(() => {
+          setIsGeneratingCpuBoards(false);
+          // Proceed to next phase (remote CPU only supports round-by-round for now)
+          setPhase({ type: 'board-selection', round: 1 });
+        }, 500);
       } else if (state.opponent) {
         // Non-CPU opponent, skip opponent selection and go to next phase
         setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
@@ -860,13 +907,18 @@ function App(): React.ReactElement {
     // Opponent selects a board (CPU chooses random)
     let opponentBoard: Board = board; // Fallback to same board
 
-    // Filter boards by opponent name and size
-    // Board names start with opponent name (e.g., "CPU Left Column" or "CPU Tougher Board 1")
-    const opponentBoardsForSize = (cpuBoards || []).filter(
-      b => b.boardSize === state.boardSize && b.name.startsWith(state.opponent!.name)
-    );
+    // Determine which board pool to use based on opponent type
+    const isRemoteCpu = state.opponent.type === 'remote-cpu';
+    const boardPool = isRemoteCpu ? (remoteCpuBoards || []) : (cpuBoards || []);
 
-    console.log(`[handleBoardSelect] Opponent: ${state.opponent!.name}, Board size: ${state.boardSize}x${state.boardSize}`);
+    // Filter boards by opponent name and size
+    // For remote CPU, just filter by size (boards are generic)
+    // For local CPU, filter by name prefix (e.g., "CPU Left Column" or "CPU Tougher Board 1")
+    const opponentBoardsForSize = isRemoteCpu
+      ? boardPool.filter(b => b.boardSize === state.boardSize)
+      : boardPool.filter(b => b.boardSize === state.boardSize && b.name.startsWith(state.opponent!.name));
+
+    console.log(`[handleBoardSelect] Opponent: ${state.opponent!.name}, Type: ${state.opponent!.type}, Board size: ${state.boardSize}x${state.boardSize}`);
     console.log(`[handleBoardSelect] Found ${opponentBoardsForSize.length} boards for ${state.opponent!.name}:`, opponentBoardsForSize.map(b => b.name));
 
     // CPU selects random board from its own boards
@@ -877,7 +929,7 @@ function App(): React.ReactElement {
     } else {
       // Fallback: log error and use player's board
       console.error(`[handleBoardSelect] ${state.opponent?.name ?? 'CPU'} boards not found for size ${state.boardSize}×${state.boardSize}`);
-      console.error(`[handleBoardSelect] All CPU boards:`, (cpuBoards || []).map(b => `${b.name} (${b.boardSize}x${b.boardSize})`));
+      console.error(`[handleBoardSelect] All boards in pool:`, boardPool.map(b => `${b.name} (${b.boardSize}x${b.boardSize})`));
       opponentBoard = board;
     }
 

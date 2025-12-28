@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, type ReactElement } from 'react';
-import { createCpuOpponent, createHumanOpponent } from '@/utils/opponent-helpers';
+import { createCpuOpponent, createHumanOpponent, createRemoteCpuOpponent } from '@/utils/opponent-helpers';
 import type { Opponent } from '@/types';
 import styles from './OpponentManager.module.css';
 
@@ -37,7 +37,7 @@ export function OpponentManager({
   onOpponentSelected,
   userName,
 }: OpponentManagerProps): ReactElement {
-  const [selectedType, setSelectedType] = useState<'cpu' | 'human' | null>(null);
+  const [selectedType, setSelectedType] = useState<'cpu' | 'human' | 'remote-cpu' | null>(null);
   const [opponentName, setOpponentName] = useState('');
 
   /**
@@ -56,6 +56,14 @@ export function OpponentManager({
   }, []);
 
   /**
+   * Handle remote CPU opponent selection
+   */
+  const handleSelectRemoteCpu = useCallback((): void => {
+    setSelectedType('remote-cpu');
+    setOpponentName('CPU Remote'); // Default name
+  }, []);
+
+  /**
    * Handle human opponent name submission
    */
   const handleHumanNameSubmit = useCallback(
@@ -69,6 +77,24 @@ export function OpponentManager({
       const humanOpponent = createHumanOpponent(opponentName.trim());
 
       onOpponentSelected(humanOpponent);
+    },
+    [opponentName, onOpponentSelected]
+  );
+
+  /**
+   * Handle remote CPU opponent name submission
+   */
+  const handleRemoteCpuNameSubmit = useCallback(
+    (e: React.FormEvent): void => {
+      e.preventDefault();
+
+      if (!opponentName.trim()) {
+        return;
+      }
+
+      const remoteCpuOpponent = createRemoteCpuOpponent(opponentName.trim());
+
+      onOpponentSelected(remoteCpuOpponent);
     },
     [opponentName, onOpponentSelected]
   );
@@ -117,6 +143,53 @@ export function OpponentManager({
     );
   }
 
+  // If remote CPU opponent type selected, show name input
+  if (selectedType === 'remote-cpu') {
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.title}>Remote CPU Opponent</h2>
+        <p className={styles.subtitle}>
+          This opponent will use boards from a remote server
+        </p>
+
+        <form onSubmit={handleRemoteCpuNameSubmit} className={styles.form}>
+          <div className={styles.fieldGroup}>
+            <label htmlFor="remote-cpu-name" className={styles.label}>
+              Opponent Name
+            </label>
+            <input
+              id="remote-cpu-name"
+              type="text"
+              value={opponentName}
+              onChange={(e) => setOpponentName(e.target.value)}
+              className={styles.input}
+              placeholder="CPU Remote"
+              maxLength={20}
+              autoFocus
+            />
+          </div>
+
+          <div className={styles.buttonGroup}>
+            <button
+              type="button"
+              onClick={() => setSelectedType(null)}
+              className={styles.backButton}
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={!opponentName.trim()}
+            >
+              Continue
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   // Default: show opponent type selection
   return (
     <div className={styles.container}>
@@ -138,6 +211,20 @@ export function OpponentManager({
             Play against the computer. Perfect for practice and solo play.
           </p>
           <span className={styles.optionBadge}>Quick Start</span>
+        </button>
+
+        {/* Remote CPU Opponent Card */}
+        <button
+          onClick={handleSelectRemoteCpu}
+          className={styles.optionCard}
+          aria-label="Play against remote CPU"
+        >
+          <div className={styles.optionIcon}>🌐</div>
+          <h3 className={styles.optionTitle}>Remote CPU</h3>
+          <p className={styles.optionDescription}>
+            Play against a CPU with boards from a remote server. New challenges every time.
+          </p>
+          <span className={styles.optionBadge}>Online</span>
         </button>
 
         {/* Human Opponent Card */}

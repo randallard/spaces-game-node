@@ -23,6 +23,13 @@ vi.mock('@/utils/opponent-helpers', () => ({
     wins: 0,
     losses: 0,
   })),
+  createRemoteCpuOpponent: vi.fn((name: string) => ({
+    type: 'remote-cpu',
+    id: `remote-cpu-${Math.random().toString(36).substring(2, 9)}`,
+    name,
+    wins: 0,
+    losses: 0,
+  })),
 }));
 
 describe('OpponentManager', () => {
@@ -716,6 +723,393 @@ describe('OpponentManager', () => {
 
       const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
       expect(input.type).toBe('text');
+    });
+  });
+
+  describe('Remote CPU opponent selection', () => {
+    it('should render remote CPU opponent option', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      expect(screen.getByText('Remote CPU')).toBeInTheDocument();
+      expect(screen.getByText(/Play against a CPU with boards from a remote server/)).toBeInTheDocument();
+      expect(screen.getByText('Online')).toBeInTheDocument();
+    });
+
+    it('should render remote CPU option card as button', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      const remoteCpuButton = screen.getByLabelText('Play against remote CPU');
+      expect(remoteCpuButton).toBeInstanceOf(HTMLButtonElement);
+    });
+
+    it('should show name input screen when remote CPU clicked', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      const remoteCpuButton = screen.getByLabelText('Play against remote CPU');
+      fireEvent.click(remoteCpuButton);
+
+      expect(screen.getByText('Remote CPU Opponent')).toBeInTheDocument();
+      expect(screen.getByText(/This opponent will use boards from a remote server/)).toBeInTheDocument();
+    });
+
+    it('should pre-populate name input with "CPU Remote"', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      expect(input.value).toBe('CPU Remote');
+    });
+
+    it('should have Continue button enabled by default (pre-filled name)', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const continueButton = screen.getByText('Continue');
+      expect(continueButton).not.toBeDisabled();
+    });
+
+    it('should allow changing remote CPU opponent name', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: 'My Remote CPU' } });
+
+      expect(input).toHaveValue('My Remote CPU');
+    });
+
+    it('should call onOpponentSelected with remote CPU opponent data', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+      fireEvent.click(screen.getByText('Continue'));
+
+      expect(mockOnOpponentSelected).toHaveBeenCalledTimes(1);
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+
+      expect(opponent.type).toBe('remote-cpu');
+      expect(opponent.name).toBe('CPU Remote');
+      expect(opponent.wins).toBe(0);
+      expect(opponent.losses).toBe(0);
+      expect(opponent.id).toMatch(/^remote-cpu-/);
+    });
+
+    it('should call onOpponentSelected with custom remote CPU name', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: 'Custom Name' } });
+      fireEvent.click(screen.getByText('Continue'));
+
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.name).toBe('Custom Name');
+    });
+
+    it('should trim remote CPU opponent name before submitting', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: '  My CPU  ' } });
+      fireEvent.click(screen.getByText('Continue'));
+
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.name).toBe('My CPU');
+    });
+
+    it('should disable Continue button when name is cleared', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: '' } });
+
+      const continueButton = screen.getByText('Continue');
+      expect(continueButton).toBeDisabled();
+    });
+
+    it('should not submit if remote CPU name is empty', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: '' } });
+
+      const form = input.closest('form')!;
+      fireEvent.submit(form);
+
+      expect(mockOnOpponentSelected).not.toHaveBeenCalled();
+    });
+
+    it('should submit via form submission (Enter key)', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      const form = input.closest('form')!;
+      fireEvent.submit(form);
+
+      expect(mockOnOpponentSelected).toHaveBeenCalledTimes(1);
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.type).toBe('remote-cpu');
+    });
+
+    it('should show Back button in remote CPU name screen', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      expect(screen.getByText('Back')).toBeInTheDocument();
+    });
+
+    it('should return to opponent selection when Back clicked', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+      expect(screen.getByText('Remote CPU Opponent')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Back'));
+
+      expect(screen.getByText('Choose Your Opponent')).toBeInTheDocument();
+      expect(screen.getByText('Remote CPU')).toBeInTheDocument();
+    });
+
+    it('should have placeholder text in input', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      expect(input.placeholder).toBe('CPU Remote');
+    });
+
+    it('should have maxLength on remote CPU name input', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      expect(input.maxLength).toBe(20);
+    });
+
+    it('should have autoFocus on remote CPU name input', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      expect(input).toBeInTheDocument();
+    });
+
+    it('should generate unique IDs for different remote CPU opponents', () => {
+      // First opponent
+      const { unmount: unmount1 } = render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+      fireEvent.click(screen.getByText('Continue'));
+
+      const firstId = mockOnOpponentSelected.mock.calls[0]![0]!.id;
+      unmount1();
+
+      // Second opponent - completely fresh render
+      mockOnOpponentSelected.mockClear();
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+      fireEvent.click(screen.getByText('Continue'));
+
+      const secondId = mockOnOpponentSelected.mock.calls[0]![0]!.id;
+
+      expect(firstId).not.toBe(secondId);
+      expect(firstId).toMatch(/^remote-cpu-/);
+      expect(secondId).toMatch(/^remote-cpu-/);
+    });
+  });
+
+  describe('All three opponent types displayed', () => {
+    it('should render all three opponent option cards', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      expect(screen.getByText('CPU Opponent')).toBeInTheDocument();
+      expect(screen.getByText('Remote CPU')).toBeInTheDocument();
+      expect(screen.getByText('Human Opponent')).toBeInTheDocument();
+    });
+
+    it('should have three option cards in correct order', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      const cpuButton = screen.getByLabelText('Play against CPU');
+      const remoteCpuButton = screen.getByLabelText('Play against remote CPU');
+      const humanButton = screen.getByLabelText('Play against human opponent');
+
+      // Verify all are present
+      expect(cpuButton).toBeInTheDocument();
+      expect(remoteCpuButton).toBeInTheDocument();
+      expect(humanButton).toBeInTheDocument();
+    });
+
+    it('should display correct badges for each opponent type', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      expect(screen.getByText('Quick Start')).toBeInTheDocument(); // CPU
+      expect(screen.getByText('Online')).toBeInTheDocument(); // Remote CPU
+      expect(screen.getByText('Multiplayer')).toBeInTheDocument(); // Human
+    });
+
+    it('should switch between different opponent types correctly', () => {
+      const { unmount } = render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      // Try CPU
+      fireEvent.click(screen.getByLabelText('Play against CPU'));
+      expect(mockOnOpponentSelected).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'cpu' })
+      );
+
+      unmount();
+      mockOnOpponentSelected.mockClear();
+
+      // Render fresh for Remote CPU test
+      const { unmount: unmount2 } = render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      // Try Remote CPU
+      fireEvent.click(screen.getByLabelText('Play against remote CPU'));
+      expect(screen.getByText('Remote CPU Opponent')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('Back'));
+
+      // Try Human
+      fireEvent.click(screen.getByLabelText('Play against human opponent'));
+      expect(screen.getByText("Enter Opponent's Name")).toBeInTheDocument();
+
+      unmount2();
     });
   });
 });

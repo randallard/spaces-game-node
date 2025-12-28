@@ -2,7 +2,7 @@
  * Opponent-related types
  */
 
-export type OpponentType = 'human' | 'cpu';
+export type OpponentType = 'human' | 'cpu' | 'remote-cpu';
 
 export type Opponent = {
   id: string; // Generated from type + name
