@@ -1,11 +1,85 @@
-.container {
+/* Creator Layout with Sidebar */
+.creatorLayout {
   width: 100%;
+  min-height: 100vh;
+  display: flex;
+  background-color: #111827;
+  gap: 1rem;
+}
+
+.container {
+  flex: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 1rem;
   gap: 1rem;
   background-color: #111827;
+}
+
+/* Existing Boards Sidebar */
+.existingBoardsSidebar {
+  width: 280px;
+  background-color: #1f2937;
+  padding: 1rem;
+  overflow-y: auto;
+  flex-shrink: 0;
+  border-right: 2px solid #374151;
+}
+
+.sidebarTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  margin: 0 0 1rem 0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidebarBoards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sidebarBoardItem {
+  background-color: #374151;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.sidebarBoardItem:hover {
+  border-color: #4b5563;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sidebarBoardThumbnail {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background-color: #4b5563;
+}
+
+.sidebarBoardInfo {
+  padding: 0.5rem;
+}
+
+.sidebarBoardName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #d1d5db;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarBoardMoves {
+  font-size: 0.625rem;
+  color: #9ca3af;
 }
 
 /* Final Move Button (appears at top when piece reaches row 0) */
@@ -758,6 +832,33 @@
 }
 
 /* Responsive */
+/* Hide sidebar on portrait mobile, show on landscape or larger screens */
+@media (max-width: 768px) and (orientation: portrait) {
+  .existingBoardsSidebar {
+    display: none;
+  }
+}
+
+/* Show sidebar on landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .existingBoardsSidebar {
+    width: 200px;
+    padding: 0.5rem;
+  }
+
+  .sidebarTitle {
+    font-size: 0.75rem;
+  }
+
+  .sidebarBoardName {
+    font-size: 0.625rem;
+  }
+
+  .sidebarBoardMoves {
+    font-size: 0.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0.5rem;
