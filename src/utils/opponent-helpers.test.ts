@@ -7,13 +7,14 @@ import {
   generateOpponentId,
   createCpuOpponent,
   createHumanOpponent,
+  createRemoteCpuOpponent,
   isCpuOpponent,
   selectRandomBoard,
   updateOpponentStats,
   calculateWinRate,
   formatOpponentStats,
 } from './opponent-helpers';
-import { CPU_OPPONENT_ID, CPU_OPPONENT_NAME } from '@/constants/game-rules';
+import { CPU_OPPONENT_ID, CPU_OPPONENT_NAME, CPU_TOUGHER_OPPONENT_ID } from '@/constants/game-rules';
 import type { Board, Opponent } from '@/types';
 
 describe('generateOpponentId', () => {
@@ -28,6 +29,14 @@ describe('generateOpponentId', () => {
     expect(id1).not.toBe(id2);
     expect(id1).toContain('human-');
     expect(id2).toContain('human-');
+  });
+
+  it('should generate unique IDs for remote-cpu opponents', () => {
+    const id1 = generateOpponentId('remote-cpu', 'Remote CPU 1');
+    const id2 = generateOpponentId('remote-cpu', 'Remote CPU 2');
+    expect(id1).not.toBe(id2);
+    expect(id1).toContain('remote-cpu-');
+    expect(id2).toContain('remote-cpu-');
   });
 });
 
@@ -67,6 +76,24 @@ describe('createHumanOpponent', () => {
   });
 });
 
+describe('createRemoteCpuOpponent', () => {
+  it('should create remote CPU opponent with given name', () => {
+    const remoteCpu = createRemoteCpuOpponent('Remote CPU 1');
+    expect(remoteCpu.name).toBe('Remote CPU 1');
+    expect(remoteCpu.type).toBe('remote-cpu');
+    expect(remoteCpu.wins).toBe(0);
+    expect(remoteCpu.losses).toBe(0);
+  });
+
+  it('should generate unique IDs for different remote CPU opponents', () => {
+    const remoteCpu1 = createRemoteCpuOpponent('Remote CPU 1');
+    const remoteCpu2 = createRemoteCpuOpponent('Remote CPU 2');
+    expect(remoteCpu1.id).not.toBe(remoteCpu2.id);
+    expect(remoteCpu1.id).toContain('remote-cpu-');
+    expect(remoteCpu2.id).toContain('remote-cpu-');
+  });
+});
+
 describe('isCpuOpponent', () => {
   it('should return true for CPU opponent', () => {
     const cpu = createCpuOpponent();
@@ -82,6 +109,22 @@ describe('isCpuOpponent', () => {
       losses: 0,
     };
     expect(isCpuOpponent(opponent)).toBe(true);
+  });
+
+  it('should return true for opponent with CPU_TOUGHER_OPPONENT_ID', () => {
+    const opponent: Opponent = {
+      id: CPU_TOUGHER_OPPONENT_ID,
+      name: 'CPU Tougher',
+      type: 'human', // Even if type is wrong
+      wins: 0,
+      losses: 0,
+    };
+    expect(isCpuOpponent(opponent)).toBe(true);
+  });
+
+  it('should return true for remote-cpu opponent type', () => {
+    const remoteCpu = createRemoteCpuOpponent('Remote CPU');
+    expect(isCpuOpponent(remoteCpu)).toBe(true);
   });
 
   it('should return false for human opponent', () => {
@@ -192,6 +235,29 @@ describe('updateOpponentStats', () => {
     const original = { ...baseOpponent };
     updateOpponentStats(baseOpponent, true);
     expect(baseOpponent).toEqual(original);
+  });
+
+  it('should set hasCompletedGame for human opponents', () => {
+    const updated = updateOpponentStats(baseOpponent, true);
+    expect(updated.hasCompletedGame).toBe(true);
+  });
+
+  it('should not set hasCompletedGame for CPU opponents', () => {
+    const cpuOpponent: Opponent = {
+      id: CPU_OPPONENT_ID,
+      name: 'CPU',
+      type: 'cpu',
+      wins: 0,
+      losses: 0,
+    };
+    const updated = updateOpponentStats(cpuOpponent, true);
+    expect(updated.hasCompletedGame).toBeUndefined();
+  });
+
+  it('should not set hasCompletedGame for remote-cpu opponents', () => {
+    const remoteCpuOpponent = createRemoteCpuOpponent('Remote CPU');
+    const updated = updateOpponentStats(remoteCpuOpponent, false);
+    expect(updated.hasCompletedGame).toBeUndefined();
   });
 });
 
