@@ -1135,13 +1135,22 @@ function App(): React.ReactElement {
 
   // Handle tutorial name entry continue
   const handleTutorialNameContinue = (newUser: UserProfileType) => {
+    // Merge preferences from current user (set during tutorial) into new user
+    const userWithPreferences: UserProfileType = {
+      ...newUser,
+      preferences: {
+        ...newUser.preferences,
+        ...state.user.preferences,
+      },
+    };
+
     // Save user to localStorage
-    setSavedUser(newUser);
+    setSavedUser(userWithPreferences);
 
     // Update game state and transition to board management
     loadState({
       ...state,
-      user: newUser,
+      user: userWithPreferences,
       phase: { type: 'board-management' },
     });
 
