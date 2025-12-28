@@ -509,12 +509,14 @@
   display: flex;
   flex-direction: column;
   padding: 2rem;
-  background-color: #1f2937;
-  border-radius: 0.5rem;
+  background-color: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
   flex-shrink: 0;
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Start Controls */
@@ -530,7 +532,7 @@
 .controlLabel {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #d1d5db;
+  color: #374151;
 }
 
 .columnSpinner {
@@ -545,18 +547,18 @@
   font-size: 3rem;
   font-weight: 700;
   text-align: center;
-  color: white;
-  background-color: #374151;
-  border: 3px solid #10b981;
+  color: #1a1a1a;
+  background-color: #f9fafb;
+  border: 3px solid #4a90e2;
   border-radius: 0.75rem;
   padding: 0.5rem;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.1);
 }
 
 .spinnerInput:focus {
   outline: none;
-  border-color: #059669;
-  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.3);
+  border-color: #357abd;
+  box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.2);
 }
 
 /* Remove default number input spinners on Firefox */
@@ -576,15 +578,18 @@
   font-size: 1.5rem;
   font-weight: 600;
   color: white;
-  background-color: #10b981;
+  background-color: #52c41a;
   border: none;
   border-radius: 0.75rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(82, 196, 26, 0.2);
 }
 
 .confirmButton:hover {
-  background-color: #059669;
+  background-color: #45a317;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
 }
 
 /* Directional Controls */
@@ -633,7 +638,7 @@
   font-size: 1rem;
   font-weight: 600;
   color: white;
-  background-color: #3b82f6;
+  background-color: #4a90e2;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -648,7 +653,7 @@
   font-size: 0.625rem;
   font-weight: 600;
   color: white;
-  background-color: #3b82f6;
+  background-color: #4a90e2;
   border: none;
   border-radius: 0.375rem;
   cursor: pointer;
@@ -663,9 +668,9 @@
 }
 
 .dirButton:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: #357abd;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
 }
 
 .dirButton:active:not(:disabled) {
@@ -673,15 +678,15 @@
 }
 
 .dirButton:disabled {
-  background-color: #4b5563;
+  background-color: #6b7280;
   cursor: not-allowed;
   opacity: 0.5;
 }
 
 .dirButtonSmall:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: #357abd;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
 }
 
 .dirButtonSmall:active:not(:disabled) {
@@ -689,29 +694,29 @@
 }
 
 .dirButtonSmall:disabled {
-  background-color: #4b5563;
+  background-color: #6b7280;
   cursor: not-allowed;
   opacity: 0.5;
 }
 
 /* Trap variant for directional buttons */
 .dirButtonTrap {
-  background-color: #ef4444;
+  background-color: #f5222d;
 }
 
 .dirButtonTrap:hover:not(:disabled) {
   background-color: #dc2626;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 /* Finish variant for directional buttons (when piece can finish) */
 .dirButtonFinish {
-  background-color: #10b981;
+  background-color: #52c41a;
 }
 
 .dirButtonFinish:hover:not(:disabled) {
-  background-color: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  background-color: #45a317;
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
 }
 
 /* Finish button in center of directional controls */
@@ -720,18 +725,19 @@
   font-size: 1.125rem;
   font-weight: 700;
   color: white;
-  background-color: #10b981;
+  background-color: #52c41a;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(82, 196, 26, 0.2);
 }
 
 .dirFinishButton:hover:not(:disabled) {
-  background-color: #059669;
+  background-color: #45a317;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
 }
 
 .dirFinishButton:active:not(:disabled) {
