@@ -1,1 +1,2 @@
 - make sure coverage is kept high for any new code that is added
+- make sure all new code has good test coverage
