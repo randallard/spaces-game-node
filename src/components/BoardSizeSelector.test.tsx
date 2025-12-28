@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BoardSizeSelector } from './BoardSizeSelector';
 import type { Board, Opponent, UserProfile } from '@/types';
 
@@ -323,6 +323,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 6, // All sizes unlocked
           wins: 3,
           losses: 3,
+    ties: 0,
         },
       };
 
@@ -347,7 +348,7 @@ describe('BoardSizeSelector', () => {
         name: 'Alice',
         type: 'human',
         wins: 0,
-        losses: 0, // First game
+        losses: 0,
       };
 
       render(
@@ -375,6 +376,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -397,6 +399,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -427,6 +430,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -456,6 +460,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -485,6 +490,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 1, // Only 2x2 and 3x3 unlocked
           wins: 0,
           losses: 1,
+    ties: 0,
         },
       };
 
@@ -514,6 +520,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -554,6 +561,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -591,6 +599,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -619,15 +628,12 @@ describe('BoardSizeSelector', () => {
 
   describe('CPU Board Generation', () => {
     it('should show generate option when CPU has insufficient boards', async () => {
-      const mockOnCpuBoardsGenerated = vi.fn();
-
       render(
         <BoardSizeSelector
           onSizeSelected={mockOnSizeSelected}
           playerBoards={mockPlayerBoards}
           cpuBoards={[]} // No CPU boards
           opponent={mockOpponent}
-          onCpuBoardsGenerated={mockOnCpuBoardsGenerated}
         />
       );
 
@@ -636,15 +642,12 @@ describe('BoardSizeSelector', () => {
     });
 
     it('should show generate CPU boards button when needed', async () => {
-      const mockOnCpuBoardsGenerated = vi.fn();
-
       render(
         <BoardSizeSelector
           onSizeSelected={mockOnSizeSelected}
           playerBoards={mockPlayerBoards}
           cpuBoards={[]} // No CPU boards
           opponent={mockOpponent}
-          onCpuBoardsGenerated={mockOnCpuBoardsGenerated}
         />
       );
 
@@ -664,6 +667,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 0, // No games played, only 2x2 and 3x3 unlocked
           wins: 0,
           losses: 0,
+    ties: 0,
         },
       };
 
@@ -691,6 +695,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 6, // All sizes unlocked
           wins: 3,
           losses: 3,
+    ties: 0,
         },
       };
 
@@ -717,6 +722,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -725,7 +731,7 @@ describe('BoardSizeSelector', () => {
         name: 'Alice',
         type: 'human',
         wins: 0,
-        losses: 0, // First game
+        losses: 0,
       };
 
       render(
@@ -750,6 +756,7 @@ describe('BoardSizeSelector', () => {
           totalGames: 10,
           wins: 5,
           losses: 5,
+    ties: 0,
         },
       };
 
@@ -758,7 +765,7 @@ describe('BoardSizeSelector', () => {
         name: 'Alice',
         type: 'human',
         wins: 2,
-        losses: 1, // Has played before
+        losses: 1,
       };
 
       render(
@@ -779,6 +786,7 @@ describe('BoardSizeSelector', () => {
       render(
         <BoardSizeSelector
           onSizeSelected={mockOnSizeSelected}
+          opponent={null}
           user={null}
         />
       );
@@ -791,7 +799,7 @@ describe('BoardSizeSelector', () => {
       render(
         <BoardSizeSelector
           onSizeSelected={mockOnSizeSelected}
-          opponent={undefined}
+          opponent={null}
         />
       );
 

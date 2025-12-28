@@ -1298,12 +1298,12 @@ describe('BoardCreator', () => {
       const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
 
-      const existingBoards = [
+      const existingBoards: Board[] = [
         {
           id: '1',
           name: 'Board 1',
           boardSize: 2 as BoardSize,
-          grid: [['empty', 'empty'], ['piece', 'empty']],
+          grid: [['empty' as const, 'empty' as const], ['piece' as const, 'empty' as const]],
           sequence: [],
           thumbnail: '',
           createdAt: Date.now(),

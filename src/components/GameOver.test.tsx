@@ -1071,10 +1071,11 @@ describe('GameOver', () => {
     });
 
     it('should handle rounds without creatures gracefully', () => {
+      const baseRound = createMockRoundResult(1, 'player');
       const roundWithoutCreatures: RoundResult = {
-        ...createMockRoundResult(1, 'player'),
-        playerCreature: undefined,
-        opponentCreature: undefined,
+        ...baseRound,
+        playerCreature: '',
+        opponentCreature: '',
       };
 
       render(
