@@ -192,6 +192,13 @@ describe('BoardCreator', () => {
       const finalMoveButton = screen.getByText('Final Move');
       fireEvent.click(finalMoveButton);
 
+      // Should show confirmation modal
+      expect(screen.getByText('Board Complete!')).toBeInTheDocument();
+
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
+
       // Should call onBoardSaved
       expect(mockOnBoardSaved).toHaveBeenCalledTimes(1);
       const savedBoard = mockOnBoardSaved.mock.calls[0]?.[0] as Board;
@@ -226,6 +233,10 @@ describe('BoardCreator', () => {
       const finalMoveButton = screen.getByText('Final Move');
       fireEvent.click(finalMoveButton);
 
+      // Should show confirmation modal and click Save
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
+
       const savedBoard = mockOnBoardSaved.mock.calls[0]?.[0] as Board;
       expect(savedBoard.name).toBe('Board 2');
     });
@@ -244,6 +255,10 @@ describe('BoardCreator', () => {
       // Click Final Move
       const finalMoveButton = screen.getByText('Final Move');
       fireEvent.click(finalMoveButton);
+
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
 
       const savedBoard = mockOnBoardSaved.mock.calls[0]?.[0] as Board;
       const finalMove = savedBoard.sequence[savedBoard.sequence.length - 1];
@@ -402,6 +417,10 @@ describe('BoardCreator', () => {
       const finalMoveButton = screen.getByText('Final Move');
       fireEvent.click(finalMoveButton);
 
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
+
       const savedBoard = mockOnBoardSaved.mock.calls[0]?.[0] as Board;
       const pieceMoves = savedBoard.sequence.filter(m => m.type === 'piece');
       expect(pieceMoves).toHaveLength(2); // Start + Move
@@ -420,6 +439,10 @@ describe('BoardCreator', () => {
       // Final move
       const finalMoveButton = screen.getByText('Final Move');
       fireEvent.click(finalMoveButton);
+
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
 
       const savedBoard = mockOnBoardSaved.mock.calls[0]?.[0] as Board;
       savedBoard.sequence.forEach((move, idx) => {
@@ -861,6 +884,10 @@ describe('BoardCreator', () => {
       // Press Enter to finish
       fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
 
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
+
       expect(onBoardSaved).toHaveBeenCalled();
     });
 
@@ -1223,6 +1250,13 @@ describe('BoardCreator', () => {
       const finalMoveButton = screen.getByText('Final Move');
       fireEvent.click(finalMoveButton);
 
+      // Should show confirmation modal
+      expect(screen.getByText('Board Complete!')).toBeInTheDocument();
+
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
+
       expect(onBoardSaved).toHaveBeenCalled();
     });
 
@@ -1247,6 +1281,10 @@ describe('BoardCreator', () => {
 
       // Complete
       fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
+
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
 
       // Should generate "Board 1"
       expect(onBoardSaved).toHaveBeenCalledWith(
@@ -1289,6 +1327,10 @@ describe('BoardCreator', () => {
 
       // Complete
       fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
+
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
 
       // Should generate "Board 2"
       expect(onBoardSaved).toHaveBeenCalledWith(

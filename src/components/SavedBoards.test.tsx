@@ -332,6 +332,10 @@ describe('SavedBoards', () => {
       const finalMoveButton = screen.getByText('Final Move');
       fireEvent.click(finalMoveButton);
 
+      // Click Save Board button
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
+
       // Should call onBoardSaved
       expect(mockOnBoardSaved).toHaveBeenCalledTimes(1);
 

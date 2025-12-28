@@ -657,6 +657,106 @@
   opacity: 0.5;
 }
 
+/* Confirmation Modal */
+.confirmationModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.confirmationContent {
+  background-color: #1f2937;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.confirmationTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #10b981;
+  text-align: center;
+  margin: 0;
+}
+
+.confirmationSubtitle {
+  font-size: 1rem;
+  color: #d1d5db;
+  text-align: center;
+  margin: 0;
+}
+
+.confirmationThumbnail {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  background-color: #374151;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  border: 2px solid #4b5563;
+}
+
+.thumbnailPreview {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 0.25rem;
+}
+
+.confirmationActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirmationCancel {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  background-color: #6b7280;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.confirmationCancel:hover {
+  background-color: #4b5563;
+}
+
+.confirmationConfirm {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  background-color: #10b981;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.confirmationConfirm:hover {
+  background-color: #059669;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {
@@ -763,5 +863,22 @@
 
   .startControls {
     gap: 1rem;
+  }
+
+  .confirmationContent {
+    padding: 1.5rem;
+  }
+
+  .confirmationTitle {
+    font-size: 1.5rem;
+  }
+
+  .confirmationActions {
+    flex-direction: column;
+  }
+
+  .confirmationCancel,
+  .confirmationConfirm {
+    width: 100%;
   }
 }

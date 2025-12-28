@@ -7,7 +7,56 @@ import { useState, useCallback, useEffect, useMemo, type ReactElement } from 're
 import { v4 as uuidv4 } from 'uuid';
 import type { Board, CellContent, BoardMove, Position, BoardSize } from '@/types';
 import { validateBoard } from '@/utils/board-validation';
+import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import styles from './BoardCreator.module.css';
+
+/**
+ * Confirmation modal component to avoid hooks issues
+ */
+interface ConfirmationModalProps {
+  board: Board;
+  usedAllTheWay: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmationModal({ board, usedAllTheWay, onConfirm, onCancel }: ConfirmationModalProps): ReactElement {
+  const thumbnail = useBoardThumbnail(board);
+
+  return (
+    <div className={styles.confirmationModal}>
+      <div className={styles.confirmationContent}>
+        <h2 className={styles.confirmationTitle}>Board Complete!</h2>
+        <p className={styles.confirmationSubtitle}>
+          {board.name} • {board.sequence.length} moves
+        </p>
+
+        <div className={styles.confirmationThumbnail}>
+          <img
+            src={thumbnail}
+            alt={`${board.name} preview`}
+            className={styles.thumbnailPreview}
+          />
+        </div>
+
+        <div className={styles.confirmationActions}>
+          <button
+            onClick={onCancel}
+            className={styles.confirmationCancel}
+          >
+            {usedAllTheWay ? 'Back to Before "All the Way"' : 'Back to Edit'}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={styles.confirmationConfirm}
+          >
+            Save Board
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export interface BoardCreatorProps {
   /** Callback when board is saved */
@@ -20,7 +69,7 @@ export interface BoardCreatorProps {
   boardSize?: BoardSize;
 }
 
-type CreationPhase = 'choosing-start' | 'building';
+type CreationPhase = 'choosing-start' | 'building' | 'confirming';
 
 /**
  * Board creator component with simplified guided flow.
@@ -52,6 +101,14 @@ export function BoardCreator({
   const [errors, setErrors] = useState<string[]>([]);
   const [selectedStartColumn, setSelectedStartColumn] = useState<number>(0);
   const [viewMode, setViewMode] = useState<'full' | 'section'>('full');
+  const [completedBoard, setCompletedBoard] = useState<Board | null>(null);
+  const [usedAllTheWay, setUsedAllTheWay] = useState<boolean>(false);
+  // Save state before finish for potential undo
+  const [beforeFinishState, setBeforeFinishState] = useState<{
+    grid: CellContent[][];
+    sequence: BoardMove[];
+    piecePosition: Position | null;
+  } | null>(null);
 
   /**
    * Get adjacent positions (orthogonal only: up, down, left, right)
@@ -190,6 +247,13 @@ export function BoardCreator({
   const handleAllTheWayToFinish = useCallback((): void => {
     if (!piecePosition || hasTrapAbove) return;
 
+    // Save state before "All the Way to Finish" for potential undo
+    setBeforeFinishState({
+      grid: grid.map(row => [...row]),
+      sequence: [...sequence],
+      piecePosition: { ...piecePosition },
+    });
+
     let currentRow = piecePosition.row;
     const col = piecePosition.col;
     let newSequence = [...sequence];
@@ -234,12 +298,28 @@ export function BoardCreator({
       createdAt: Date.now(),
     };
 
-    // Auto-save
-    onBoardSaved(board);
-  }, [piecePosition, sequence, grid, boardSize, onBoardSaved, hasTrapAbove, existingBoards]);
+    // Validate
+    const validation = validateBoard(board);
+    if (!validation.valid) {
+      setErrors(validation.errors.map((e) => e.message));
+      return;
+    }
+
+    // Show confirmation modal
+    setCompletedBoard(board);
+    setUsedAllTheWay(true);
+    setPhase('confirming');
+  }, [piecePosition, sequence, grid, boardSize, hasTrapAbove, existingBoards]);
 
   const handleFinalMove = useCallback((): void => {
     if (!piecePosition || piecePosition.row !== 0) return;
+
+    // Save state before final move for potential undo
+    setBeforeFinishState({
+      grid: grid.map(row => [...row]),
+      sequence: [...sequence],
+      piecePosition: { ...piecePosition },
+    });
 
     // ADD a final move at row -1 (off the board)
     const nextOrder = sequence.length + 1;
@@ -282,9 +362,36 @@ export function BoardCreator({
     // Thumbnail will be generated on-demand when displayed
     board.thumbnail = '';
 
-    // Auto-save
-    onBoardSaved(board);
-  }, [piecePosition, sequence, grid, existingBoards, onBoardSaved]);
+    // Show confirmation modal
+    setCompletedBoard(board);
+    setUsedAllTheWay(false);
+    setPhase('confirming');
+  }, [piecePosition, sequence, grid, existingBoards, boardSize]);
+
+  /**
+   * Handle confirm board from modal
+   */
+  const handleConfirmBoard = useCallback((): void => {
+    if (!completedBoard) return;
+    onBoardSaved(completedBoard);
+  }, [completedBoard, onBoardSaved]);
+
+  /**
+   * Handle cancel from confirmation modal
+   */
+  const handleCancelConfirmation = useCallback((): void => {
+    if (beforeFinishState) {
+      // Restore state from before finishing (works for both regular and "All the Way")
+      setGrid(beforeFinishState.grid);
+      setSequence(beforeFinishState.sequence);
+      setPiecePosition(beforeFinishState.piecePosition);
+      setBeforeFinishState(null);
+    }
+
+    setCompletedBoard(null);
+    setUsedAllTheWay(false);
+    setPhase('building');
+  }, [beforeFinishState]);
 
   /**
    * Handle restart
@@ -296,6 +403,9 @@ export function BoardCreator({
     setPiecePosition(null);
     setErrors([]);
     setSelectedStartColumn(0);
+    setCompletedBoard(null);
+    setUsedAllTheWay(false);
+    setBeforeFinishState(null);
   }, [boardSize, createEmptyGrid]);
 
   /**
@@ -518,6 +628,18 @@ export function BoardCreator({
   const visibleRows = grid.slice(sectionBounds.startRow, sectionBounds.endRow);
   const visibleGrid = visibleRows.map(row => row.slice(sectionBounds.startCol, sectionBounds.endCol));
   const visibleSize = viewMode === 'section' ? Math.max(visibleGrid.length, visibleGrid[0]?.length || 0) : boardSize;
+
+  // Show confirmation modal
+  if (phase === 'confirming' && completedBoard) {
+    return (
+      <ConfirmationModal
+        board={completedBoard}
+        usedAllTheWay={usedAllTheWay}
+        onConfirm={handleConfirmBoard}
+        onCancel={handleCancelConfirmation}
+      />
+    );
+  }
 
   return (
     <div className={styles.container}>
