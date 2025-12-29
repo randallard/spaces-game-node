@@ -261,7 +261,8 @@ function App(): React.ReactElement {
         setSavedUser(state.user);
       }
     }
-  }, [state.user, savedUser, setSavedUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.user]);
 
   // Detect feature unlocks when totalGames changes
   useEffect(() => {
