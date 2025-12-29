@@ -189,6 +189,7 @@ describe('backup', () => {
         user: mockUser,
         boards: [mockBoard],
         opponents: [mockOpponent],
+        decks: [],
       };
 
       const result = validateBackup(validBackup);
@@ -203,6 +204,7 @@ describe('backup', () => {
         user: null,
         boards: [],
         opponents: [],
+        decks: [],
       };
 
       const result = validateBackup(validBackup);
@@ -325,6 +327,7 @@ describe('backup', () => {
         user: mockUser,
         boards: [mockBoard],
         opponents: [mockOpponent],
+        decks: [],
       };
 
       const result = importBackup(validBackup);
@@ -333,6 +336,7 @@ describe('backup', () => {
       expect(JSON.parse(localStorage.getItem('spaces-game-user')!)).toEqual(mockUser);
       expect(JSON.parse(localStorage.getItem('spaces-game-boards')!)).toEqual([mockBoard]);
       expect(JSON.parse(localStorage.getItem('spaces-game-opponents')!)).toEqual([mockOpponent]);
+      expect(JSON.parse(localStorage.getItem('spaces-game-decks')!)).toEqual([]);
     });
 
     it('should remove user from localStorage when backup has null user', () => {
@@ -344,6 +348,7 @@ describe('backup', () => {
         user: null,
         boards: [],
         opponents: [],
+        decks: [],
       };
 
       const result = importBackup(validBackup);
@@ -400,6 +405,7 @@ describe('backup', () => {
         user: mockUser,
         boards: [],
         opponents: [],
+        decks: [],
       };
 
       const result = importBackup(validBackup);
@@ -407,6 +413,7 @@ describe('backup', () => {
       expect(result).toBe(true);
       expect(localStorage.getItem('spaces-game-boards')).toBe('[]');
       expect(localStorage.getItem('spaces-game-opponents')).toBe('[]');
+      expect(localStorage.getItem('spaces-game-decks')).toBe('[]');
     });
   });
 
@@ -418,6 +425,7 @@ describe('backup', () => {
         user: mockUser,
         boards: [],
         opponents: [],
+        decks: [],
       };
 
       const file = new File([JSON.stringify(validBackup)], 'backup.json', {
