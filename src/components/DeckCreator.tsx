@@ -158,39 +158,22 @@ export function DeckCreator({
 
           {/* Size Filter */}
           <div className={styles.filterBar}>
-            <span className={styles.filterLabel}>Filter by size:</span>
-            <div className={styles.filterButtons}>
-              <button
-                onClick={() => setSizeFilter('all')}
-                className={`${styles.filterButton} ${sizeFilter === 'all' ? styles.filterButtonActive : ''}`}
-              >
-                All ({availableBoards.length})
-              </button>
-              <button
-                onClick={() => setSizeFilter('2-5')}
-                className={`${styles.filterButton} ${sizeFilter === '2-5' ? styles.filterButtonActive : ''}`}
-              >
-                2-5 ({availableBoards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})
-              </button>
-              <button
-                onClick={() => setSizeFilter('6-10')}
-                className={`${styles.filterButton} ${sizeFilter === '6-10' ? styles.filterButtonActive : ''}`}
-              >
-                6-10 ({availableBoards.filter(b => b.boardSize >= 6 && b.boardSize <= 10).length})
-              </button>
-              <button
-                onClick={() => setSizeFilter('11-20')}
-                className={`${styles.filterButton} ${sizeFilter === '11-20' ? styles.filterButtonActive : ''}`}
-              >
-                11-20 ({availableBoards.filter(b => b.boardSize >= 11 && b.boardSize <= 20).length})
-              </button>
-              <button
-                onClick={() => setSizeFilter('21+')}
-                className={`${styles.filterButton} ${sizeFilter === '21+' ? styles.filterButtonActive : ''}`}
-              >
-                21+ ({availableBoards.filter(b => b.boardSize >= 21).length})
-              </button>
-            </div>
+            <label htmlFor="board-size-filter" className={styles.filterLabel}>Filter by size:</label>
+            <select
+              id="board-size-filter"
+              value={sizeFilter}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSizeFilter(value as SizeFilter);
+              }}
+              className={styles.filterSelect}
+            >
+              <option value="all">All ({availableBoards.length})</option>
+              <option value="2-5">2-5 ({availableBoards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})</option>
+              <option value="6-10">6-10 ({availableBoards.filter(b => b.boardSize >= 6 && b.boardSize <= 10).length})</option>
+              <option value="11-20">11-20 ({availableBoards.filter(b => b.boardSize >= 11 && b.boardSize <= 20).length})</option>
+              <option value="21+">21+ ({availableBoards.filter(b => b.boardSize >= 21).length})</option>
+            </select>
           </div>
 
           <div className={styles.boardGrid}>
