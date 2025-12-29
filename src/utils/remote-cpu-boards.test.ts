@@ -475,7 +475,8 @@ describe('fetchRemoteCpuBoards', () => {
 
       expect(result).toEqual([]);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error fetching remote CPU boards'),
+        expect.stringContaining('[fetchRemoteCpuBoards] Error fetching remote CPU boards'),
+        expect.stringContaining('Network error'),
         expect.any(Error)
       );
 
