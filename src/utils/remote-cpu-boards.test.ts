@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fetchRemoteCpuBoards, checkRemoteCpuAvailability } from './remote-cpu-boards';
-import type { Board } from '@/types';
+import { fetchRemoteCpuBoards, fetchRemoteCpuDeck, checkRemoteCpuAvailability } from './remote-cpu-boards';
+import type { Board, Deck } from '@/types';
 
 describe('fetchRemoteCpuBoards', () => {
   let mockFetch: ReturnType<typeof vi.fn>;
@@ -528,6 +528,284 @@ describe('fetchRemoteCpuBoards', () => {
       const result = await fetchRemoteCpuBoards(10);
 
       expect(result).toHaveLength(1);
+    });
+  });
+});
+
+describe('fetchRemoteCpuDeck', () => {
+  let mockFetch: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    mockFetch = vi.fn();
+    global.fetch = mockFetch;
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  const createValidBoard = (id: string, boardSize: number): Board => ({
+    id,
+    name: `Test Board ${id}`,
+    boardSize,
+    grid: Array(boardSize).fill(null).map(() => Array(boardSize).fill('empty')),
+    sequence: [
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: -1, col: 0 }, type: 'final', order: 2 },
+    ],
+    thumbnail: '',
+    createdAt: Date.now(),
+  });
+
+  const createValidDeck = (boardSize: number, deckNum: number): Deck => ({
+    id: `remote-cpu-${boardSize}x${boardSize}-deck-${deckNum}`,
+    name: `CPU Remote ${boardSize}×${boardSize} Deck #${deckNum}`,
+    boards: Array(10).fill(null).map((_, i) => createValidBoard(`board-${i}`, boardSize)),
+    createdAt: Date.now(),
+  });
+
+  describe('successful fetches', () => {
+    it('should fetch and validate a deck for valid size', async () => {
+      const validDeck = createValidDeck(2, 1);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => validDeck,
+      });
+
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe(validDeck.id);
+      expect(result?.boards).toHaveLength(10);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/decks/2x2-deck-'),
+        expect.any(Object)
+      );
+    });
+
+    it('should randomly select between deck 1 and deck 2', async () => {
+      const deck1 = createValidDeck(3, 1);
+      const deck2 = createValidDeck(3, 2);
+
+      // Mock Math.random to control deck selection
+      const mathRandomSpy = vi.spyOn(Math, 'random');
+
+      // Test deck 1 selection (random < 0.5)
+      mathRandomSpy.mockReturnValueOnce(0.3);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => deck1,
+      });
+
+      const result1 = await fetchRemoteCpuDeck(3);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('3x3-deck-1.json'),
+        expect.any(Object)
+      );
+
+      // Test deck 2 selection (random >= 0.5)
+      mathRandomSpy.mockReturnValueOnce(0.7);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => deck2,
+      });
+
+      const result2 = await fetchRemoteCpuDeck(3);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('3x3-deck-2.json'),
+        expect.any(Object)
+      );
+
+      mathRandomSpy.mockRestore();
+    });
+
+    it('should validate all boards in the deck', async () => {
+      const validDeck = createValidDeck(2, 1);
+      // Make one board invalid
+      validDeck.boards[5]!.boardSize = 99;
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => validDeck,
+      });
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Deck validation failed')
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('validation - deck structure', () => {
+    it('should reject deck with invalid structure (not an object)', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => 'invalid',
+      });
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid deck structure')
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should reject deck with missing id', async () => {
+      const invalidDeck = { ...createValidDeck(2, 1), id: undefined };
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => invalidDeck,
+      });
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should reject deck with wrong number of boards', async () => {
+      const invalidDeck = createValidDeck(2, 1);
+      invalidDeck.boards = invalidDeck.boards.slice(0, 5); // Only 5 boards
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => invalidDeck,
+      });
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should reject deck with invalid board size parameter', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const result1 = await fetchRemoteCpuDeck(1);
+      expect(result1).toBeNull();
+
+      const result2 = await fetchRemoteCpuDeck(11);
+      expect(result2).toBeNull();
+
+      const result3 = await fetchRemoteCpuDeck(2.5 as any);
+      expect(result3).toBeNull();
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('error handling', () => {
+    it('should return null on fetch failure', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found' });
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle timeout with AbortError', async () => {
+      const abortError = new Error('Aborted');
+      abortError.name = 'AbortError';
+      mockFetch.mockRejectedValue(abortError);
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[fetchRemoteCpuDeck] Fetch timeout')
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle general fetch errors', async () => {
+      mockFetch.mockRejectedValue(new Error('Network error'));
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[fetchRemoteCpuDeck] Error fetching deck'),
+        expect.stringContaining('Network error'),
+        expect.any(Error)
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle JSON parse errors', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => {
+          throw new Error('Invalid JSON');
+        },
+      });
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle unknown errors', async () => {
+      mockFetch.mockRejectedValue('unknown error');
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[fetchRemoteCpuDeck] Unknown error'),
+        'unknown error'
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('deck size ranges', () => {
+    it('should accept deck size 2 (minimum)', async () => {
+      const validDeck = createValidDeck(2, 1);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => validDeck,
+      });
+
+      const result = await fetchRemoteCpuDeck(2);
+
+      expect(result).not.toBeNull();
+      expect(result?.boards[0]?.boardSize).toBe(2);
+    });
+
+    it('should accept deck size 10 (maximum)', async () => {
+      const validDeck = createValidDeck(10, 1);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => validDeck,
+      });
+
+      const result = await fetchRemoteCpuDeck(10);
+
+      expect(result).not.toBeNull();
+      expect(result?.boards[0]?.boardSize).toBe(10);
     });
   });
 });
