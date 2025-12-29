@@ -827,6 +827,38 @@ function App(): React.ReactElement {
         console.error(`[handleDeckSelect] ${selectedOpponent.name} deck not found or could not be generated for size ${deckSize}×${deckSize}`);
         opponentDeck = deck;
       }
+    } else if (selectedOpponent?.type === 'remote-cpu') {
+      // Remote CPU - create deck from fetched remote boards
+      console.log(`[handleDeckSelect] Creating deck for Remote CPU from fetched boards`);
+
+      // Get remote boards for this size
+      const remoteBoardsForSize = (remoteCpuBoards || []).filter(b => b.boardSize === deckSize);
+
+      if (remoteBoardsForSize.length >= 10) {
+        // Randomly select 10 boards from the available remote boards
+        const selectedBoards: Board[] = [];
+        const availableBoards = [...remoteBoardsForSize];
+
+        for (let i = 0; i < 10; i++) {
+          const randomIndex = Math.floor(Math.random() * availableBoards.length);
+          selectedBoards.push(availableBoards[randomIndex]!);
+          // Remove selected board to avoid duplicates
+          availableBoards.splice(randomIndex, 1);
+        }
+
+        opponentDeck = {
+          id: `remote-cpu-deck-${Date.now()}`,
+          name: `${selectedOpponent.name} ${deckSize}×${deckSize} Deck`,
+          boards: selectedBoards,
+          createdAt: Date.now(),
+        };
+
+        console.log(`[handleDeckSelect] Created Remote CPU deck with ${opponentDeck.boards.length} boards`);
+      } else {
+        // Not enough boards - fallback to using player's deck
+        console.error(`[handleDeckSelect] Not enough remote CPU boards for ${deckSize}×${deckSize} (need 10, have ${remoteBoardsForSize.length})`);
+        opponentDeck = deck;
+      }
     } else {
       // Human opponent - would normally choose via URL sharing
       // For now, create random deck from available player boards of same size
