@@ -55,10 +55,34 @@ function migrateBoardClearThumbnail(board: any): any {
 }
 
 /**
+ * Migrate a board to ensure it has a valid UUID
+ */
+function migrateBoardId(board: any): any {
+  if (!board || typeof board !== 'object') {
+    return board;
+  }
+
+  // Check if ID is a valid UUID format
+  const isValidUuid = typeof board.id === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(board.id);
+
+  if (!isValidUuid) {
+    console.log('[Migration] Board has invalid UUID, generating new one:', board.id);
+    return {
+      ...board,
+      id: uuidv4(),
+    };
+  }
+
+  return board;
+}
+
+/**
  * Apply all board migrations
  */
 function migrateBoard(board: any): any {
   let migrated = board;
+  migrated = migrateBoardId(migrated);
   migrated = migrateBoardAddSize(migrated);
   migrated = migrateBoardClearThumbnail(migrated);
   return migrated;
