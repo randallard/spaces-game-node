@@ -137,15 +137,26 @@ function validateBoard(board: unknown, expectedSize: number): board is Board {
       return false;
     }
 
-    // Validate move coordinates are within board
-    if (
-      move.position.row < 0 ||
-      move.position.row >= b.boardSize ||
-      move.position.col < 0 ||
-      move.position.col >= b.boardSize
-    ) {
-      console.warn(`Board ${b.id} rejected: move coordinates out of bounds at index ${i}`);
-      return false;
+    // Validate move coordinates
+    // For "final" moves, row can be -1 (exit position)
+    // For other moves, coordinates must be within board bounds
+    if (move.type === 'final') {
+      // Final move should be at row -1, col within board bounds
+      if (move.position.row !== -1 || move.position.col < 0 || move.position.col >= b.boardSize) {
+        console.warn(`Board ${b.id} rejected: final move must be at row -1 with valid column at index ${i}`);
+        return false;
+      }
+    } else {
+      // Regular moves (piece/trap) must be within board bounds
+      if (
+        move.position.row < 0 ||
+        move.position.row >= b.boardSize ||
+        move.position.col < 0 ||
+        move.position.col >= b.boardSize
+      ) {
+        console.warn(`Board ${b.id} rejected: move coordinates out of bounds at index ${i}`);
+        return false;
+      }
     }
 
     // Validate move type
