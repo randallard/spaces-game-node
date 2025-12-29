@@ -185,11 +185,12 @@ export async function fetchRemoteCpuBoards(boardSize: BoardSize): Promise<Board[
       boardSize < LIMITS.MIN_BOARD_SIZE ||
       boardSize > LIMITS.MAX_BOARD_SIZE
     ) {
-      console.error(`Invalid board size requested: ${boardSize}`);
+      console.error(`[fetchRemoteCpuBoards] Invalid board size requested: ${boardSize}`);
       return [];
     }
 
     const url = `${REMOTE_CPU_BASE_URL}/boards/${boardSize}x${boardSize}.json`;
+    console.log(`[fetchRemoteCpuBoards] Fetching from: ${url}`);
 
     // Fetch with timeout and size limit
     const controller = new AbortController();
@@ -197,6 +198,8 @@ export async function fetchRemoteCpuBoards(boardSize: BoardSize): Promise<Board[
 
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeoutId);
+
+    console.log(`[fetchRemoteCpuBoards] Response status: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       console.error(`Failed to fetch remote CPU boards: ${response.status} ${response.statusText}`);
@@ -234,9 +237,11 @@ export async function fetchRemoteCpuBoards(boardSize: BoardSize): Promise<Board[
     return validBoards;
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.error('Fetch timeout: Request took too long');
+      console.error('[fetchRemoteCpuBoards] Fetch timeout: Request took too long');
+    } else if (error instanceof Error) {
+      console.error('[fetchRemoteCpuBoards] Error fetching remote CPU boards:', error.message, error);
     } else {
-      console.error('Error fetching remote CPU boards:', error);
+      console.error('[fetchRemoteCpuBoards] Unknown error:', error);
     }
     return [];
   }
