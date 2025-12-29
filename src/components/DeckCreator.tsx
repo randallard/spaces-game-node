@@ -198,23 +198,36 @@ export function DeckCreator({
           {/* Size Filter */}
           <div className={styles.filterBar}>
             <label htmlFor="board-size-filter" className={styles.filterLabel}>Filter by size:</label>
-            <select
-              id="board-size-filter"
-              value={sizeFilter}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSizeFilter(value as SizeFilter);
-              }}
-              className={styles.filterSelect}
-              disabled={selectedBoards.length > 0}
-              title={selectedBoards.length > 0 ? 'Filter locked to deck size' : 'Select a size filter'}
-            >
-              <option value="all">All ({availableBoards.length})</option>
-              <option value="2-5">2-5 ({availableBoards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})</option>
-              <option value="6-10">6-10 ({availableBoards.filter(b => b.boardSize >= 6 && b.boardSize <= 10).length})</option>
-              <option value="11-20">11-20 ({availableBoards.filter(b => b.boardSize >= 11 && b.boardSize <= 20).length})</option>
-              <option value="21+">21+ ({availableBoards.filter(b => b.boardSize >= 21).length})</option>
-            </select>
+            {selectedBoards.length > 0 && deckSize !== null ? (
+              <select
+                id="board-size-filter"
+                value={deckSize}
+                className={styles.filterSelect}
+                disabled={true}
+                title="Filter locked to deck size"
+              >
+                <option value={deckSize}>
+                  {deckSize}×{deckSize} ({availableBoards.filter(b => b.boardSize === deckSize).length})
+                </option>
+              </select>
+            ) : (
+              <select
+                id="board-size-filter"
+                value={sizeFilter}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSizeFilter(value as SizeFilter);
+                }}
+                className={styles.filterSelect}
+                title="Select a size filter"
+              >
+                <option value="all">All ({availableBoards.length})</option>
+                <option value="2-5">2-5 ({availableBoards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})</option>
+                <option value="6-10">6-10 ({availableBoards.filter(b => b.boardSize >= 6 && b.boardSize <= 10).length})</option>
+                <option value="11-20">11-20 ({availableBoards.filter(b => b.boardSize >= 11 && b.boardSize <= 20).length})</option>
+                <option value="21+">21+ ({availableBoards.filter(b => b.boardSize >= 21).length})</option>
+              </select>
+            )}
           </div>
 
           <div className={styles.boardGrid}>
