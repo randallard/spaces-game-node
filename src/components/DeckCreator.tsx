@@ -62,16 +62,40 @@ export function DeckCreator({
   const [selectedBoards, setSelectedBoards] = useState<Board[]>(
     existingDeck?.boards || []
   );
-  const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
+  const [sizeFilter, setSizeFilter] = useState<SizeFilter>(() => {
+    // If editing an existing deck, set filter to the deck's board size
+    if (existingDeck && existingDeck.boards.length > 0) {
+      return existingDeck.boards[0]?.boardSize ?? 'all';
+    }
+    return 'all';
+  });
 
   const handleBoardSelect = useCallback((board: Board) => {
     if (selectedBoards.length < 10) {
-      setSelectedBoards((prev) => [...prev, board]);
+      setSelectedBoards((prev) => {
+        const newBoards = [...prev, board];
+
+        // If this is the first board, auto-filter to this board's size
+        if (prev.length === 0) {
+          setSizeFilter(board.boardSize);
+        }
+
+        return newBoards;
+      });
     }
   }, [selectedBoards.length]);
 
   const handleRemoveBoard = useCallback((index: number) => {
-    setSelectedBoards((prev) => prev.filter((_, i) => i !== index));
+    setSelectedBoards((prev) => {
+      const newBoards = prev.filter((_, i) => i !== index);
+
+      // If removing the last board, reset filter to 'all'
+      if (newBoards.length === 0) {
+        setSizeFilter('all');
+      }
+
+      return newBoards;
+    });
   }, []);
 
   const handleSave = useCallback(() => {
@@ -96,32 +120,47 @@ export function DeckCreator({
   }, [deckName, selectedBoards, existingDeck, onDeckSaved]);
 
   /**
-   * Filter boards based on selected size
+   * Get the deck size (all boards in a deck must be the same size)
+   */
+  const deckSize = useMemo(() => {
+    if (selectedBoards.length === 0) return null;
+    return selectedBoards[0]?.boardSize ?? null;
+  }, [selectedBoards]);
+
+  /**
+   * Filter boards based on selected size and deck constraints
    */
   const filteredBoards = useMemo(() => {
-    if (sizeFilter === 'all') {
-      return availableBoards;
-    }
+    let boards = availableBoards;
 
-    // Handle range filters
-    if (typeof sizeFilter === 'string') {
-      switch (sizeFilter) {
-        case '2-5':
-          return availableBoards.filter((board) => board.boardSize >= 2 && board.boardSize <= 5);
-        case '6-10':
-          return availableBoards.filter((board) => board.boardSize >= 6 && board.boardSize <= 10);
-        case '11-20':
-          return availableBoards.filter((board) => board.boardSize >= 11 && board.boardSize <= 20);
-        case '21+':
-          return availableBoards.filter((board) => board.boardSize >= 21);
-        default:
-          return availableBoards;
+    // If a deck is started, only show boards of the same size
+    if (deckSize !== null) {
+      boards = boards.filter((board) => board.boardSize === deckSize);
+    } else if (sizeFilter !== 'all') {
+      // Otherwise apply the filter selection
+      if (typeof sizeFilter === 'string') {
+        switch (sizeFilter) {
+          case '2-5':
+            boards = boards.filter((board) => board.boardSize >= 2 && board.boardSize <= 5);
+            break;
+          case '6-10':
+            boards = boards.filter((board) => board.boardSize >= 6 && board.boardSize <= 10);
+            break;
+          case '11-20':
+            boards = boards.filter((board) => board.boardSize >= 11 && board.boardSize <= 20);
+            break;
+          case '21+':
+            boards = boards.filter((board) => board.boardSize >= 21);
+            break;
+        }
+      } else {
+        // Handle specific size filter
+        boards = boards.filter((board) => board.boardSize === sizeFilter);
       }
     }
 
-    // Handle specific size filter
-    return availableBoards.filter((board) => board.boardSize === sizeFilter);
-  }, [availableBoards, sizeFilter]);
+    return boards;
+  }, [availableBoards, sizeFilter, deckSize]);
 
   const isComplete = deckName.trim() !== '' && selectedBoards.length === 10;
 
