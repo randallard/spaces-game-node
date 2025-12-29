@@ -9,7 +9,7 @@ import type { Deck, Board } from '@/types';
 import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import styles from './DeckCreator.module.css';
 
-type SizeFilter = 'all' | '2-5' | '6-10' | '11-20' | '21+' | number;
+type SizeFilter = 'all' | number;
 
 /**
  * BoardThumbnail component with on-demand thumbnail generation
@@ -128,6 +128,22 @@ export function DeckCreator({
   }, [selectedBoards]);
 
   /**
+   * Get unique board sizes from available boards
+   */
+  const uniqueSizes = useMemo(() => {
+    const sizes = new Set<number>();
+    availableBoards.forEach(board => sizes.add(board.boardSize));
+    return Array.from(sizes).sort((a, b) => a - b);
+  }, [availableBoards]);
+
+  /**
+   * Get count of boards for a specific size
+   */
+  const getBoardCount = (size: number): number => {
+    return availableBoards.filter(board => board.boardSize === size).length;
+  };
+
+  /**
    * Filter boards based on selected size and deck constraints
    */
   const filteredBoards = useMemo(() => {
@@ -137,26 +153,8 @@ export function DeckCreator({
     if (deckSize !== null) {
       boards = boards.filter((board) => board.boardSize === deckSize);
     } else if (sizeFilter !== 'all') {
-      // Otherwise apply the filter selection
-      if (typeof sizeFilter === 'string') {
-        switch (sizeFilter) {
-          case '2-5':
-            boards = boards.filter((board) => board.boardSize >= 2 && board.boardSize <= 5);
-            break;
-          case '6-10':
-            boards = boards.filter((board) => board.boardSize >= 6 && board.boardSize <= 10);
-            break;
-          case '11-20':
-            boards = boards.filter((board) => board.boardSize >= 11 && board.boardSize <= 20);
-            break;
-          case '21+':
-            boards = boards.filter((board) => board.boardSize >= 21);
-            break;
-        }
-      } else {
-        // Handle specific size filter
-        boards = boards.filter((board) => board.boardSize === sizeFilter);
-      }
+      // Otherwise apply the specific size filter
+      boards = boards.filter((board) => board.boardSize === sizeFilter);
     }
 
     return boards;
@@ -216,16 +214,17 @@ export function DeckCreator({
                 value={sizeFilter}
                 onChange={(e) => {
                   const value = e.target.value;
-                  setSizeFilter(value as SizeFilter);
+                  setSizeFilter(value === 'all' ? 'all' : parseInt(value));
                 }}
                 className={styles.filterSelect}
                 title="Select a size filter"
               >
                 <option value="all">All ({availableBoards.length})</option>
-                <option value="2-5">2-5 ({availableBoards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})</option>
-                <option value="6-10">6-10 ({availableBoards.filter(b => b.boardSize >= 6 && b.boardSize <= 10).length})</option>
-                <option value="11-20">11-20 ({availableBoards.filter(b => b.boardSize >= 11 && b.boardSize <= 20).length})</option>
-                <option value="21+">21+ ({availableBoards.filter(b => b.boardSize >= 21).length})</option>
+                {uniqueSizes.map(size => (
+                  <option key={size} value={size}>
+                    {size}×{size} ({getBoardCount(size)})
+                  </option>
+                ))}
               </select>
             )}
           </div>
