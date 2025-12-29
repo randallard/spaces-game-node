@@ -9,7 +9,7 @@ import { updateOpponentStats, createHumanOpponent } from '@/utils/opponent-helpe
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
 import { generateChallengeUrl, generateFinalResultsUrl, getChallengeFromUrl, clearChallengeFromUrl } from '@/utils/challenge-url';
 import { decodeMinimalBoard } from '@/utils/board-encoding';
-import { fetchRemoteCpuBoards } from '@/utils/remote-cpu-boards';
+import { fetchRemoteCpuBoards, fetchRemoteCpuDeck } from '@/utils/remote-cpu-boards';
 import {
   UserProfile,
   OpponentManager,
@@ -828,36 +828,35 @@ function App(): React.ReactElement {
         opponentDeck = deck;
       }
     } else if (selectedOpponent?.type === 'remote-cpu') {
-      // Remote CPU - create deck from fetched remote boards
-      console.log(`[handleDeckSelect] Creating deck for Remote CPU from fetched boards`);
+      // Remote CPU - fetch pre-made deck from remote server
+      console.log(`[handleDeckSelect] Fetching Remote CPU deck from server`);
 
-      // Get remote boards for this size
-      const remoteBoardsForSize = (remoteCpuBoards || []).filter(b => b.boardSize === deckSize);
+      // Show generating modal
+      setGeneratingSize(deckSize ?? 2);
+      setIsGeneratingCpuBoards(true);
 
-      if (remoteBoardsForSize.length >= 10) {
-        // Randomly select 10 boards from the available remote boards
-        const selectedBoards: Board[] = [];
-        const availableBoards = [...remoteBoardsForSize];
+      try {
+        const remoteDeck = await fetchRemoteCpuDeck(deckSize ?? 2);
 
-        for (let i = 0; i < 10; i++) {
-          const randomIndex = Math.floor(Math.random() * availableBoards.length);
-          selectedBoards.push(availableBoards[randomIndex]!);
-          // Remove selected board to avoid duplicates
-          availableBoards.splice(randomIndex, 1);
+        if (remoteDeck) {
+          opponentDeck = remoteDeck;
+          console.log(`[handleDeckSelect] Fetched Remote CPU deck with ${opponentDeck.boards.length} boards`);
+        } else {
+          console.error(`[handleDeckSelect] Failed to fetch Remote CPU deck for ${deckSize}×${deckSize}`);
+          alert('Failed to fetch Remote CPU deck from server. Please try again.');
+          setIsGeneratingCpuBoards(false);
+          return;
         }
-
-        opponentDeck = {
-          id: `remote-cpu-deck-${Date.now()}`,
-          name: `${selectedOpponent.name} ${deckSize}×${deckSize} Deck`,
-          boards: selectedBoards,
-          createdAt: Date.now(),
-        };
-
-        console.log(`[handleDeckSelect] Created Remote CPU deck with ${opponentDeck.boards.length} boards`);
-      } else {
-        // Not enough boards - fallback to using player's deck
-        console.error(`[handleDeckSelect] Not enough remote CPU boards for ${deckSize}×${deckSize} (need 10, have ${remoteBoardsForSize.length})`);
-        opponentDeck = deck;
+      } catch (error) {
+        console.error('[handleDeckSelect] Error fetching Remote CPU deck:', error);
+        alert('Failed to fetch Remote CPU deck from server. Please try again.');
+        setIsGeneratingCpuBoards(false);
+        return;
+      } finally {
+        // Hide generating modal
+        setTimeout(() => {
+          setIsGeneratingCpuBoards(false);
+        }, 500);
       }
     } else {
       // Human opponent - would normally choose via URL sharing
