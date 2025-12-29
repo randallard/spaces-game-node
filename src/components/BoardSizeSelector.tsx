@@ -87,7 +87,17 @@ export function BoardSizeSelector({
       };
     }
 
-    // CPU needs at least 3 boards for the size to be considered "ready"
+    // For remote CPU, boards are fetched automatically when size is selected
+    // So we always consider them "ready" (they'll be fetched on selection)
+    if (opponent?.type === 'remote-cpu') {
+      return {
+        playerHasBoards,
+        cpuHasBoards: true, // Will be fetched automatically
+        bothHaveBoards: playerHasBoards,
+      };
+    }
+
+    // Local CPU needs at least 3 boards for the size to be considered "ready"
     // This matches the check in App.tsx cpuHasBoardsForSize function
     let cpuHasBoards = false;
     if (opponent) {
