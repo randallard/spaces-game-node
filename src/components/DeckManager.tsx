@@ -152,27 +152,24 @@ export function DeckManager({
         <>
           {/* Size Filter */}
           <div className={styles.filterBar}>
-            <span className={styles.filterLabel}>Filter by size:</span>
-            <div className={styles.filterButtons}>
-              <button
-                onClick={() => setSizeFilter('all')}
-                className={`${styles.filterButton} ${sizeFilter === 'all' ? styles.filterButtonActive : ''}`}
-              >
-                All ({deckCounts.all})
-              </button>
-              <button
-                onClick={() => setSizeFilter(2)}
-                className={`${styles.filterButton} ${sizeFilter === 2 ? styles.filterButtonActive : ''}`}
-              >
-                2x2 ({deckCounts.size2})
-              </button>
-              <button
-                onClick={() => setSizeFilter(3)}
-                className={`${styles.filterButton} ${sizeFilter === 3 ? styles.filterButtonActive : ''}`}
-              >
-                3x3 ({deckCounts.size3})
-              </button>
-            </div>
+            <label htmlFor="deck-size-filter" className={styles.filterLabel}>Filter by size:</label>
+            <select
+              id="deck-size-filter"
+              value={sizeFilter}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSizeFilter(value === 'all' ? 'all' : parseInt(value) as 2 | 3);
+              }}
+              className={styles.filterSelect}
+            >
+              <option value="all">All ({deckCounts.all})</option>
+              {deckCounts.size2 > 0 && (
+                <option value="2">2×2 ({deckCounts.size2})</option>
+              )}
+              {deckCounts.size3 > 0 && (
+                <option value="3">3×3 ({deckCounts.size3})</option>
+              )}
+            </select>
           </div>
 
           {filteredDecks.length === 0 ? (
