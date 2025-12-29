@@ -599,7 +599,7 @@ describe('fetchRemoteCpuDeck', () => {
         json: async () => deck1,
       });
 
-      const result1 = await fetchRemoteCpuDeck(3);
+      await fetchRemoteCpuDeck(3);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('3x3-deck-1.json'),
         expect.any(Object)
@@ -612,7 +612,7 @@ describe('fetchRemoteCpuDeck', () => {
         json: async () => deck2,
       });
 
-      const result2 = await fetchRemoteCpuDeck(3);
+      await fetchRemoteCpuDeck(3);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('3x3-deck-2.json'),
         expect.any(Object)
