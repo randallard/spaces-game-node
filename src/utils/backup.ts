@@ -3,8 +3,8 @@
  * @module utils/backup
  */
 
-import { UserProfileSchema, BoardSchema, OpponentSchema } from '@/schemas';
-import type { UserProfile, Board, Opponent } from '@/types';
+import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
+import type { UserProfile, Board, Opponent, Deck } from '@/types';
 import { z } from 'zod';
 
 /**
@@ -16,6 +16,7 @@ export interface BackupData {
   user: UserProfile | null;
   boards: Board[];
   opponents: Opponent[];
+  decks: Deck[];
 }
 
 /**
@@ -27,6 +28,7 @@ const BackupDataSchema = z.object({
   user: UserProfileSchema.nullable(),
   boards: z.array(BoardSchema),
   opponents: z.array(OpponentSchema),
+  decks: z.array(DeckSchema),
 });
 
 /**
@@ -36,10 +38,12 @@ export function exportBackup(): BackupData {
   const userJson = localStorage.getItem('spaces-game-user');
   const boardsJson = localStorage.getItem('spaces-game-boards');
   const opponentsJson = localStorage.getItem('spaces-game-opponents');
+  const decksJson = localStorage.getItem('spaces-game-decks');
 
   const user = userJson ? JSON.parse(userJson) : null;
   const boards = boardsJson ? JSON.parse(boardsJson) : [];
   const opponents = opponentsJson ? JSON.parse(opponentsJson) : [];
+  const decks = decksJson ? JSON.parse(decksJson) : [];
 
   return {
     version: '1.0.0',
@@ -47,6 +51,7 @@ export function exportBackup(): BackupData {
     user,
     boards,
     opponents,
+    decks,
   };
 }
 
@@ -98,6 +103,7 @@ export function importBackup(data: unknown): boolean {
     userName: backup.user?.name,
     boardCount: backup.boards.length,
     opponentCount: backup.opponents.length,
+    deckCount: backup.decks.length,
   });
 
   try {
@@ -117,6 +123,9 @@ export function importBackup(data: unknown): boolean {
 
     const validOpponents = z.array(OpponentSchema).parse(backup.opponents);
     localStorage.setItem('spaces-game-opponents', JSON.stringify(validOpponents));
+
+    const validDecks = z.array(DeckSchema).parse(backup.decks);
+    localStorage.setItem('spaces-game-decks', JSON.stringify(validDecks));
 
     console.log('[BACKUP] Import complete, ready to reload');
     return true;
