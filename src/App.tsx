@@ -618,8 +618,8 @@ function App(): React.ReactElement {
         // Hide generating modal after a brief delay
         setTimeout(() => {
           setIsGeneratingCpuBoards(false);
-          // Proceed to next phase (remote CPU only supports round-by-round for now)
-          setPhase({ type: 'board-selection', round: 1 });
+          // Proceed to next phase based on game mode
+          setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
         }, 500);
       } else if (state.opponent) {
         // Non-CPU opponent, skip opponent selection and go to next phase
