@@ -3,10 +3,11 @@
  * @module components/UserProfile
  */
 
-import { useState, useEffect, useCallback, type ReactElement } from 'react';
+import { useState, useEffect, useCallback, useRef, type ReactElement } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserProfile, CreatureId } from '@/types';
 import { getAllCreatures } from '@/types/creature';
+import { loadBackupFromFile, importBackup } from '@/utils/backup';
 import styles from './UserProfile.module.css';
 
 export interface UserProfileProps {
@@ -40,6 +41,8 @@ export function UserProfile({
   const [name, setName] = useState(existingUser?.name || '');
   const [error, setError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get all available creatures
   const creatures = getAllCreatures();
@@ -144,6 +147,65 @@ export function UserProfile({
       onUserCreated(user);
     },
     [name, existingUser, validateName, onUserCreated, playerCreature, opponentCreature]
+  );
+
+  /**
+   * Handle restore backup button click
+   */
+  const handleRestoreClick = useCallback((): void => {
+    fileInputRef.current?.click();
+  }, []);
+
+  /**
+   * Handle backup file selection
+   */
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      try {
+        console.log('[UserProfile] Loading backup from file...');
+        const backup = await loadBackupFromFile(file);
+        if (!backup) {
+          console.error('[UserProfile] Invalid backup file');
+          setBackupMessage('Invalid backup file');
+          setTimeout(() => setBackupMessage(null), 3000);
+          return;
+        }
+
+        console.log('[UserProfile] Backup loaded, showing confirmation...');
+        const confirmed = window.confirm(
+          'This will replace all your current data (profile, boards, opponents). Continue?'
+        );
+
+        if (confirmed) {
+          console.log('[UserProfile] User confirmed, importing backup...');
+          const success = importBackup(backup);
+          if (success) {
+            console.log('[UserProfile] Import successful, reloading...');
+            // Reload immediately to prevent React state from overwriting restored data
+            window.location.reload();
+          } else {
+            console.error('[UserProfile] Import failed');
+            setBackupMessage('Failed to restore backup');
+            setTimeout(() => setBackupMessage(null), 3000);
+          }
+        } else {
+          console.log('[UserProfile] User cancelled restore');
+        }
+      } catch (error) {
+        console.error('[UserProfile] Error during restore:', error);
+        setBackupMessage('Error reading backup file');
+        setTimeout(() => setBackupMessage(null), 3000);
+      }
+
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+    []
   );
 
   const isValid = validateName(name) === null;
@@ -343,6 +405,32 @@ export function UserProfile({
                 <span className={styles.statValue}>{existingUser.stats.ties}</span>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Restore Backup Section */}
+        {!existingUser && (
+          <div className={styles.restoreSection}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+              aria-label="Select backup file"
+            />
+            <button
+              type="button"
+              onClick={handleRestoreClick}
+              className={styles.restoreButton}
+            >
+              Restore from Backup
+            </button>
+            {backupMessage && (
+              <div className={styles.backupMessage} role="alert">
+                {backupMessage}
+              </div>
+            )}
           </div>
         )}
 
