@@ -254,10 +254,14 @@ function App(): React.ReactElement {
   // Save user to localStorage when it changes
   useEffect(() => {
     if (state.user.name) {
-      console.log('[APP] Saving user to localStorage:', state.user.name);
-      setSavedUser(state.user);
+      // Only save if user has actually changed (deep equality check)
+      const userChanged = JSON.stringify(savedUser) !== JSON.stringify(state.user);
+      if (userChanged) {
+        console.log('[APP] Saving user to localStorage:', state.user.name);
+        setSavedUser(state.user);
+      }
     }
-  }, [state.user, setSavedUser]);
+  }, [state.user, savedUser, setSavedUser]);
 
   // Detect feature unlocks when totalGames changes
   useEffect(() => {
