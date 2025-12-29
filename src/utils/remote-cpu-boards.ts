@@ -7,9 +7,8 @@ import type { Board, BoardSize, CellContent, BoardMove } from '@/types';
 
 /**
  * Base URL for remote CPU boards (GitHub Pages)
- * TODO: Update this with actual GitHub Pages URL once repo is created
  */
-const REMOTE_CPU_BASE_URL = 'https://USERNAME.github.io/REPO-NAME';
+const REMOTE_CPU_BASE_URL = 'https://randallard.github.io/spaces-game-cpu-boards';
 
 /**
  * Security limits for remote board fetching
