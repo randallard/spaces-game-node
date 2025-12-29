@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 
-export const OpponentTypeSchema = z.enum(['human', 'cpu']);
+export const OpponentTypeSchema = z.enum(['human', 'cpu', 'remote-cpu']);
 
 export const OpponentSchema = z.object({
   id: z.string().min(1),
