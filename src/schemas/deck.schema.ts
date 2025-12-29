@@ -9,7 +9,7 @@ import { BoardSchema } from './board.schema';
  * Deck schema - validates 10-board decks
  */
 export const DeckSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().uuid('Deck ID must be a valid UUID'),
   name: z.string().min(1, 'Deck name is required').max(50, 'Deck name too long'),
   boards: z
     .array(BoardSchema)
