@@ -9,7 +9,7 @@ import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import { getOpponentIcon } from '@/utils/app-helpers';
 import styles from './DeckManager.module.css';
 
-type SizeFilter = 'all' | 2 | 3;
+type SizeFilter = 'all' | number;
 
 /**
  * MiniThumbnail component with on-demand thumbnail generation
@@ -120,15 +120,23 @@ export function DeckManager({
   }, [decks, sizeFilter]);
 
   /**
-   * Count decks by size
+   * Get unique deck sizes from all decks
    */
-  const deckCounts = useMemo(() => {
-    return {
-      all: decks.length,
-      size2: decks.filter(d => getDeckSize(d) === 2).length,
-      size3: decks.filter(d => getDeckSize(d) === 3).length,
-    };
+  const uniqueSizes = useMemo(() => {
+    const sizes = new Set<number>();
+    decks.forEach(deck => {
+      const size = getDeckSize(deck);
+      if (size !== null) sizes.add(size);
+    });
+    return Array.from(sizes).sort((a, b) => a - b);
   }, [decks]);
+
+  /**
+   * Get count of decks for a specific size
+   */
+  const getDeckCount = (size: number): number => {
+    return decks.filter(d => getDeckSize(d) === size).length;
+  };
 
   return (
     <div className={styles.container}>
@@ -158,17 +166,16 @@ export function DeckManager({
               value={sizeFilter}
               onChange={(e) => {
                 const value = e.target.value;
-                setSizeFilter(value === 'all' ? 'all' : parseInt(value) as 2 | 3);
+                setSizeFilter(value === 'all' ? 'all' : parseInt(value));
               }}
               className={styles.filterSelect}
             >
-              <option value="all">All ({deckCounts.all})</option>
-              {deckCounts.size2 > 0 && (
-                <option value="2">2×2 ({deckCounts.size2})</option>
-              )}
-              {deckCounts.size3 > 0 && (
-                <option value="3">3×3 ({deckCounts.size3})</option>
-              )}
+              <option value="all">All ({decks.length})</option>
+              {uniqueSizes.map(size => (
+                <option key={size} value={size}>
+                  {size}×{size} ({getDeckCount(size)})
+                </option>
+              ))}
             </select>
           </div>
 
