@@ -3,7 +3,7 @@
  * @module utils/remote-cpu-boards
  */
 
-import type { Board, BoardSize, CellContent, BoardMove } from '@/types';
+import type { Board, BoardSize, CellContent, BoardMove, Deck } from '@/types';
 
 /**
  * Base URL for remote CPU boards (GitHub Pages)
@@ -255,6 +255,87 @@ export async function fetchRemoteCpuBoards(boardSize: BoardSize): Promise<Board[
       console.error('[fetchRemoteCpuBoards] Unknown error:', error);
     }
     return [];
+  }
+}
+
+/**
+ * Fetch a random deck for a specific size from remote CPU server
+ * @param boardSize - The size of boards in the deck (2-10)
+ * @returns Promise resolving to a Deck object, or null on error
+ */
+export async function fetchRemoteCpuDeck(boardSize: BoardSize): Promise<Deck | null> {
+  try {
+    // Validate boardSize parameter
+    if (
+      !Number.isInteger(boardSize) ||
+      boardSize < LIMITS.MIN_BOARD_SIZE ||
+      boardSize > LIMITS.MAX_BOARD_SIZE
+    ) {
+      console.error(`[fetchRemoteCpuDeck] Invalid board size requested: ${boardSize}`);
+      return null;
+    }
+
+    // Randomly select deck 1 or 2
+    const deckNum = Math.random() < 0.5 ? 1 : 2;
+    const url = `${REMOTE_CPU_BASE_URL}/decks/${boardSize}x${boardSize}-deck-${deckNum}.json`;
+    console.log(`[fetchRemoteCpuDeck] Fetching from: ${url}`);
+
+    // Fetch with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    console.log(`[fetchRemoteCpuDeck] Response status: ${response.status} ${response.statusText}`);
+
+    if (!response.ok) {
+      console.error(`[fetchRemoteCpuDeck] Failed to fetch: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const deck = await response.json();
+
+    // Validate deck structure
+    if (
+      typeof deck !== 'object' ||
+      deck === null ||
+      typeof deck.id !== 'string' ||
+      typeof deck.name !== 'string' ||
+      !Array.isArray(deck.boards) ||
+      deck.boards.length !== 10
+    ) {
+      console.error('[fetchRemoteCpuDeck] Invalid deck structure');
+      return null;
+    }
+
+    // Validate each board in the deck
+    const validBoards = deck.boards.filter((board: unknown): board is Board =>
+      validateBoard(board, boardSize)
+    );
+
+    if (validBoards.length !== 10) {
+      console.error(`[fetchRemoteCpuDeck] Deck validation failed: only ${validBoards.length}/10 boards valid`);
+      return null;
+    }
+
+    console.log(`[fetchRemoteCpuDeck] Successfully fetched deck with ${validBoards.length} boards`);
+
+    return {
+      id: deck.id,
+      name: deck.name,
+      boards: validBoards,
+      createdAt: deck.createdAt || Date.now(),
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('[fetchRemoteCpuDeck] Fetch timeout: Request took too long');
+    } else if (error instanceof Error) {
+      console.error('[fetchRemoteCpuDeck] Error fetching deck:', error.message, error);
+    } else {
+      console.error('[fetchRemoteCpuDeck] Unknown error:', error);
+    }
+    return null;
   }
 }
 
