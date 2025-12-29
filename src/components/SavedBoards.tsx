@@ -28,6 +28,8 @@ export interface SavedBoardsProps {
   opponentName: string;
   /** User profile for feature unlock checks */
   user?: UserProfile | null;
+  /** Callback when create deck button is clicked */
+  onCreateDeck?: () => void;
 }
 
 type ViewMode = 'list' | 'select-size' | 'create';
@@ -108,6 +110,7 @@ export function SavedBoards({
   userName,
   opponentName,
   user,
+  onCreateDeck,
 }: SavedBoardsProps): ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedBoardSize, setSelectedBoardSize] = useState<BoardSize>(2);
@@ -315,11 +318,16 @@ export function SavedBoards({
         </div>
       ) : (
         <>
-          {/* Create New Board Button */}
+          {/* Create New Board and Deck Buttons */}
           <div className={styles.topActions}>
             <button onClick={handleCreateNew} className={styles.newBoardButton}>
               + Create New Board
             </button>
+            {onCreateDeck && (
+              <button onClick={onCreateDeck} className={styles.newDeckButton}>
+                + Create New Deck
+              </button>
+            )}
           </div>
 
           {/* Size Filter */}

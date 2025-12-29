@@ -1469,6 +1469,7 @@ function App(): React.ReactElement {
                     userName={state.user.name}
                     opponentName=""
                     user={savedUser}
+                    onCreateDeck={() => setShowDeckCreator(true)}
                   />
                 </div>
               </div>

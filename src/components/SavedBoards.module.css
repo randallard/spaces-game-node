@@ -68,6 +68,7 @@
 .topActions {
   display: flex;
   justify-content: center;
+  gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
@@ -262,6 +263,22 @@
 
 .newBoardButton:hover {
   background-color: #357abd;
+}
+
+.newDeckButton {
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background-color: #9333ea;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.newDeckButton:hover {
+  background-color: #7e22ce;
 }
 
 /* Size Selection */
