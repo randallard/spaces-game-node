@@ -1365,6 +1365,19 @@ function App(): React.ReactElement {
         );
 
       case 'board-management':
+        if (showDeckCreator) {
+          return (
+            <DeckCreator
+              availableBoards={savedBoards || []}
+              onDeckSaved={handleDeckSave}
+              onCancel={() => {
+                setShowDeckCreator(false);
+                setEditingDeck(null);
+              }}
+              existingDeck={editingDeck ?? undefined}
+            />
+          );
+        }
         return (
           <div className={styles.boardManagement}>
             <div className={styles.managementHeader}>
