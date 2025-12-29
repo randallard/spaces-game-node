@@ -206,6 +206,8 @@ export function DeckCreator({
                 setSizeFilter(value as SizeFilter);
               }}
               className={styles.filterSelect}
+              disabled={selectedBoards.length > 0}
+              title={selectedBoards.length > 0 ? 'Filter locked to deck size' : 'Select a size filter'}
             >
               <option value="all">All ({availableBoards.length})</option>
               <option value="2-5">2-5 ({availableBoards.filter(b => b.boardSize >= 2 && b.boardSize <= 5).length})</option>

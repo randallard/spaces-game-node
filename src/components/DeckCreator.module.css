@@ -131,6 +131,12 @@
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
+.filterSelect:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+}
+
 .boardGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
