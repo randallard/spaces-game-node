@@ -49,44 +49,59 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing authorization code' });
     }
 
-    // Phase 1: Just log the code (no actual OAuth yet)
     console.log('[Discord OAuth] Received authorization code:', code.substring(0, 10) + '...');
 
-    // TODO Phase 2: Exchange code for token
-    // const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    //   body: new URLSearchParams({
-    //     client_id: process.env.DISCORD_CLIENT_ID!,
-    //     client_secret: process.env.DISCORD_CLIENT_SECRET!,
-    //     grant_type: 'authorization_code',
-    //     code: code,
-    //     redirect_uri: process.env.DISCORD_REDIRECT_URI!,
-    //   }),
-    // });
+    // Exchange code for access token
+    console.log('[Discord OAuth] Exchanging code for token...');
+    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.DISCORD_CLIENT_ID!,
+        client_secret: process.env.DISCORD_CLIENT_SECRET!,
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: process.env.DISCORD_REDIRECT_URI!,
+      }),
+    });
 
-    // TODO Phase 2: Get user info with token
-    // const token = await tokenResponse.json() as DiscordTokenResponse;
-    // const userResponse = await fetch('https://discord.com/api/users/@me', {
-    //   headers: { Authorization: `Bearer ${token.access_token}` },
-    // });
-    // const user = await userResponse.json() as DiscordUser;
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error('[Discord OAuth] Token exchange failed:', errorText);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      return res.redirect(`${frontendUrl}/?discord_error=token_exchange_failed`);
+    }
 
-    // Phase 1: Return mock user data
-    const mockUser = {
-      id: '123456789',
-      username: 'testuser',
-      discriminator: '0',
-      avatar: null,
-    };
+    const tokenData = await tokenResponse.json() as DiscordTokenResponse;
+    console.log('[Discord OAuth] Token received, fetching user info...');
 
-    console.log('[Discord OAuth] Returning mock user data (Phase 1):', mockUser);
+    // Get user info with access token
+    const userResponse = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+
+    if (!userResponse.ok) {
+      const errorText = await userResponse.text();
+      console.error('[Discord OAuth] User fetch failed:', errorText);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      return res.redirect(`${frontendUrl}/?discord_error=user_fetch_failed`);
+    }
+
+    const user = await userResponse.json() as DiscordUser;
+    console.log('[Discord OAuth] User authenticated:', {
+      id: user.id,
+      username: user.username,
+      globalName: user.global_name,
+    });
 
     // Redirect back to frontend with user data
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const redirectUrl = new URL(frontendUrl);
-    redirectUrl.searchParams.set('discord_id', mockUser.id);
-    redirectUrl.searchParams.set('discord_username', mockUser.username);
+    redirectUrl.searchParams.set('discord_id', user.id);
+    redirectUrl.searchParams.set('discord_username', user.global_name || user.username);
+    if (user.avatar) {
+      redirectUrl.searchParams.set('discord_avatar', user.avatar);
+    }
 
     return res.redirect(redirectUrl.toString());
 

@@ -33,6 +33,8 @@ playwright-report
 .env
 .env.local
 .env.*.local
+.env.development.local
+DISCORD_CREDENTIALS.md
 
 # Vercel
 .vercel
