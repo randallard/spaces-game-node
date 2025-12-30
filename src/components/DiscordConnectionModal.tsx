@@ -14,9 +14,9 @@ export interface DiscordConnectionModalProps {
   /** Callback when user clicks "Connect Discord" */
   onConnect: () => void;
   /** Whether user is currently connected to Discord */
-  isConnected?: boolean;
+  isConnected?: boolean | undefined;
   /** Discord username if connected */
-  discordUsername?: string;
+  discordUsername?: string | undefined;
 }
 
 /**

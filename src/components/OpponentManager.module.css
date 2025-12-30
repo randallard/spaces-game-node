@@ -177,6 +177,14 @@
   line-height: 1.5;
 }
 
+.discordConnectedHint {
+  font-size: 0.8125rem;
+  color: #059669;
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
 .discordLink {
   background: none;
   border: none;

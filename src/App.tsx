@@ -56,6 +56,48 @@ function App(): React.ReactElement {
     console.log('[APP] savedUser changed:', savedUser?.name || 'null');
   }, [savedUser]);
 
+  // Handle Discord OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const discordId = params.get('discord_id');
+    const discordUsername = params.get('discord_username');
+    const discordAvatar = params.get('discord_avatar');
+
+    if (discordId && discordUsername && savedUser) {
+      console.log('[APP] Discord OAuth callback detected, updating user profile:', {
+        discordId,
+        discordUsername,
+        discordAvatar,
+      });
+
+      // Update user profile with Discord info
+      const updatedUser: UserProfileType = {
+        ...savedUser,
+        discordId,
+        discordUsername,
+        discordAvatar: discordAvatar || undefined,
+      };
+
+      setSavedUser(updatedUser);
+
+      // Clean URL by removing Discord params
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('discord_id');
+      newUrl.searchParams.delete('discord_username');
+      newUrl.searchParams.delete('discord_avatar');
+      window.history.replaceState({}, '', newUrl.toString());
+
+      // Check where user was before OAuth
+      const returnTo = sessionStorage.getItem('discord-oauth-return');
+      sessionStorage.removeItem('discord-oauth-return');
+
+      console.log('[APP] Discord connection successful! User updated.', { returnTo });
+
+      // Reload page to refresh game state with updated user
+      window.location.reload();
+    }
+  }, [savedUser, setSavedUser]);
+
   const [savedBoards, setSavedBoards] = useLocalStorage<Board[] | null>(
     'spaces-game-boards',
     BoardSchema.array(),
@@ -1493,6 +1535,9 @@ function App(): React.ReactElement {
       case 'add-opponent':
         return (
           <OpponentManager
+            userName={state.user.name}
+            discordId={state.user.discordId}
+            discordUsername={state.user.discordUsername}
             onOpponentSelected={(opponent) => {
               // Save opponent to localStorage
               const existingIndex = (savedOpponents || []).findIndex((o) => o.id === opponent.id);
@@ -1510,7 +1555,6 @@ function App(): React.ReactElement {
                 phase: { type: 'board-management' },
               });
             }}
-            userName={state.user.name}
           />
         );
 
@@ -1593,10 +1637,12 @@ function App(): React.ReactElement {
       case 'opponent-selection':
         return (
           <OpponentManager
+            userName={state.user.name}
+            discordId={state.user.discordId}
+            discordUsername={state.user.discordUsername}
             onOpponentSelected={(opponent) =>
               handleOpponentSelect(opponent, state.phase.type === 'opponent-selection' ? state.phase.gameMode : 'round-by-round')
             }
-            userName={state.user.name}
           />
         );
 

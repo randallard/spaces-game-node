@@ -7,6 +7,7 @@ import { useState, useCallback, useRef, type ReactElement } from 'react';
 import type { UserProfile, CreatureId } from '@/types';
 import { getAllCreatures } from '@/types/creature';
 import { downloadBackup, loadBackupFromFile, importBackup } from '@/utils/backup';
+import { DiscordConnectionModal } from './DiscordConnectionModal';
 import styles from './ProfileModal.module.css';
 
 export interface ProfileModalProps {
@@ -38,6 +39,7 @@ export function ProfileModal({
   const [error, setError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const [showDiscordModal, setShowDiscordModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get all available creatures
@@ -55,8 +57,55 @@ export function ProfileModal({
   const [opponentCreature, setOpponentCreature] = useState<CreatureId>(
     user.opponentCreature || getRandomCreatureId()
   );
+
+  // Auto-save creature changes
+  const handlePlayerCreatureChange = useCallback(
+    (creatureId: CreatureId): void => {
+      setPlayerCreature(creatureId);
+
+      // Immediately save to user profile
+      const updatedUser: UserProfile = {
+        ...user,
+        playerCreature: creatureId,
+      };
+      onUpdate(updatedUser);
+    },
+    [user, onUpdate]
+  );
+
+  const handleOpponentCreatureChange = useCallback(
+    (creatureId: CreatureId): void => {
+      setOpponentCreature(creatureId);
+
+      // Immediately save to user profile
+      const updatedUser: UserProfile = {
+        ...user,
+        opponentCreature: creatureId,
+      };
+      onUpdate(updatedUser);
+    },
+    [user, onUpdate]
+  );
   const [showCompleteRoundResults, setShowCompleteRoundResults] = useState<boolean>(
     user.preferences?.showCompleteRoundResults ?? false
+  );
+
+  // Auto-save preference changes
+  const handleToggleShowCompleteRoundResults = useCallback(
+    (checked: boolean): void => {
+      setShowCompleteRoundResults(checked);
+
+      // Immediately save to user profile
+      const updatedUser: UserProfile = {
+        ...user,
+        preferences: {
+          ...user.preferences,
+          showCompleteRoundResults: checked,
+        },
+      };
+      onUpdate(updatedUser);
+    },
+    [user, onUpdate]
   );
 
   const validateName = useCallback((value: string): string | null => {
@@ -91,6 +140,17 @@ export function ProfileModal({
     },
     [validateName]
   );
+
+  const handleConnectDiscord = useCallback((): void => {
+    // Save that we're in profile modal
+    sessionStorage.setItem('discord-oauth-return', 'profile');
+
+    // Redirect to Discord OAuth
+    const apiUrl = import.meta.env.DEV
+      ? 'http://localhost:3001'
+      : window.location.origin;
+    window.location.href = `${apiUrl}/api/auth/discord/authorize`;
+  }, []);
 
   const handleSave = useCallback(
     (e: React.FormEvent): void => {
@@ -239,7 +299,7 @@ export function ProfileModal({
           <div className={styles.creatures}>
             <h3 className={styles.creaturesTitle}>Creatures</h3>
             <p className={styles.creaturesDescription}>
-              Choose creatures for visual flair - purely cosmetic!
+              Choose creatures for visual flair - purely cosmetic! (saves automatically)
             </p>
             <div className={styles.creaturesGrid}>
               <div className={styles.field}>
@@ -249,7 +309,7 @@ export function ProfileModal({
                 <select
                   id="player-creature"
                   value={playerCreature}
-                  onChange={(e) => setPlayerCreature(e.target.value)}
+                  onChange={(e) => handlePlayerCreatureChange(e.target.value as CreatureId)}
                   className={styles.select}
                 >
                   {creatures.map((creature) => (
@@ -266,7 +326,7 @@ export function ProfileModal({
                 <select
                   id="opponent-creature"
                   value={opponentCreature}
-                  onChange={(e) => setOpponentCreature(e.target.value)}
+                  onChange={(e) => handleOpponentCreatureChange(e.target.value as CreatureId)}
                   className={styles.select}
                 >
                   {creatures.map((creature) => (
@@ -287,15 +347,53 @@ export function ProfileModal({
                 <input
                   type="checkbox"
                   checked={showCompleteRoundResults}
-                  onChange={(e) => setShowCompleteRoundResults(e.target.checked)}
+                  onChange={(e) => handleToggleShowCompleteRoundResults(e.target.checked)}
                   className={styles.checkbox}
                 />
                 <span>Show complete round results by default</span>
               </label>
               <p className={styles.preferenceDescription}>
-                Skip step-by-step replay and show all results immediately
+                Skip step-by-step replay and show all results immediately (saves automatically)
               </p>
             </div>
+          </div>
+
+          {/* Discord Integration */}
+          <div className={styles.discord}>
+            <h3 className={styles.discordTitle}>
+              Discord Notifications
+              <button
+                type="button"
+                onClick={() => setShowDiscordModal(true)}
+                className={styles.helpButton}
+                aria-label="Learn more about Discord notifications"
+              >
+                ?
+              </button>
+            </h3>
+            {user.discordId && user.discordUsername ? (
+              <div className={styles.discordConnected}>
+                <p className={styles.discordStatus}>
+                  ✅ Connected as <strong>{user.discordUsername}</strong>
+                </p>
+                <p className={styles.discordDescription}>
+                  You'll receive Discord notifications for turn updates and game completions
+                </p>
+              </div>
+            ) : (
+              <div className={styles.discordNotConnected}>
+                <p className={styles.discordDescription}>
+                  Get notified on Discord when opponents play their turns
+                </p>
+                <button
+                  type="button"
+                  onClick={handleConnectDiscord}
+                  className={styles.discordConnectButton}
+                >
+                  Connect Discord
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Stats Display */}
@@ -375,6 +473,14 @@ export function ProfileModal({
           </div>
         </form>
       </div>
+
+      <DiscordConnectionModal
+        isOpen={showDiscordModal}
+        onClose={() => setShowDiscordModal(false)}
+        onConnect={handleConnectDiscord}
+        isConnected={!!(user.discordId && user.discordUsername)}
+        discordUsername={user.discordUsername}
+      />
     </div>
   );
 }

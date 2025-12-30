@@ -14,6 +14,9 @@ export interface OpponentManagerProps {
   onOpponentSelected: (opponent: Opponent) => void;
   /** User's name (for display purposes) */
   userName: string;
+  /** Discord connection info */
+  discordUsername?: string | undefined;
+  discordId?: string | undefined;
 }
 
 /**
@@ -37,10 +40,14 @@ export interface OpponentManagerProps {
 export function OpponentManager({
   onOpponentSelected,
   userName,
+  discordUsername,
+  discordId,
 }: OpponentManagerProps): ReactElement {
   const [selectedType, setSelectedType] = useState<'cpu' | 'human' | 'remote-cpu' | null>(null);
   const [opponentName, setOpponentName] = useState('');
   const [showDiscordModal, setShowDiscordModal] = useState(false);
+
+  const isDiscordConnected = !!(discordId && discordUsername);
 
   /**
    * Handle CPU opponent selection
@@ -69,6 +76,9 @@ export function OpponentManager({
    * Handle Discord connection
    */
   const handleConnectDiscord = useCallback((): void => {
+    // Save that we're in opponent creation flow
+    sessionStorage.setItem('discord-oauth-return', 'opponent-creation');
+
     // Redirect to Discord OAuth
     const apiUrl = import.meta.env.DEV
       ? 'http://localhost:3001'
@@ -137,16 +147,24 @@ export function OpponentManager({
             </div>
 
             <div className={styles.discordOption}>
-              <p className={styles.discordHint}>
-                💡 Want notifications when they play their turn?
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowDiscordModal(true)}
-                className={styles.discordLink}
-              >
-                Connect Discord (optional)
-              </button>
+              {isDiscordConnected ? (
+                <p className={styles.discordConnectedHint}>
+                  ✅ Discord connected • You'll be notified when they play
+                </p>
+              ) : (
+                <>
+                  <p className={styles.discordHint}>
+                    💡 Want notifications when they play their turn?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscordModal(true)}
+                    className={styles.discordLink}
+                  >
+                    Connect Discord (optional)
+                  </button>
+                </>
+              )}
             </div>
 
             <div className={styles.buttonGroup}>
@@ -172,6 +190,8 @@ export function OpponentManager({
           isOpen={showDiscordModal}
           onClose={() => setShowDiscordModal(false)}
           onConnect={handleConnectDiscord}
+          isConnected={isDiscordConnected}
+          discordUsername={discordUsername}
         />
       </>
     );
