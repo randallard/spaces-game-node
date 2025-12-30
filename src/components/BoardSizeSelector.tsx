@@ -54,6 +54,17 @@ export function BoardSizeSelector({
   // Check if playing against human opponent who hasn't completed a game yet
   const isFirstTimeHumanOpponent = opponent?.type === 'human' && !opponent?.hasCompletedGame;
 
+  // Debug logging
+  if (opponent?.type === 'human') {
+    console.log('[BoardSizeSelector] Human opponent check:', {
+      opponentName: opponent.name,
+      hasCompletedGame: opponent.hasCompletedGame,
+      wins: opponent.wins,
+      losses: opponent.losses,
+      isFirstTimeHumanOpponent,
+    });
+  }
+
   // All preset sizes
   const allPresetSizes = [
     { size: 2, label: 'Classic', description: 'Quick strategic gameplay' },
