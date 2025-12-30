@@ -33,3 +33,7 @@ playwright-report
 .env
 .env.local
 .env.*.local
+
+# Vercel
+.vercel
+.vercel.json
