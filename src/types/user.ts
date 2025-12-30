@@ -29,6 +29,11 @@ export type UserProfile = {
   opponents?: Opponent[] | undefined; // Optional - stored separately
   playerCreature?: CreatureId | undefined; // Creature for player
   opponentCreature?: CreatureId | undefined; // Creature for opponent
+
+  // Discord integration
+  discordId?: string | undefined; // Discord user ID (from OAuth)
+  discordUsername?: string | undefined; // Discord username for display
+  discordAvatar?: string | undefined; // Discord avatar hash/URL
 };
 
 /**

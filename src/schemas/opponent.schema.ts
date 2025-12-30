@@ -12,6 +12,11 @@ export const OpponentSchema = z.object({
   type: OpponentTypeSchema,
   wins: z.number().int().min(0),
   losses: z.number().int().min(0),
+  hasCompletedGame: z.boolean().optional(),
+
+  // Discord integration
+  discordId: z.string().optional(),
+  discordUsername: z.string().max(32).optional(),
 });
 
 export const OpponentStatsSchema = z.object({

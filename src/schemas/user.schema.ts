@@ -28,6 +28,11 @@ export const UserProfileSchema = z.object({
   opponents: z.array(OpponentSchema).optional(),
   playerCreature: z.string().optional(),
   opponentCreature: z.string().optional(),
+
+  // Discord integration
+  discordId: z.string().optional(),
+  discordUsername: z.string().max(32).optional(), // Discord username max length
+  discordAvatar: z.string().optional(),
 });
 
 export const OpponentStatsMapSchema = z.record(
