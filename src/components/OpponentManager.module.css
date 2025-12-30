@@ -160,3 +160,35 @@
   background-color: #9ca3af;
   cursor: not-allowed;
 }
+
+/* Discord connection option */
+.discordOption {
+  padding: 1rem;
+  background-color: #eff6ff;
+  border-radius: 0.5rem;
+  border-left: 3px solid #4a90e2;
+  text-align: center;
+}
+
+.discordHint {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+}
+
+.discordLink {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.discordLink:hover {
+  color: #357abd;
+}

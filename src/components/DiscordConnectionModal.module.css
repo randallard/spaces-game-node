@@ -1,0 +1,238 @@
+/* Discord Connection Modal Styles */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background-color: rgb(30, 41, 59);
+  border-radius: 0.75rem;
+  max-width: 32rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgb(51, 65, 85);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: rgb(226, 232, 240);
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: rgb(148, 163, 184);
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.closeButton:hover {
+  background-color: rgb(51, 65, 85);
+  color: rgb(226, 232, 240);
+}
+
+.content {
+  padding: 1.5rem;
+}
+
+.description {
+  font-size: 1rem;
+  color: rgb(203, 213, 225);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.6;
+}
+
+.connectedMessage {
+  font-size: 1.125rem;
+  color: rgb(134, 239, 172);
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.benefitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.benefit {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: rgb(15, 23, 42);
+  border-radius: 0.5rem;
+  border-left: 3px solid rgb(99, 102, 241);
+}
+
+.benefitIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.benefit strong {
+  display: block;
+  color: rgb(226, 232, 240);
+  margin-bottom: 0.25rem;
+}
+
+.benefitDetail {
+  font-size: 0.875rem;
+  color: rgb(148, 163, 184);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.note {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: rgb(51, 65, 85);
+  border-radius: 0.5rem;
+  border-left: 3px solid rgb(234, 179, 8);
+}
+
+.note p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: rgb(203, 213, 225);
+  line-height: 1.6;
+}
+
+.note strong {
+  color: rgb(250, 204, 21);
+}
+
+.footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid rgb(51, 65, 85);
+  justify-content: flex-end;
+}
+
+.skipButton {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background-color: transparent;
+  color: rgb(148, 163, 184);
+  border: 1px solid rgb(71, 85, 105);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.skipButton:hover {
+  background-color: rgb(51, 65, 85);
+  color: rgb(226, 232, 240);
+}
+
+.connectButton {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background-color: rgb(88, 101, 242);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.connectButton:hover {
+  background-color: rgb(71, 82, 196);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.connectButton:active {
+  transform: translateY(0);
+}
+
+.doneButton {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  background-color: rgb(34, 197, 94);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+
+.doneButton:hover {
+  background-color: rgb(22, 163, 74);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.doneButton:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .modal {
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .header,
+  .content,
+  .footer {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .benefit {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .footer {
+    flex-direction: column;
+  }
+
+  .skipButton,
+  .connectButton,
+  .doneButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
