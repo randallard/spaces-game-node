@@ -200,3 +200,19 @@
 .discordLink:hover {
   color: #357abd;
 }
+
+.discordLink:disabled {
+  color: #9ca3af;
+  cursor: wait;
+  text-decoration: none;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}

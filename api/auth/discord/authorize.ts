@@ -43,7 +43,7 @@ export default async function handler(
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', 'identify'); // Just need basic user info
+    authUrl.searchParams.set('scope', 'identify'); // Only need to identify the user
 
     console.log('[Discord Auth] Redirecting to Discord OAuth:', authUrl.toString().substring(0, 80) + '...');
 

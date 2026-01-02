@@ -3,7 +3,7 @@
  * @module components/SavedBoards
  */
 
-import { useState, useMemo, type ReactElement } from 'react';
+import { useState, useMemo, useEffect, type ReactElement } from 'react';
 import type { Board, BoardSize, UserProfile } from '@/types';
 import { isValidBoardSize } from '@/types';
 import { BoardCreatorModal } from './BoardCreatorModal';
@@ -30,6 +30,10 @@ export interface SavedBoardsProps {
   user?: UserProfile | null;
   /** Callback when create deck button is clicked */
   onCreateDeck?: () => void;
+  /** Initial board size to create (if set, opens creator immediately) */
+  initialBoardSize?: number | null;
+  /** Callback when initial board creation is handled */
+  onInitialBoardSizeHandled?: () => void;
 }
 
 type ViewMode = 'list' | 'select-size' | 'create';
@@ -111,12 +115,25 @@ export function SavedBoards({
   opponentName,
   user,
   onCreateDeck,
+  initialBoardSize = null,
+  onInitialBoardSizeHandled,
 }: SavedBoardsProps): ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedBoardSize, setSelectedBoardSize] = useState<BoardSize>(2);
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [customSize, setCustomSize] = useState<string>('');
   const [customError, setCustomError] = useState<string>('');
+
+  // Handle initial board size if provided (use useEffect to avoid setState during render)
+  useEffect(() => {
+    if (initialBoardSize !== null && viewMode === 'list') {
+      setSelectedBoardSize(initialBoardSize as BoardSize);
+      setViewMode('create');
+      if (onInitialBoardSizeHandled) {
+        onInitialBoardSizeHandled();
+      }
+    }
+  }, [initialBoardSize, viewMode, onInitialBoardSizeHandled]);
 
   /**
    * Handle create new board

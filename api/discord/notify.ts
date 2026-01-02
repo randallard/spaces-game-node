@@ -58,7 +58,6 @@ export default async function handler(
       });
     }
 
-    // Phase 1: Just log the request (no bot yet)
     console.log('[Discord Notify] Received notification request:', {
       discordId: body.discordId,
       eventType: body.eventType,
@@ -66,25 +65,45 @@ export default async function handler(
       round: body.gameData.round,
     });
 
-    // TODO Phase 3: Forward to Discord bot
-    // const botUrl = process.env.BOT_URL;
-    // const botResponse = await fetch(`${botUrl}/send-notification`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'Authorization': `Bearer ${process.env.BOT_API_KEY}`
-    //   },
-    //   body: JSON.stringify(body)
-    // });
+    // Forward to Discord bot
+    const botUrl = process.env.BOT_URL || 'http://localhost:3002';
+    const botApiKey = process.env.BOT_API_KEY || 'dev-spaces-game-secret-key';
 
-    // Phase 1: Return success (stub)
-    return res.status(200).json({
-      success: true,
-      message: 'Notification logged (Phase 1 - no bot yet)',
-      data: {
+    console.log('[Discord Notify] Forwarding to bot:', botUrl);
+
+    const botResponse = await fetch(`${botUrl}/notify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': botApiKey,
+      },
+      body: JSON.stringify({
         discordId: body.discordId,
         eventType: body.eventType,
-      }
+        gameData: {
+          type: body.eventType,
+          ...body.gameData,
+        },
+      }),
+    });
+
+    if (!botResponse.ok) {
+      const errorText = await botResponse.text();
+      console.error('[Discord Notify] Bot request failed:', errorText);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to send notification',
+        details: errorText,
+      });
+    }
+
+    const botResult = await botResponse.json();
+    console.log('[Discord Notify] ✅ Notification sent via bot');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Notification sent successfully',
+      data: botResult,
     });
 
   } catch (error) {

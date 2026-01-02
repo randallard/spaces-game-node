@@ -25,6 +25,8 @@ export interface BoardSizeSelectorProps {
   onGenerateCpuBoards?: (size: number, opponentName?: string) => Promise<Deck | undefined>;
   /** User profile for feature unlock checks */
   user?: UserProfile | null;
+  /** Callback to navigate to board creation */
+  onCreateBoards?: (size: number) => void;
 }
 
 /**
@@ -42,6 +44,7 @@ export function BoardSizeSelector({
   opponent,
   onGenerateCpuBoards,
   user,
+  onCreateBoards,
 }: BoardSizeSelectorProps): ReactElement {
   const [customSize, setCustomSize] = useState<string>('');
   const [customError, setCustomError] = useState<string>('');
@@ -197,14 +200,23 @@ export function BoardSizeSelector({
             );
           }
 
-          // Player doesn't have boards - disabled with message
+          // Player doesn't have boards - show create button
           if (!playerHasBoards) {
             return (
-              <div key={size} className={`${styles.sizeOption} ${styles.sizeOptionDisabled}`}>
+              <div key={size} className={`${styles.sizeOption} ${styles.sizeOptionGenerate}`}>
                 <div className={styles.sizeOptionLabel}>{size}×{size}</div>
                 <div className={styles.sizeOptionDescription}>{description}</div>
                 <div className={styles.sizeOptionBadge}>{label}</div>
-                <div className={styles.sizeOptionMessage}>You need to create {size}×{size} boards</div>
+                <button
+                  onClick={() => {
+                    if (onCreateBoards) {
+                      onCreateBoards(size);
+                    }
+                  }}
+                  className={styles.generateButton}
+                >
+                  Create {size}×{size} boards
+                </button>
               </div>
             );
           }

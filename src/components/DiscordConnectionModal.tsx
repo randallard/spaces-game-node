@@ -17,6 +17,8 @@ export interface DiscordConnectionModalProps {
   isConnected?: boolean | undefined;
   /** Discord username if connected */
   discordUsername?: string | undefined;
+  /** Whether Discord connection is in progress */
+  isConnecting?: boolean;
 }
 
 /**
@@ -36,6 +38,7 @@ export function DiscordConnectionModal({
   onConnect,
   isConnected = false,
   discordUsername,
+  isConnecting = false,
 }: DiscordConnectionModalProps): ReactElement | null {
   if (!isOpen) {
     return null;
@@ -130,11 +133,11 @@ export function DiscordConnectionModal({
             </button>
           ) : (
             <>
-              <button onClick={onClose} className={styles.skipButton}>
+              <button onClick={onClose} className={styles.skipButton} disabled={isConnecting}>
                 Skip for Now
               </button>
-              <button onClick={onConnect} className={styles.connectButton}>
-                Connect with Discord
+              <button onClick={onConnect} className={styles.connectButton} disabled={isConnecting}>
+                {isConnecting ? 'Connecting to Discord...' : 'Connect with Discord'}
               </button>
             </>
           )}
