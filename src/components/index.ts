@@ -64,3 +64,9 @@ export type { FeatureUnlockModalProps } from './FeatureUnlockModal';
 
 export { ShareChallenge } from './ShareChallenge';
 export type { ShareChallengeProps } from './ShareChallenge';
+
+export { ChallengeReceivedModal } from './ChallengeReceivedModal';
+export type { ChallengeReceivedModalProps } from './ChallengeReceivedModal';
+
+export { CompletedRoundModal } from './CompletedRoundModal';
+export type { CompletedRoundModalProps } from './CompletedRoundModal';

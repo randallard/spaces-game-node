@@ -35,6 +35,20 @@ export interface AllRoundsResultsProps {
   explanationStyle?: 'lively' | 'technical';
   /** Optional callback when the explanation style preference changes */
   onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
+  /** Optional custom button text */
+  continueButtonText?: string;
+  /** Optional: hide the header if this is mid-game review */
+  isReview?: boolean;
+  /** Whether opponent has Discord connected */
+  opponentHasDiscord?: boolean;
+  /** Opponent's Discord username */
+  opponentDiscordUsername?: string;
+  /** Whether current user has Discord connected */
+  userHasDiscord?: boolean;
+  /** Callback when user wants to connect Discord */
+  onConnectDiscord?: () => void;
+  /** Whether Discord connection is in progress */
+  isConnectingDiscord?: boolean;
 }
 
 /**
@@ -60,6 +74,13 @@ export function AllRoundsResults({
   onShowCompleteResultsChange,
   explanationStyle = 'lively',
   onExplanationStyleChange,
+  continueButtonText,
+  isReview = false,
+  opponentHasDiscord = false,
+  opponentDiscordUsername,
+  userHasDiscord = false,
+  onConnectDiscord,
+  isConnectingDiscord = false,
 }: AllRoundsResultsProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -143,14 +164,24 @@ export function AllRoundsResults({
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.emoji}>{getWinnerEmoji()}</div>
-        <h2 className={styles.title}>Game Complete!</h2>
-        <h3 className={`${styles.winnerText} ${styles[`winner${winner}`]}`}>
-          {getWinnerText()}
-        </h3>
-      </div>
+      {/* Header - only show if not in review mode */}
+      {!isReview && (
+        <div className={styles.header}>
+          <div className={styles.emoji}>{getWinnerEmoji()}</div>
+          <h2 className={styles.title}>Game Complete!</h2>
+          <h3 className={`${styles.winnerText} ${styles[`winner${winner}`]}`}>
+            {getWinnerText()}
+          </h3>
+        </div>
+      )}
+
+      {/* Header for review mode */}
+      {isReview && (
+        <div className={styles.header}>
+          <h2 className={styles.title}>Previous Rounds</h2>
+          <p className={styles.reviewSubtitle}>Review the game so far before selecting your next board</p>
+        </div>
+      )}
 
       {/* Final Score */}
       <div className={styles.finalScore}>
@@ -316,10 +347,63 @@ export function AllRoundsResults({
         </div>
       </div>
 
+      {/* Discord Status Section (only show in review mode) */}
+      {isReview && (opponentHasDiscord || onConnectDiscord) && (
+        <div className={styles.discordSection}>
+          {/* Show opponent's Discord status */}
+          {opponentHasDiscord && (
+            <div className={styles.discordStatus}>
+              <div className={styles.discordIcon}>🔔</div>
+              <div className={styles.discordInfo}>
+                <strong>{opponentName}</strong> is connected to Discord
+                {opponentDiscordUsername && (
+                  <span className={styles.discordUsername}> (@{opponentDiscordUsername})</span>
+                )}
+                <p className={styles.discordHint}>
+                  They'll be notified automatically when you make your move!
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Show user's Discord connection option */}
+          {!userHasDiscord && onConnectDiscord && (
+            <div className={styles.discordConnect}>
+              <button
+                onClick={onConnectDiscord}
+                className={styles.discordConnectButton}
+                disabled={isConnectingDiscord}
+              >
+                {isConnectingDiscord ? (
+                  <>
+                    <span className={styles.spinner}>⏳</span> Connecting to Discord...
+                  </>
+                ) : (
+                  <>
+                    <span className={styles.discordLogo}>💬</span> Connect to Discord
+                  </>
+                )}
+              </button>
+              <p className={styles.discordConnectHint}>
+                Get notified when {opponentName} makes their move
+              </p>
+            </div>
+          )}
+
+          {/* Show user's connected status */}
+          {userHasDiscord && (
+            <div className={styles.discordConnected}>
+              <div className={styles.discordIcon}>✅</div>
+              <p>You're connected to Discord and will receive notifications!</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Actions */}
       <div className={styles.actions}>
         <button onClick={onPlayAgain} className={styles.playAgainButton}>
-          Play Again
+          {continueButtonText || 'Play Again'}
         </button>
       </div>
 

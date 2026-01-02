@@ -17,6 +17,14 @@ export interface ShareChallengeProps {
   round: number;
   /** Callback when user cancels */
   onCancel: () => void;
+  /** Whether opponent has Discord connected */
+  opponentHasDiscord?: boolean;
+  /** Whether current user has Discord connected */
+  userHasDiscord?: boolean;
+  /** Callback when user wants to connect Discord */
+  onConnectDiscord?: () => void;
+  /** Whether Discord connection is in progress */
+  isConnectingDiscord?: boolean;
 }
 
 /**
@@ -34,6 +42,10 @@ export function ShareChallenge({
   boardSize,
   round,
   onCancel,
+  opponentHasDiscord = false,
+  userHasDiscord = false,
+  onConnectDiscord,
+  isConnectingDiscord = false,
 }: ShareChallengeProps): ReactElement {
   const [copySuccess, setCopySuccess] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
@@ -110,6 +122,52 @@ export function ShareChallenge({
     }
   }, [challengeUrl, opponentName, boardSize, round, handleCopyToClipboard]);
 
+  // If opponent has Discord, show notification status instead of sharing UI
+  if (opponentHasDiscord) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <h1 className={styles.title}>Turn Complete!</h1>
+
+          <div className={styles.notificationStatus}>
+            <div className={styles.notificationIcon}>🔔</div>
+            <p className={styles.notificationText}>
+              Notification automatically sent to <strong>{opponentName}</strong>
+            </p>
+          </div>
+
+          <div className={styles.info}>
+            <p className={styles.infoSubtext}>
+              Round {round} • {boardSize}×{boardSize} Board
+            </p>
+          </div>
+
+          {/* Discord connection hint for user */}
+          {!userHasDiscord && onConnectDiscord && (
+            <div className={styles.discordHint}>
+              <button
+                onClick={onConnectDiscord}
+                className={styles.discordHintLink}
+                disabled={isConnectingDiscord}
+              >
+                {isConnectingDiscord ? 'Connecting to Discord...' : 'Connect to Discord if you want to receive notifications automatically'}
+              </button>
+            </div>
+          )}
+
+          {/* Cancel button */}
+          <button
+            onClick={onCancel}
+            className={styles.cancelButton}
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Default sharing UI when opponent doesn't have Discord
   return (
     <div className={styles.container}>
       <div className={styles.content}>
@@ -170,6 +228,19 @@ export function ShareChallenge({
             <code className={styles.urlCode}>{challengeUrl}</code>
           </div>
         </details>
+
+        {/* Discord connection hint for user */}
+        {!userHasDiscord && onConnectDiscord && (
+          <div className={styles.discordHint}>
+            <button
+              onClick={onConnectDiscord}
+              className={styles.discordHintLink}
+              disabled={isConnectingDiscord}
+            >
+              {isConnectingDiscord ? 'Connecting to Discord...' : 'Connect to Discord to receive notifications automatically'}
+            </button>
+          </div>
+        )}
 
         {/* Cancel button */}
         <button

@@ -60,6 +60,7 @@ export type GamePhase =
   | { type: 'share-challenge'; round: number } // Share challenge URL with human opponent
   | { type: 'share-final-results' } // Share final results URL after round 5
   | { type: 'waiting-for-opponent'; round: number }
+  | { type: 'round-review'; round: number } // Review previous rounds before selecting board (human vs human)
   | { type: 'round-results'; round: number; result: RoundResult } // Single round result
   | { type: 'all-rounds-results'; results: RoundResult[] } // All 10 rounds at once
   | { type: 'game-over'; winner: 'player' | 'opponent' | 'tie' };

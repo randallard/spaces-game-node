@@ -32,6 +32,10 @@ export interface ChallengeData {
   opponentScore?: number;
   /** Is this a final results share (no board, just scores) */
   isFinalResults?: boolean;
+  /** Sender's Discord ID (optional, for notifications) */
+  playerDiscordId?: string;
+  /** Sender's Discord username (optional, for display) */
+  playerDiscordUsername?: string;
 }
 
 /**
@@ -45,6 +49,8 @@ export interface ChallengeData {
  * @param playerName - Sender's player name
  * @param playerScore - Current player score (optional)
  * @param opponentScore - Current opponent score (optional)
+ * @param playerDiscordId - Sender's Discord ID (optional)
+ * @param playerDiscordUsername - Sender's Discord username (optional)
  * @returns Full challenge URL
  */
 export function generateChallengeUrl(
@@ -55,7 +61,9 @@ export function generateChallengeUrl(
   playerId: string,
   playerName: string,
   playerScore?: number,
-  opponentScore?: number
+  opponentScore?: number,
+  playerDiscordId?: string,
+  playerDiscordUsername?: string
 ): string {
   // Encode the board using minimal encoding
   const encodedBoard = encodeMinimalBoard(board);
@@ -71,6 +79,8 @@ export function generateChallengeUrl(
     playerName,
     ...(playerScore !== undefined && { playerScore }),
     ...(opponentScore !== undefined && { opponentScore }),
+    ...(playerDiscordId && { playerDiscordId }),
+    ...(playerDiscordUsername && { playerDiscordUsername }),
   };
 
   // Serialize to compact JSON

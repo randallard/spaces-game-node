@@ -8,6 +8,7 @@ import type { UserProfile, CreatureId } from '@/types';
 import { getAllCreatures } from '@/types/creature';
 import { downloadBackup, loadBackupFromFile, importBackup } from '@/utils/backup';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
+import { getApiEndpoint } from '@/config/api';
 import styles from './ProfileModal.module.css';
 
 export interface ProfileModalProps {
@@ -40,6 +41,7 @@ export function ProfileModal({
   const [isDirty, setIsDirty] = useState(false);
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
   const [showDiscordModal, setShowDiscordModal] = useState(false);
+  const [isConnectingDiscord, setIsConnectingDiscord] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get all available creatures
@@ -142,14 +144,14 @@ export function ProfileModal({
   );
 
   const handleConnectDiscord = useCallback((): void => {
+    // Set loading state
+    setIsConnectingDiscord(true);
+
     // Save that we're in profile modal
     sessionStorage.setItem('discord-oauth-return', 'profile');
 
     // Redirect to Discord OAuth
-    const apiUrl = import.meta.env.DEV
-      ? 'http://localhost:3001'
-      : window.location.origin;
-    window.location.href = `${apiUrl}/api/auth/discord/authorize`;
+    window.location.href = getApiEndpoint('/api/auth/discord/authorize');
   }, []);
 
   const handleSave = useCallback(
@@ -389,8 +391,9 @@ export function ProfileModal({
                   type="button"
                   onClick={handleConnectDiscord}
                   className={styles.discordConnectButton}
+                  disabled={isConnectingDiscord}
                 >
-                  Connect Discord
+                  {isConnectingDiscord ? 'Connecting to Discord...' : 'Connect Discord'}
                 </button>
               </div>
             )}
@@ -480,6 +483,7 @@ export function ProfileModal({
         onConnect={handleConnectDiscord}
         isConnected={!!(user.discordId && user.discordUsername)}
         discordUsername={user.discordUsername}
+        isConnecting={isConnectingDiscord}
       />
     </div>
   );

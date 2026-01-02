@@ -7,6 +7,7 @@ import { useState, useCallback, type ReactElement } from 'react';
 import { createCpuOpponent, createHumanOpponent, createRemoteCpuOpponent } from '@/utils/opponent-helpers';
 import type { Opponent } from '@/types';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
+import { getApiEndpoint } from '@/config/api';
 import styles from './OpponentManager.module.css';
 
 export interface OpponentManagerProps {
@@ -46,6 +47,7 @@ export function OpponentManager({
   const [selectedType, setSelectedType] = useState<'cpu' | 'human' | 'remote-cpu' | null>(null);
   const [opponentName, setOpponentName] = useState('');
   const [showDiscordModal, setShowDiscordModal] = useState(false);
+  const [isConnectingDiscord, setIsConnectingDiscord] = useState(false);
 
   const isDiscordConnected = !!(discordId && discordUsername);
 
@@ -76,14 +78,14 @@ export function OpponentManager({
    * Handle Discord connection
    */
   const handleConnectDiscord = useCallback((): void => {
+    // Set loading state
+    setIsConnectingDiscord(true);
+
     // Save that we're in opponent creation flow
     sessionStorage.setItem('discord-oauth-return', 'opponent-creation');
 
     // Redirect to Discord OAuth
-    const apiUrl = import.meta.env.DEV
-      ? 'http://localhost:3001'
-      : window.location.origin;
-    window.location.href = `${apiUrl}/api/auth/discord/authorize`;
+    window.location.href = getApiEndpoint('/api/auth/discord/authorize');
   }, []);
 
   /**
@@ -160,8 +162,9 @@ export function OpponentManager({
                     type="button"
                     onClick={() => setShowDiscordModal(true)}
                     className={styles.discordLink}
+                    disabled={isConnectingDiscord}
                   >
-                    Connect Discord (optional)
+                    {isConnectingDiscord ? 'Connecting to Discord...' : 'Connect Discord (optional)'}
                   </button>
                 </>
               )}
@@ -192,6 +195,7 @@ export function OpponentManager({
           onConnect={handleConnectDiscord}
           isConnected={isDiscordConnected}
           discordUsername={discordUsername}
+          isConnecting={isConnectingDiscord}
         />
       </>
     );
