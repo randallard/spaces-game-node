@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SavedBoards } from './SavedBoards';
-import type { Board } from '@/types';
+import type { Board, RoundResult } from '@/types';
 
 describe('SavedBoards', () => {
   const mockOnBoardSelected = vi.fn();
@@ -606,6 +606,238 @@ describe('SavedBoards', () => {
       // Should return to list
       expect(screen.getByText('Board 1')).toBeInTheDocument();
       expect(screen.queryByText('Select Board Size')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Round history display', () => {
+    const createMockRoundResult = (round: number, winner: 'player' | 'opponent' | 'tie'): RoundResult => ({
+      round,
+      winner,
+      playerBoard: createMockBoard('player-' + round, 'Player Board ' + round),
+      opponentBoard: createMockBoard('opponent-' + round, 'Opponent Board ' + round),
+      playerFinalPosition: { row: 0, col: 0 },
+      opponentFinalPosition: { row: 0, col: 0 },
+      playerPoints: winner === 'player' ? 2 : winner === 'tie' ? 1 : 0,
+      opponentPoints: winner === 'opponent' ? 2 : winner === 'tie' ? 1 : 0,
+    });
+
+    it('should not show round history when no rounds have been played', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          roundHistory={[]}
+          playerScore={0}
+          opponentScore={0}
+        />
+      );
+
+      expect(screen.queryByText(/Previous Rounds/)).not.toBeInTheDocument();
+    });
+
+    it('should not show round history in management mode', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+      const roundHistory = [createMockRoundResult(1, 'player')];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          currentRound={0}
+          roundHistory={roundHistory}
+          playerScore={2}
+          opponentScore={0}
+        />
+      );
+
+      expect(screen.queryByText(/Previous Rounds/)).not.toBeInTheDocument();
+    });
+
+    it('should show round history section when rounds exist', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+      const roundHistory = [
+        createMockRoundResult(1, 'player'),
+        createMockRoundResult(2, 'opponent'),
+      ];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          currentRound={3}
+          roundHistory={roundHistory}
+          playerScore={2}
+          opponentScore={2}
+        />
+      );
+
+      expect(screen.getByText('Previous Rounds (2)')).toBeInTheDocument();
+      expect(screen.getByText('Show Previous Rounds')).toBeInTheDocument();
+    });
+
+    it('should toggle round history display when button is clicked', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+      const roundHistory = [createMockRoundResult(1, 'player')];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          currentRound={2}
+          roundHistory={roundHistory}
+          playerScore={2}
+          opponentScore={0}
+        />
+      );
+
+      const toggleButton = screen.getByText('Show Previous Rounds');
+      fireEvent.click(toggleButton);
+
+      // Should show round cards
+      expect(screen.getByText('Round 1')).toBeInTheDocument();
+      expect(screen.getByText('Alice Won')).toBeInTheDocument();
+
+      // Button text should change
+      expect(screen.getByText('Hide Previous Rounds')).toBeInTheDocument();
+
+      // Click again to hide
+      fireEvent.click(screen.getByText('Hide Previous Rounds'));
+      expect(screen.queryByText('Round 1')).not.toBeInTheDocument();
+    });
+
+    it('should display current score in round history section', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+      const roundHistory = [
+        createMockRoundResult(1, 'player'),
+        createMockRoundResult(2, 'opponent'),
+      ];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          currentRound={3}
+          roundHistory={roundHistory}
+          playerScore={2}
+          opponentScore={2}
+        />
+      );
+
+      // Show the round history
+      fireEvent.click(screen.getByText('Show Previous Rounds'));
+
+      expect(screen.getByText('Alice: 2')).toBeInTheDocument();
+      expect(screen.getByText('Bob: 2')).toBeInTheDocument();
+    });
+
+    it('should display all round cards when history is shown', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+      const roundHistory = [
+        createMockRoundResult(1, 'player'),
+        createMockRoundResult(2, 'opponent'),
+        createMockRoundResult(3, 'tie'),
+      ];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          currentRound={4}
+          roundHistory={roundHistory}
+          playerScore={3}
+          opponentScore={3}
+        />
+      );
+
+      // Show the round history
+      fireEvent.click(screen.getByText('Show Previous Rounds'));
+
+      expect(screen.getByText('Round 1')).toBeInTheDocument();
+      expect(screen.getByText('Round 2')).toBeInTheDocument();
+      expect(screen.getByText('Round 3')).toBeInTheDocument();
+      expect(screen.getByText('Alice Won')).toBeInTheDocument();
+      expect(screen.getByText('Bob Won')).toBeInTheDocument();
+      expect(screen.getByText('Tie')).toBeInTheDocument();
+    });
+
+    it('should show round detail modal when round card is clicked', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+      const roundHistory = [createMockRoundResult(1, 'player')];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          currentRound={2}
+          roundHistory={roundHistory}
+          playerScore={2}
+          opponentScore={0}
+        />
+      );
+
+      // Show the round history
+      fireEvent.click(screen.getByText('Show Previous Rounds'));
+
+      // Click on the round card
+      const roundCard = screen.getByText('Round 1').closest('button');
+      fireEvent.click(roundCard!);
+
+      // Should show close button (modal is open)
+      expect(screen.getByLabelText('Close')).toBeInTheDocument();
+    });
+
+    it('should close round detail modal when close button is clicked', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+      const roundHistory = [createMockRoundResult(1, 'player')];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          currentRound={2}
+          roundHistory={roundHistory}
+          playerScore={2}
+          opponentScore={0}
+        />
+      );
+
+      // Show the round history
+      fireEvent.click(screen.getByText('Show Previous Rounds'));
+
+      // Click on the round card to open modal
+      const roundCard = screen.getByText('Round 1').closest('button');
+      fireEvent.click(roundCard!);
+
+      // Click close button
+      const closeButton = screen.getByLabelText('Close');
+      fireEvent.click(closeButton);
+
+      // Modal should be closed (close button no longer visible)
+      expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    });
+
+    it('should display points for each round', () => {
+      const boards = [createMockBoard('1', 'Board 1')];
+      const roundHistory = [createMockRoundResult(1, 'player')];
+
+      render(
+        <SavedBoards
+          {...defaultProps}
+          boards={boards}
+          currentRound={2}
+          roundHistory={roundHistory}
+          playerScore={2}
+          opponentScore={0}
+        />
+      );
+
+      // Show the round history
+      fireEvent.click(screen.getByText('Show Previous Rounds'));
+
+      // Should show points (2 - 0 for player win)
+      expect(screen.getByText('2 - 0')).toBeInTheDocument();
     });
   });
 });

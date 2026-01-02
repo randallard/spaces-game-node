@@ -1080,7 +1080,7 @@ function App(): React.ReactElement {
   // Handle board CRUD operations
   const handleBoardSave = (board: Board) => {
     const boards = savedBoards || [];
-    const existingIndex = boards.findIndex((b) => b.id !== board.id);
+    const existingIndex = boards.findIndex((b) => b.id === board.id);
     if (existingIndex >= 0) {
       const updated = [...boards];
       updated[existingIndex] = board;
@@ -2138,6 +2138,13 @@ function App(): React.ReactElement {
               onInitialBoardSizeHandled={() => {
                 // Size has been handled, no need to do anything
               }}
+              roundHistory={state.roundHistory}
+              playerScore={state.playerScore}
+              opponentScore={state.opponentScore}
+              showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
+              onShowCompleteResultsChange={handleShowCompleteResultsChange}
+              explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
+              onExplanationStyleChange={handleExplanationStyleChange}
             />
 
             {/* Loading overlay */}

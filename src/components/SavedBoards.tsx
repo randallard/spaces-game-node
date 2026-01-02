@@ -4,11 +4,13 @@
  */
 
 import { useState, useMemo, useEffect, type ReactElement } from 'react';
-import type { Board, BoardSize, UserProfile } from '@/types';
+import type { Board, BoardSize, UserProfile, RoundResult } from '@/types';
 import { isValidBoardSize } from '@/types';
 import { BoardCreatorModal } from './BoardCreatorModal';
 import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import { getFeatureUnlocks } from '@/utils/feature-unlocks';
+import { RoundResults } from './RoundResults';
+import { generateBoardThumbnail } from '@/utils/svg-thumbnail';
 import styles from './SavedBoards.module.css';
 
 export interface SavedBoardsProps {
@@ -34,6 +36,20 @@ export interface SavedBoardsProps {
   initialBoardSize?: number | null;
   /** Callback when initial board creation is handled */
   onInitialBoardSizeHandled?: () => void;
+  /** Round history for the current game (optional) */
+  roundHistory?: RoundResult[];
+  /** Current player score (optional, for round history display) */
+  playerScore?: number;
+  /** Current opponent score (optional, for round history display) */
+  opponentScore?: number;
+  /** Optional user preference for showing complete results */
+  showCompleteResultsByDefault?: boolean;
+  /** Optional callback when the show complete results preference changes */
+  onShowCompleteResultsChange?: (value: boolean) => void;
+  /** Optional user preference for explanation style */
+  explanationStyle?: 'lively' | 'technical';
+  /** Optional callback when the explanation style preference changes */
+  onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
 }
 
 type ViewMode = 'list' | 'select-size' | 'create';
@@ -117,12 +133,21 @@ export function SavedBoards({
   onCreateDeck,
   initialBoardSize = null,
   onInitialBoardSizeHandled,
+  roundHistory = [],
+  playerScore = 0,
+  opponentScore = 0,
+  showCompleteResultsByDefault = false,
+  onShowCompleteResultsChange,
+  explanationStyle = 'lively',
+  onExplanationStyleChange,
 }: SavedBoardsProps): ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedBoardSize, setSelectedBoardSize] = useState<BoardSize>(2);
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [customSize, setCustomSize] = useState<string>('');
   const [customError, setCustomError] = useState<string>('');
+  const [selectedHistoryRound, setSelectedHistoryRound] = useState<number | null>(null);
+  const [showRoundHistory, setShowRoundHistory] = useState<boolean>(false);
 
   // Handle initial board size if provided (use useEffect to avoid setState during render)
   useEffect(() => {
@@ -311,6 +336,55 @@ export function SavedBoards({
   // Check if we're in management mode (not in an active round)
   const isManagementMode = currentRound === 0;
 
+  // Calculate running totals for round history
+  const runningTotals = roundHistory.reduce(
+    (acc, result) => {
+      const lastTotal = acc[acc.length - 1] || { player: 0, opponent: 0 };
+      acc.push({
+        player: lastTotal.player + (result.playerPoints ?? 0),
+        opponent: lastTotal.opponent + (result.opponentPoints ?? 0),
+      });
+      return acc;
+    },
+    [] as Array<{ player: number; opponent: number }>
+  );
+
+  // If viewing a specific round from history
+  if (selectedHistoryRound !== null) {
+    const result = roundHistory[selectedHistoryRound - 1];
+    if (!result) return <div>Invalid round selected</div>;
+
+    const runningTotal = runningTotals[selectedHistoryRound - 1];
+    if (!runningTotal) return <div>Invalid running total</div>;
+
+    return (
+      <div className={styles.modalOverlay} onClick={() => setSelectedHistoryRound(null)}>
+        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <button
+            className={styles.closeButton}
+            onClick={() => setSelectedHistoryRound(null)}
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <RoundResults
+            result={result}
+            playerName={userName}
+            opponentName={opponentName}
+            playerScore={runningTotal.player}
+            opponentScore={runningTotal.opponent}
+            onContinue={() => setSelectedHistoryRound(null)}
+            continueButtonText="Close"
+            showCompleteResultsByDefault={showCompleteResultsByDefault}
+            onShowCompleteResultsChange={onShowCompleteResultsChange}
+            explanationStyle={explanationStyle}
+            onExplanationStyleChange={onExplanationStyleChange}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       {!isManagementMode && (
@@ -319,6 +393,94 @@ export function SavedBoards({
           <p className={styles.subtitle}>
             {userName} vs {opponentName}
           </p>
+        </div>
+      )}
+
+      {/* Round History Section */}
+      {!isManagementMode && roundHistory.length > 0 && (
+        <div className={styles.roundHistorySection}>
+          <div className={styles.roundHistoryHeader}>
+            <h3 className={styles.roundHistoryTitle}>
+              Previous Rounds ({roundHistory.length})
+            </h3>
+            <button
+              className={styles.toggleHistoryButton}
+              onClick={() => setShowRoundHistory(!showRoundHistory)}
+            >
+              {showRoundHistory ? 'Hide' : 'Show'} Previous Rounds
+            </button>
+          </div>
+
+          {showRoundHistory && (
+            <>
+              <div className={styles.currentScore}>
+                <span className={styles.scoreItem}>
+                  {userName}: {playerScore}
+                </span>
+                <span className={styles.scoreDivider}>-</span>
+                <span className={styles.scoreItem}>
+                  {opponentName}: {opponentScore}
+                </span>
+              </div>
+
+              <div className={styles.roundHistoryGrid}>
+                {roundHistory.map((result) => {
+                  const roundWinner = result.winner;
+                  const roundWinnerClass =
+                    roundWinner === 'player'
+                      ? styles.historyCardPlayer
+                      : roundWinner === 'opponent'
+                      ? styles.historyCardOpponent
+                      : styles.historyCardTie;
+
+                  const playerThumb = generateBoardThumbnail(result.playerBoard);
+                  const opponentThumb = generateBoardThumbnail(result.opponentBoard);
+
+                  return (
+                    <button
+                      key={result.round}
+                      className={`${styles.historyCard} ${roundWinnerClass}`}
+                      onClick={() => setSelectedHistoryRound(result.round)}
+                    >
+                      <div className={styles.historyCardHeader}>
+                        <span className={styles.historyRoundNumber}>Round {result.round}</span>
+                        <span className={styles.historyWinner}>
+                          {roundWinner === 'player'
+                            ? `${userName} Won`
+                            : roundWinner === 'opponent'
+                            ? `${opponentName} Won`
+                            : 'Tie'}
+                        </span>
+                      </div>
+
+                      <div className={styles.historyThumbnails}>
+                        <div className={styles.historyThumbWrapper}>
+                          <span className={styles.historyThumbLabel}>{userName}</span>
+                          <img
+                            src={playerThumb}
+                            alt={`${userName}'s board`}
+                            className={styles.historyThumb}
+                          />
+                        </div>
+                        <div className={styles.historyThumbWrapper}>
+                          <span className={styles.historyThumbLabel}>{opponentName}</span>
+                          <img
+                            src={opponentThumb}
+                            alt={`${opponentName}'s board`}
+                            className={styles.historyThumb}
+                          />
+                        </div>
+                      </div>
+
+                      <div className={styles.historyPoints}>
+                        {result.playerPoints ?? 0} - {result.opponentPoints ?? 0}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       )}
 
