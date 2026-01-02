@@ -1022,7 +1022,7 @@ describe('AllRoundsResults', () => {
     it('should handle invalid round selection gracefully', () => {
       const results = [createMockResult(1, 'player', 2, 0)];
 
-      const { rerender } = render(
+      render(
         <AllRoundsResults
           results={results}
           playerName="Alice"

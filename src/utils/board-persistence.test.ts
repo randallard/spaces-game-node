@@ -231,4 +231,150 @@ describe('Board persistence to localStorage', () => {
     expect(localStorage.getItem('spaces-game-boards')).toBeTruthy();
     expect(localStorage.getItem('wrong-key')).toBeNull();
   });
+
+  describe('Board save logic (mimicking handleBoardSave)', () => {
+    it('should add new board without overwriting existing boards', () => {
+      const { result } = renderHook(() =>
+        useLocalStorage('spaces-game-boards', BoardSchema.array(), [])
+      );
+
+      const [, setBoards] = result.current;
+
+      // Save first board
+      act(() => {
+        setBoards([mockBoard]);
+      });
+
+      // Create and save second board (simulating handleBoardSave logic)
+      const board2: Board = {
+        ...mockBoard,
+        id: '223e4567-e89b-12d3-a456-426614174000',
+        name: 'Test Board 2',
+      };
+
+      act(() => {
+        const [boards] = result.current;
+        const currentBoards = boards || [];
+        const existingIndex = currentBoards.findIndex((b) => b.id === board2.id);
+        if (existingIndex >= 0) {
+          const updated = [...currentBoards];
+          updated[existingIndex] = board2;
+          setBoards(updated);
+        } else {
+          setBoards([...currentBoards, board2]);
+        }
+      });
+
+      // Verify both boards exist and first board was NOT overwritten
+      const stored = localStorage.getItem('spaces-game-boards');
+      const parsed = JSON.parse(stored!);
+      expect(parsed).toHaveLength(2);
+      expect(parsed[0].id).toBe('123e4567-e89b-12d3-a456-426614174000');
+      expect(parsed[0].name).toBe('Test Board');
+      expect(parsed[1].id).toBe('223e4567-e89b-12d3-a456-426614174000');
+      expect(parsed[1].name).toBe('Test Board 2');
+    });
+
+    it('should update existing board when IDs match', () => {
+      const { result } = renderHook(() =>
+        useLocalStorage('spaces-game-boards', BoardSchema.array(), [])
+      );
+
+      const [, setBoards] = result.current;
+
+      const board2: Board = {
+        ...mockBoard,
+        id: '223e4567-e89b-12d3-a456-426614174000',
+        name: 'Test Board 2',
+      };
+
+      // Save two boards
+      act(() => {
+        setBoards([mockBoard, board2]);
+      });
+
+      // Update second board (simulating handleBoardSave logic)
+      const updatedBoard2: Board = {
+        ...board2,
+        name: 'Updated Board 2',
+      };
+
+      act(() => {
+        const [boards] = result.current;
+        const currentBoards = boards || [];
+        const existingIndex = currentBoards.findIndex((b) => b.id === updatedBoard2.id);
+        if (existingIndex >= 0) {
+          const updated = [...currentBoards];
+          updated[existingIndex] = updatedBoard2;
+          setBoards(updated);
+        } else {
+          setBoards([...currentBoards, updatedBoard2]);
+        }
+      });
+
+      // Verify update happened and first board was NOT affected
+      const stored = localStorage.getItem('spaces-game-boards');
+      const parsed = JSON.parse(stored!);
+      expect(parsed).toHaveLength(2);
+      expect(parsed[0].id).toBe('123e4567-e89b-12d3-a456-426614174000');
+      expect(parsed[0].name).toBe('Test Board');
+      expect(parsed[1].id).toBe('223e4567-e89b-12d3-a456-426614174000');
+      expect(parsed[1].name).toBe('Updated Board 2');
+    });
+
+    it('should correctly handle saving 3+ boards sequentially', () => {
+      const { result } = renderHook(() =>
+        useLocalStorage('spaces-game-boards', BoardSchema.array(), [])
+      );
+
+      const [, setBoards] = result.current;
+
+      // Helper function mimicking handleBoardSave
+      const saveBoard = (board: Board) => {
+        const [boards] = result.current;
+        const currentBoards = boards || [];
+        const existingIndex = currentBoards.findIndex((b) => b.id === board.id);
+        if (existingIndex >= 0) {
+          const updated = [...currentBoards];
+          updated[existingIndex] = board;
+          setBoards(updated);
+        } else {
+          setBoards([...currentBoards, board]);
+        }
+      };
+
+      // Save first board
+      act(() => {
+        saveBoard(mockBoard);
+      });
+
+      // Save second board
+      const board2: Board = {
+        ...mockBoard,
+        id: '223e4567-e89b-12d3-a456-426614174000',
+        name: 'Test Board 2',
+      };
+      act(() => {
+        saveBoard(board2);
+      });
+
+      // Save third board
+      const board3: Board = {
+        ...mockBoard,
+        id: '323e4567-e89b-12d3-a456-426614174000',
+        name: 'Test Board 3',
+      };
+      act(() => {
+        saveBoard(board3);
+      });
+
+      // Verify all three boards exist and none were overwritten
+      const stored = localStorage.getItem('spaces-game-boards');
+      const parsed = JSON.parse(stored!);
+      expect(parsed).toHaveLength(3);
+      expect(parsed[0].name).toBe('Test Board');
+      expect(parsed[1].name).toBe('Test Board 2');
+      expect(parsed[2].name).toBe('Test Board 3');
+    });
+  });
 });
