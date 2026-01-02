@@ -587,4 +587,294 @@ describe('ShareChallenge', () => {
       }
     });
   });
+
+  describe('Discord notification mode (opponent has Discord)', () => {
+    it('should show turn complete title when opponent has Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+        />
+      );
+
+      expect(screen.getByText('Turn Complete!')).toBeInTheDocument();
+    });
+
+    it('should show notification sent status when opponent has Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentName="Bob"
+          opponentHasDiscord={true}
+        />
+      );
+
+      expect(screen.getByText(/Notification automatically sent to/)).toBeInTheDocument();
+      expect(screen.getByText('Bob')).toBeInTheDocument();
+    });
+
+    it('should display round and board info when opponent has Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          round={5}
+          boardSize={4}
+          opponentHasDiscord={true}
+        />
+      );
+
+      expect(screen.getByText(/Round 5/)).toBeInTheDocument();
+      expect(screen.getByText(/4×4 Board/)).toBeInTheDocument();
+    });
+
+    it('should not show copy/share buttons when opponent has Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+        />
+      );
+
+      expect(screen.queryByText(/Copy Link/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Share Challenge/)).not.toBeInTheDocument();
+    });
+
+    it('should show back to home button when opponent has Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+        />
+      );
+
+      expect(screen.getByText('Back to Home')).toBeInTheDocument();
+    });
+
+    it('should call onCancel when back to home clicked', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+        />
+      );
+
+      const backButton = screen.getByText('Back to Home');
+      fireEvent.click(backButton);
+
+      expect(mockOnCancel).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Discord connection hints', () => {
+    const mockOnConnectDiscord = vi.fn();
+
+    beforeEach(() => {
+      mockOnConnectDiscord.mockClear();
+    });
+
+    it('should show Discord connection hint when opponent has Discord but user does not', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+        />
+      );
+
+      expect(screen.getByText(/Connect to Discord if you want to receive notifications automatically/)).toBeInTheDocument();
+    });
+
+    it('should show Discord connection hint in normal mode when user does not have Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={false}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+        />
+      );
+
+      expect(screen.getByText(/Connect to Discord to receive notifications automatically/)).toBeInTheDocument();
+    });
+
+    it('should call onConnectDiscord when hint link clicked (opponent has Discord)', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+        />
+      );
+
+      const connectLink = screen.getByText(/Connect to Discord if you want to receive notifications automatically/);
+      fireEvent.click(connectLink);
+
+      expect(mockOnConnectDiscord).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onConnectDiscord when hint link clicked (normal mode)', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={false}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+        />
+      );
+
+      const connectLink = screen.getByText(/Connect to Discord to receive notifications automatically/);
+      fireEvent.click(connectLink);
+
+      expect(mockOnConnectDiscord).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not show Discord hint when user already has Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          userHasDiscord={true}
+          onConnectDiscord={mockOnConnectDiscord}
+        />
+      );
+
+      expect(screen.queryByText(/Connect to Discord/)).not.toBeInTheDocument();
+    });
+
+    it('should not show Discord hint when no onConnectDiscord callback provided', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          userHasDiscord={false}
+        />
+      );
+
+      expect(screen.queryByText(/Connect to Discord/)).not.toBeInTheDocument();
+    });
+
+    it('should show connecting state when Discord connection is in progress (opponent has Discord)', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+          isConnectingDiscord={true}
+        />
+      );
+
+      expect(screen.getByText(/Connecting to Discord.../)).toBeInTheDocument();
+    });
+
+    it('should show connecting state when Discord connection is in progress (normal mode)', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={false}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+          isConnectingDiscord={true}
+        />
+      );
+
+      expect(screen.getByText(/Connecting to Discord.../)).toBeInTheDocument();
+    });
+
+    it('should disable Discord connection button when connecting (opponent has Discord)', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+          isConnectingDiscord={true}
+        />
+      );
+
+      const connectButton = screen.getByText(/Connecting to Discord.../);
+      expect(connectButton).toBeDisabled();
+    });
+
+    it('should disable Discord connection button when connecting (normal mode)', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={false}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+          isConnectingDiscord={true}
+        />
+      );
+
+      const connectButton = screen.getByText(/Connecting to Discord.../);
+      expect(connectButton).toBeDisabled();
+    });
+  });
+
+  describe('Discord integration combinations', () => {
+    const mockOnConnectDiscord = vi.fn();
+
+    beforeEach(() => {
+      mockOnConnectDiscord.mockClear();
+    });
+
+    it('should handle both users without Discord in normal mode', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={false}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+        />
+      );
+
+      expect(screen.getByText(/Share Your Challenge/)).toBeInTheDocument();
+      expect(screen.getByText(/Connect to Discord to receive notifications automatically/)).toBeInTheDocument();
+    });
+
+    it('should handle user with Discord in normal mode', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={false}
+          userHasDiscord={true}
+        />
+      );
+
+      expect(screen.getByText(/Share Your Challenge/)).toBeInTheDocument();
+      expect(screen.queryByText(/Connect to Discord/)).not.toBeInTheDocument();
+    });
+
+    it('should handle opponent with Discord, user without Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentName="Alice"
+          opponentHasDiscord={true}
+          userHasDiscord={false}
+          onConnectDiscord={mockOnConnectDiscord}
+        />
+      );
+
+      expect(screen.getByText('Turn Complete!')).toBeInTheDocument();
+      expect(screen.getByText(/Notification automatically sent to/)).toBeInTheDocument();
+      expect(screen.getByText(/Connect to Discord if you want to receive notifications automatically/)).toBeInTheDocument();
+    });
+
+    it('should handle both users with Discord', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          userHasDiscord={true}
+        />
+      );
+
+      expect(screen.getByText('Turn Complete!')).toBeInTheDocument();
+      expect(screen.queryByText(/Connect to Discord/)).not.toBeInTheDocument();
+    });
+  });
 });

@@ -305,6 +305,22 @@
   transform: translateY(-1px);
 }
 
+.discordConnectButton:disabled {
+  background-color: #7289DA;
+  cursor: wait;
+  opacity: 0.8;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Stats Section */
 .stats {
   background-color: var(--bg-primary);
