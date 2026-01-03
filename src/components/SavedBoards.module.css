@@ -472,10 +472,38 @@
   margin-bottom: 1rem;
 }
 
+.roundHistoryTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .roundHistoryTitle {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1a1a1a;
+}
+
+.helpIconButton {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #6b7280;
+  background-color: white;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.helpIconButton:hover {
+  color: #4a90e2;
+  border-color: #4a90e2;
+  background-color: #eff6ff;
 }
 
 .toggleHistoryButton {
@@ -672,4 +700,114 @@
   color: #1a1a1a;
   border-color: #9ca3af;
   background-color: #f3f4f6;
+}
+
+/* Help Modal - matches HelpModal.module.css */
+.helpModalContent {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.helpModalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+  padding-right: 2rem;
+}
+
+.helpModalBody {
+  color: #374151;
+  line-height: 1.6;
+}
+
+.helpModalParagraph {
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+}
+
+.helpModalSection {
+  margin-bottom: 1.5rem;
+}
+
+.helpModalSectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.75rem 0;
+}
+
+.helpModalList {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.helpModalList li {
+  margin-bottom: 0.5rem;
+}
+
+.helpModalList li:last-child {
+  margin-bottom: 0;
+}
+
+.helpModalExample {
+  margin: 0;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+  font-style: italic;
+}
+
+.helpModalInfoBox {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #dbeafe;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  color: #1e40af;
+}
+
+.helpModalButton {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.helpModalButton:hover {
+  background-color: #2563eb;
+}
+
+.helpModalButton:active {
+  background-color: #1d4ed8;
+}
+
+@media (max-width: 640px) {
+  .helpModalContent {
+    padding: 1.5rem;
+  }
+
+  .helpModalTitle {
+    font-size: 1.25rem;
+  }
+
+  .helpModalSectionTitle {
+    font-size: 1rem;
+  }
 }

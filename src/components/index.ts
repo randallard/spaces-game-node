@@ -70,3 +70,6 @@ export type { ChallengeReceivedModalProps } from './ChallengeReceivedModal';
 
 export { CompletedRoundModal } from './CompletedRoundModal';
 export type { CompletedRoundModalProps } from './CompletedRoundModal';
+
+export { ActiveGames } from './ActiveGames';
+export type { ActiveGamesProps } from './ActiveGames';

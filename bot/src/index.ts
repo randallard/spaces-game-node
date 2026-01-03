@@ -58,11 +58,22 @@ interface ChallengeSentNotification {
   boardSize: number;
 }
 
-type NotificationData = TurnReadyNotification | GameCompleteNotification | ChallengeSentNotification;
+interface RoundCompleteNotification {
+  type: 'round-complete';
+  playerName: string;
+  round: number;
+  gameUrl: string;
+  result: 'win' | 'loss' | 'tie';
+  playerScore: number;
+  opponentScore: number;
+  boardSize?: number;
+}
+
+type NotificationData = TurnReadyNotification | GameCompleteNotification | ChallengeSentNotification | RoundCompleteNotification;
 
 interface NotificationRequest {
   discordId: string;
-  eventType: 'turn-ready' | 'game-complete' | 'challenge-sent';
+  eventType: 'turn-ready' | 'game-complete' | 'challenge-sent' | 'round-complete';
   gameData: NotificationData;
 }
 
@@ -86,6 +97,16 @@ function formatNotificationMessage(data: NotificationData): string {
     case 'challenge-sent':
       return `⚔️ **New Challenge!**\n\n` +
         `${data.playerName} has challenged you to a ${data.boardSize}×${data.boardSize} game!\n\n` +
+        `${data.gameUrl}`;
+
+    case 'round-complete':
+      const roundResultEmoji = data.result === 'win' ? '🎉' : data.result === 'loss' ? '😢' : '🤝';
+      const roundResultText = data.result === 'win' ? 'You won!' : data.result === 'loss' ? 'You lost' : "It's a tie!";
+      return `${roundResultEmoji} **Round ${data.round} Complete!**\n\n` +
+        `${data.playerName} has finished their turn.\n` +
+        `${roundResultText}\n` +
+        `Current Score: ${data.playerScore} - ${data.opponentScore}\n\n` +
+        `Review the round and play your next move:\n` +
         `${data.gameUrl}`;
 
     default:

@@ -10,7 +10,7 @@ import { BoardCreatorModal } from './BoardCreatorModal';
 import { useBoardThumbnail } from '@/hooks/useBoardThumbnail';
 import { getFeatureUnlocks } from '@/utils/feature-unlocks';
 import { RoundResults } from './RoundResults';
-import { generateBoardThumbnail } from '@/utils/svg-thumbnail';
+import { generateBoardThumbnail, generateOpponentThumbnail } from '@/utils/svg-thumbnail';
 import styles from './SavedBoards.module.css';
 
 export interface SavedBoardsProps {
@@ -148,6 +148,7 @@ export function SavedBoards({
   const [customError, setCustomError] = useState<string>('');
   const [selectedHistoryRound, setSelectedHistoryRound] = useState<number | null>(null);
   const [showRoundHistory, setShowRoundHistory] = useState<boolean>(false);
+  const [showRotationHelp, setShowRotationHelp] = useState<boolean>(false);
 
   // Handle initial board size if provided (use useEffect to avoid setState during render)
   useEffect(() => {
@@ -400,9 +401,21 @@ export function SavedBoards({
       {!isManagementMode && roundHistory.length > 0 && (
         <div className={styles.roundHistorySection}>
           <div className={styles.roundHistoryHeader}>
-            <h3 className={styles.roundHistoryTitle}>
-              Previous Rounds ({roundHistory.length})
-            </h3>
+            <div className={styles.roundHistoryTitleGroup}>
+              <h3 className={styles.roundHistoryTitle}>
+                Previous Rounds ({roundHistory.length})
+              </h3>
+              <button
+                className={styles.helpIconButton}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowRotationHelp(true);
+                }}
+                title="About opponent board displays"
+              >
+                ?
+              </button>
+            </div>
             <button
               className={styles.toggleHistoryButton}
               onClick={() => setShowRoundHistory(!showRoundHistory)}
@@ -434,7 +447,11 @@ export function SavedBoards({
                       : styles.historyCardTie;
 
                   const playerThumb = generateBoardThumbnail(result.playerBoard);
-                  const opponentThumb = generateBoardThumbnail(result.opponentBoard);
+                  const opponentThumb = generateOpponentThumbnail(
+                    result.opponentBoard,
+                    result.simulationDetails?.opponentLastStep,
+                    result.simulationDetails?.playerTrapPosition // Only show trap at position player hit
+                  );
 
                   return (
                     <button
@@ -481,6 +498,56 @@ export function SavedBoards({
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Help Modal */}
+      {showRotationHelp && (
+        <div className={styles.modalOverlay} onClick={() => setShowRotationHelp(false)}>
+          <div className={styles.helpModalContent} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={styles.closeButton}
+              onClick={() => setShowRotationHelp(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <h2 className={styles.helpModalTitle}>Why Are Some Opponent Moves Hidden?</h2>
+            <div className={styles.helpModalBody}>
+              <p className={styles.helpModalParagraph}>
+                You can only see the moves your opponent <strong>actually made</strong> during the round.
+              </p>
+
+              <div className={styles.helpModalSection}>
+                <h3 className={styles.helpModalSectionTitle}>Rounds End When:</h3>
+                <ul className={styles.helpModalList}>
+                  <li>A player reaches the goal</li>
+                  <li>A player hits a trap</li>
+                  <li>Players collide</li>
+                  <li>Both players complete their sequences</li>
+                </ul>
+              </div>
+
+              <div className={styles.helpModalSection}>
+                <h3 className={styles.helpModalSectionTitle}>Example:</h3>
+                <p className={styles.helpModalExample}>
+                  If your opponent planned 5 moves but you reached the goal after move 2,
+                  you'll only see their first 2 moves. Their remaining 3 moves stay hidden!
+                </p>
+              </div>
+
+              <div className={styles.helpModalInfoBox}>
+                <strong>Strategic Note:</strong> This prevents you from gaining information
+                about boards your opponent created but didn't fully execute.
+              </div>
+            </div>
+            <button
+              className={styles.helpModalButton}
+              onClick={() => setShowRotationHelp(false)}
+            >
+              Got It!
+            </button>
+          </div>
         </div>
       )}
 

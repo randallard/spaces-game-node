@@ -10,12 +10,15 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Type definitions for request body
 interface NotificationRequest {
   discordId: string;
-  eventType: 'turn-ready' | 'game-complete' | 'challenge-sent';
+  eventType: 'turn-ready' | 'game-complete' | 'challenge-sent' | 'round-complete';
   gameData: {
     round?: number;
     playerName: string;
     gameUrl: string;
     boardSize?: number;
+    result?: 'win' | 'loss' | 'tie';
+    playerScore?: number;
+    opponentScore?: number;
   };
 }
 
