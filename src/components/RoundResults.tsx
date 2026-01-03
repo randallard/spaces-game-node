@@ -36,6 +36,8 @@ export interface RoundResultsProps {
   onExplanationStyleChange?: ((value: 'lively' | 'technical') => void) | undefined;
   /** Optional flag to enable tutorial mode with instructions */
   isTutorial?: boolean;
+  /** Optional flag indicating if waiting for opponent to respond */
+  waitingForOpponentResponse?: boolean;
 }
 
 /**
@@ -62,6 +64,7 @@ export function RoundResults({
   explanationStyle = 'lively',
   onExplanationStyleChange,
   isTutorial = false,
+  waitingForOpponentResponse = false,
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard } = result;
 
@@ -647,6 +650,17 @@ export function RoundResults({
                 {continueButtonText}
               </button>
             </div>
+            {waitingForOpponentResponse && (
+              <div className={styles.waitingMessage}>
+                <p className={styles.waitingText}>
+                  <strong>Waiting for {opponentName}</strong>
+                </p>
+                <p className={styles.waitingSubtext}>
+                  The next round will be sent to you once {opponentName} completes this round.
+                  You'll receive a notification when it's your turn!
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

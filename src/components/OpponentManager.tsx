@@ -3,7 +3,7 @@
  * @module components/OpponentManager
  */
 
-import { useState, useCallback, type ReactElement } from 'react';
+import { useState, useCallback, useEffect, type ReactElement } from 'react';
 import { createCpuOpponent, createHumanOpponent, createRemoteCpuOpponent } from '@/utils/opponent-helpers';
 import type { Opponent } from '@/types';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
@@ -51,6 +51,22 @@ export function OpponentManager({
 
   const isDiscordConnected = !!(discordId && discordUsername);
 
+  // Restore form state after Discord OAuth redirect
+  useEffect(() => {
+    const savedFormJson = sessionStorage.getItem('discord-oauth-opponent-form');
+    if (savedFormJson) {
+      try {
+        const savedForm = JSON.parse(savedFormJson);
+        setSelectedType(savedForm.selectedType);
+        setOpponentName(savedForm.opponentName);
+        // Clear the saved form state
+        sessionStorage.removeItem('discord-oauth-opponent-form');
+      } catch (error) {
+        console.error('[OpponentManager] Failed to restore form state:', error);
+      }
+    }
+  }, []);
+
   /**
    * Handle CPU opponent selection
    */
@@ -84,9 +100,15 @@ export function OpponentManager({
     // Save that we're in opponent creation flow
     sessionStorage.setItem('discord-oauth-return', 'opponent-creation');
 
+    // Save the current form state so we can restore it after OAuth
+    sessionStorage.setItem('discord-oauth-opponent-form', JSON.stringify({
+      selectedType,
+      opponentName,
+    }));
+
     // Redirect to Discord OAuth
     window.location.href = getApiEndpoint('/api/auth/discord/authorize');
-  }, []);
+  }, [selectedType, opponentName]);
 
   /**
    * Handle human opponent name submission

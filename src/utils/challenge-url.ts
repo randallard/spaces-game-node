@@ -7,6 +7,7 @@
 import LZString from 'lz-string';
 import { encodeMinimalBoard, decodeMinimalBoard } from './board-encoding';
 import type { Board } from '../types/board';
+import type { RoundResult } from '../types/game-state';
 
 /**
  * Challenge data structure for URL encoding
@@ -32,10 +33,14 @@ export interface ChallengeData {
   opponentScore?: number;
   /** Is this a final results share (no board, just scores) */
   isFinalResults?: boolean;
+  /** Is this a round complete notification (both played, receiver should review) */
+  isRoundComplete?: boolean;
   /** Sender's Discord ID (optional, for notifications) */
   playerDiscordId?: string;
   /** Sender's Discord username (optional, for display) */
   playerDiscordUsername?: string;
+  /** Previous round result (optional, to help receiver catch up on missed rounds) */
+  previousRoundResult?: RoundResult;
 }
 
 /**
@@ -51,6 +56,7 @@ export interface ChallengeData {
  * @param opponentScore - Current opponent score (optional)
  * @param playerDiscordId - Sender's Discord ID (optional)
  * @param playerDiscordUsername - Sender's Discord username (optional)
+ * @param previousRoundResult - Previous round result (optional, for catching up)
  * @returns Full challenge URL
  */
 export function generateChallengeUrl(
@@ -63,7 +69,9 @@ export function generateChallengeUrl(
   playerScore?: number,
   opponentScore?: number,
   playerDiscordId?: string,
-  playerDiscordUsername?: string
+  playerDiscordUsername?: string,
+  previousRoundResult?: RoundResult,
+  isRoundComplete?: boolean
 ): string {
   // Encode the board using minimal encoding
   const encodedBoard = encodeMinimalBoard(board);
@@ -81,6 +89,8 @@ export function generateChallengeUrl(
     ...(opponentScore !== undefined && { opponentScore }),
     ...(playerDiscordId && { playerDiscordId }),
     ...(playerDiscordUsername && { playerDiscordUsername }),
+    ...(previousRoundResult && { previousRoundResult }),
+    ...(isRoundComplete && { isRoundComplete }),
   };
 
   // Serialize to compact JSON

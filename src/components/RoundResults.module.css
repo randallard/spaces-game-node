@@ -519,3 +519,40 @@
     max-width: 250px;
   }
 }
+
+/* Waiting for opponent message */
+.waitingMessage {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background-color: #eff6ff;
+  border: 2px solid #3b82f6;
+  border-radius: 0.75rem;
+  text-align: center;
+}
+
+.waitingText {
+  font-size: 1.125rem;
+  color: #1e40af;
+  margin: 0 0 0.5rem 0;
+}
+
+.waitingSubtext {
+  font-size: 0.9375rem;
+  color: #3b82f6;
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .waitingMessage {
+    padding: 1rem;
+  }
+
+  .waitingText {
+    font-size: 1rem;
+  }
+
+  .waitingSubtext {
+    font-size: 0.875rem;
+  }
+}
