@@ -32,6 +32,7 @@ const createMockGameState = (gameId: string): GameState => ({
   },
   opponent: createMockOpponent('Test'),
   gameId,
+  gameCreatorId: null,
   gameMode: 'round-by-round',
   boardSize: 2,
   currentRound: 1,
@@ -72,9 +73,17 @@ describe('ActiveGames', () => {
     mockOnResumeGame = vi.fn();
   });
 
+  const mockOnArchiveGame = vi.fn();
+  const mockOnDeleteGame = vi.fn();
+
   it('should return null when there are no active games', () => {
     const { container } = render(
-      <ActiveGames games={[]} onResumeGame={mockOnResumeGame} />
+      <ActiveGames
+        games={[]}
+        onResumeGame={mockOnResumeGame}
+        onArchiveGame={mockOnArchiveGame}
+        onDeleteGame={mockOnDeleteGame}
+      />
     );
     expect(container.firstChild).toBeNull();
   });
@@ -85,7 +94,7 @@ describe('ActiveGames', () => {
       createMockActiveGame('game-2', 'Bob'),
     ];
 
-    render(<ActiveGames games={games} onResumeGame={mockOnResumeGame} />);
+    render(<ActiveGames games={games} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     expect(screen.getByText('Active Games')).toBeInTheDocument();
     expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -95,7 +104,7 @@ describe('ActiveGames', () => {
   it('should display game info correctly', () => {
     const game = createMockActiveGame('game-1', 'Charlie', 3, 2, 1);
 
-    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} />);
+    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     expect(screen.getByText('Charlie')).toBeInTheDocument();
     expect(screen.getByText(/Round 3 of 5/)).toBeInTheDocument();
@@ -108,7 +117,7 @@ describe('ActiveGames', () => {
     game.totalRounds = 10;
     game.gameMode = 'deck';
 
-    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} />);
+    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     expect(screen.getByText(/Round 5 of 10/)).toBeInTheDocument();
   });
@@ -116,7 +125,7 @@ describe('ActiveGames', () => {
   it('should call onResumeGame when resume button is clicked', () => {
     const game = createMockActiveGame('game-1', 'Eve');
 
-    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} />);
+    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     const resumeButton = screen.getByText('Resume');
     fireEvent.click(resumeButton);
@@ -132,7 +141,7 @@ describe('ActiveGames', () => {
       createMockActiveGame('game-3', 'Henry', 1, 0, 1),
     ];
 
-    render(<ActiveGames games={games} onResumeGame={mockOnResumeGame} />);
+    render(<ActiveGames games={games} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     const resumeButtons = screen.getAllByText('Resume');
     expect(resumeButtons).toHaveLength(3);
@@ -149,7 +158,7 @@ describe('ActiveGames', () => {
     const game = createMockActiveGame('game-1', 'Ivy');
     game.phase = { type: 'waiting-for-opponent', round: 2 };
 
-    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} />);
+    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     expect(screen.getByText(/Waiting for opponent/)).toBeInTheDocument();
   });
@@ -158,7 +167,7 @@ describe('ActiveGames', () => {
     const game = createMockActiveGame('game-1', 'Jack');
     game.boardSize = null;
 
-    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} />);
+    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     expect(screen.getByText('Jack')).toBeInTheDocument();
     expect(screen.getByText(/Score: 0-0/)).toBeInTheDocument();
@@ -173,9 +182,62 @@ describe('ActiveGames', () => {
     const humanGame = createMockActiveGame('game-2', 'Alice');
     humanGame.opponent.type = 'human';
 
-    render(<ActiveGames games={[cpuGame, humanGame]} onResumeGame={mockOnResumeGame} />);
+    render(<ActiveGames games={[cpuGame, humanGame]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     expect(screen.getByText('CPU Sam')).toBeInTheDocument();
     expect(screen.getByText('Alice')).toBeInTheDocument();
+  });
+
+  it('should show notification badge when waiting for opponent to choose board', () => {
+    const game = createMockActiveGame('player-id', 'Ted');
+    game.fullState.user.id = 'player-id';
+    game.fullState.gameCreatorId = 'player-id'; // Player created game
+    game.fullState.opponent = { ...game.opponent, type: 'human' };
+    game.fullState.currentRound = 2; // Even round
+    game.fullState.opponentSelectedBoard = null;
+    game.phase = { type: 'waiting-for-opponent', round: 2 };
+    game.currentRound = 2;
+
+    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
+
+    // Should show the warning emoji notification badge
+    const badge = screen.getByTitle('Waiting for opponent to choose their board');
+    expect(badge).toBeInTheDocument();
+    expect(badge.textContent).toBe('⚠️');
+
+    // Should show the updated status text
+    expect(screen.getByText(/Waiting for opponent to choose board/)).toBeInTheDocument();
+  });
+
+  it('should not show notification badge when it is player turn to choose', () => {
+    const game = createMockActiveGame('player-id', 'Ted');
+    game.fullState.user.id = 'player-id';
+    game.fullState.gameCreatorId = 'player-id'; // Player created game
+    game.fullState.opponent = { ...game.opponent, type: 'human' };
+    game.fullState.currentRound = 1; // Odd round - player goes first
+    game.fullState.opponentSelectedBoard = null;
+    game.phase = { type: 'round-review', round: 1 };
+    game.currentRound = 1;
+
+    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
+
+    // Should not show the notification badge
+    expect(screen.queryByTitle('Waiting for opponent to choose their board')).not.toBeInTheDocument();
+  });
+
+  it('should not show notification badge for CPU opponents', () => {
+    const game = createMockActiveGame('player-id', 'CPU Sam');
+    game.fullState.user.id = 'player-id';
+    game.fullState.gameCreatorId = 'player-id';
+    game.fullState.opponent = { ...game.opponent, type: 'cpu' };
+    game.fullState.currentRound = 2;
+    game.fullState.opponentSelectedBoard = null;
+    game.phase = { type: 'waiting-for-opponent', round: 2 };
+    game.currentRound = 2;
+
+    render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
+
+    // Should not show the notification badge for CPU
+    expect(screen.queryByTitle('Waiting for opponent to choose their board')).not.toBeInTheDocument();
   });
 });

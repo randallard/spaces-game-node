@@ -20,6 +20,7 @@ export type ActiveGameInfo = {
   boardSize: number | null;
   gameMode: 'round-by-round' | 'deck' | null;
   lastUpdated: number; // timestamp
+  archived?: boolean; // If true, hidden from active games list until opponent makes a move
   // Store full state for restoration
   fullState: GameState;
 };
@@ -27,9 +28,9 @@ export type ActiveGameInfo = {
 const ACTIVE_GAMES_KEY = 'spaces-game-active-games';
 
 /**
- * Get all active games from localStorage
+ * Get all active games from localStorage (excluding archived by default)
  */
-export function getActiveGames(): ActiveGameInfo[] {
+export function getActiveGames(includeArchived = false): ActiveGameInfo[] {
   try {
     const stored = localStorage.getItem(ACTIVE_GAMES_KEY);
     if (!stored) return [];
@@ -39,9 +40,15 @@ export function getActiveGames(): ActiveGameInfo[] {
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const recentGames = games.filter(game => game.lastUpdated > sevenDaysAgo);
 
-    // If we filtered any out, update localStorage
+    // If we filtered out old games, update localStorage
     if (recentGames.length !== games.length) {
       localStorage.setItem(ACTIVE_GAMES_KEY, JSON.stringify(recentGames));
+    }
+
+    // Filter out archived games unless explicitly requested
+    // This is done after saving to localStorage so archived games are kept
+    if (!includeArchived) {
+      return recentGames.filter(game => !game.archived);
     }
 
     return recentGames;
@@ -66,12 +73,13 @@ export function saveActiveGame(state: GameState): void {
     return;
   }
 
-  // Don't save tutorial or setup phases
+  // Don't save tutorial, setup, or home phases
   if (state.phase.type === 'user-setup' ||
       state.phase.type === 'tutorial-intro' ||
       state.phase.type === 'tutorial-board-creation' ||
       state.phase.type === 'tutorial-results' ||
-      state.phase.type === 'tutorial-name-entry') {
+      state.phase.type === 'tutorial-name-entry' ||
+      state.phase.type === 'board-management') {
     return;
   }
 
@@ -127,9 +135,83 @@ export function clearActiveGames(): void {
 }
 
 /**
+ * Archive a game (keep in localStorage but hide from active list)
+ */
+export function archiveActiveGame(gameId: string): void {
+  try {
+    const games = getActiveGames(true); // Include archived to find the game
+    const gameIndex = games.findIndex(g => g.gameId === gameId);
+
+    if (gameIndex !== -1 && games[gameIndex]) {
+      games[gameIndex]!.archived = true;
+      localStorage.setItem(ACTIVE_GAMES_KEY, JSON.stringify(games));
+    }
+  } catch (error) {
+    console.error('[ActiveGames] Error archiving active game:', error);
+  }
+}
+
+/**
+ * Unarchive a game (when opponent makes a move)
+ */
+export function unarchiveActiveGame(gameId: string): void {
+  try {
+    const games = getActiveGames(true); // Include archived to find the game
+    const gameIndex = games.findIndex(g => g.gameId === gameId);
+
+    if (gameIndex !== -1 && games[gameIndex]) {
+      games[gameIndex]!.archived = false;
+      localStorage.setItem(ACTIVE_GAMES_KEY, JSON.stringify(games));
+    }
+  } catch (error) {
+    console.error('[ActiveGames] Error unarchiving active game:', error);
+  }
+}
+
+/**
+ * Determine if the player is waiting for opponent to choose their board first
+ * Based on the alternating board selection pattern:
+ * - Round 1: Game creator goes first
+ * - Odd rounds (1, 3, 5): Game creator goes first
+ * - Even rounds (2, 4, 6): Opponent goes first
+ */
+export function isWaitingForOpponentBoard(game: ActiveGameInfo): boolean {
+  const { fullState, phase } = game;
+
+  // Only relevant for human opponents
+  if (fullState.opponent?.type !== 'human') {
+    return false;
+  }
+
+  // Check if we're in a waiting or review phase after completing our round
+  const isWaitingPhase = phase.type === 'waiting-for-opponent' ||
+                         phase.type === 'round-review' ||
+                         phase.type === 'all-rounds-results';
+
+  if (!isWaitingPhase) {
+    return false;
+  }
+
+  // Determine who went first in round 1 (game creator)
+  const playerWentFirstRound1 = fullState.gameCreatorId === fullState.user.id;
+
+  // Calculate if it's player's turn to go first this round
+  const isOddRound = fullState.currentRound % 2 === 1;
+  const isPlayerTurnToGoFirst = isOddRound === playerWentFirstRound1;
+
+  // If it's opponent's turn to go first and they haven't selected their board yet
+  return !isPlayerTurnToGoFirst && !fullState.opponentSelectedBoard;
+}
+
+/**
  * Determine what phase description to show for a game
  */
-export function getPhaseDescription(phase: GamePhase): string {
+export function getPhaseDescription(phase: GamePhase, game?: ActiveGameInfo): string {
+  // Check if we're waiting for opponent to choose their board first
+  if (game && isWaitingForOpponentBoard(game)) {
+    return 'Waiting for opponent to choose board';
+  }
+
   switch (phase.type) {
     case 'board-selection':
       return 'Selecting board';

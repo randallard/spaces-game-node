@@ -13,6 +13,7 @@ export const OpponentSchema = z.object({
   wins: z.number().int().min(0),
   losses: z.number().int().min(0),
   hasCompletedGame: z.boolean().optional(),
+  archived: z.boolean().optional(), // If true, hidden from opponents list
 
   // Discord integration
   discordId: z.string().optional(),

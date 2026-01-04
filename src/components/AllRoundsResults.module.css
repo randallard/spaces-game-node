@@ -534,3 +534,56 @@
     margin: 0 auto;
   }
 }
+
+/* Waiting for Opponent Message */
+.waitingMessage {
+  margin: 2rem auto;
+  padding: 1.5rem;
+  max-width: 600px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border-radius: 12px;
+  color: white;
+  text-align: center;
+}
+
+.waitingIcon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.waitingTitle {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.waitingText {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.waitingText strong {
+  font-weight: 700;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .waitingMessage {
+    margin: 1.5rem 1rem;
+    padding: 1.25rem;
+  }
+
+  .waitingIcon {
+    font-size: 2.5rem;
+  }
+
+  .waitingTitle {
+    font-size: 1.25rem;
+  }
+
+  .waitingText {
+    font-size: 0.9375rem;
+  }
+}

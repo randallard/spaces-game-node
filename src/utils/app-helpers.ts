@@ -100,6 +100,7 @@ export function createInitialState(user: UserProfile | null): GameState {
     user: user || createEmptyUser(),
     opponent: null,
     gameId: null,
+    gameCreatorId: null,
     gameMode: null,
     boardSize: null,
     currentRound: 1,

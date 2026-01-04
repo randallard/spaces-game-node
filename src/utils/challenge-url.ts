@@ -27,6 +27,8 @@ export interface ChallengeData {
   playerId: string;
   /** Sender's player name */
   playerName: string;
+  /** Game creator's player ID (who sent round 1 challenge) */
+  gameCreatorId?: string;
   /** Player's current score (optional, for tracking through rounds) */
   playerScore?: number;
   /** Opponent's current score (optional, for tracking through rounds) */
@@ -71,10 +73,14 @@ export function generateChallengeUrl(
   playerDiscordId?: string,
   playerDiscordUsername?: string,
   previousRoundResult?: RoundResult,
-  isRoundComplete?: boolean
+  isRoundComplete?: boolean,
+  gameCreatorId?: string
 ): string {
   // Encode the board using minimal encoding
   const encodedBoard = encodeMinimalBoard(board);
+
+  // For round 1, the sender is the game creator
+  const creatorId = gameCreatorId || (round === 1 ? playerId : undefined);
 
   // Create challenge data in compact format
   const challengeData: ChallengeData = {
@@ -85,6 +91,7 @@ export function generateChallengeUrl(
     gameId,
     playerId,
     playerName,
+    ...(creatorId && { gameCreatorId: creatorId }),
     ...(playerScore !== undefined && { playerScore }),
     ...(opponentScore !== undefined && { opponentScore }),
     ...(playerDiscordId && { playerDiscordId }),

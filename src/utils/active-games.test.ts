@@ -8,7 +8,10 @@ import {
   saveActiveGame,
   removeActiveGame,
   clearActiveGames,
+  archiveActiveGame,
+  unarchiveActiveGame,
   getPhaseDescription,
+  isWaitingForOpponentBoard,
   type ActiveGameInfo,
 } from './active-games';
 import type { GameState } from '@/types/game-state';
@@ -44,6 +47,7 @@ describe('active-games utilities', () => {
     },
     opponent: createMockOpponent(),
     gameId,
+    gameCreatorId: 'test-user',
     gameMode: 'round-by-round',
     boardSize: 2,
     currentRound: 1,
@@ -172,6 +176,14 @@ describe('active-games utilities', () => {
       expect(games).toHaveLength(0);
     });
 
+    it('should not save board-management phase', () => {
+      const state = createMockGameState('game-1', { type: 'board-management' });
+      saveActiveGame(state);
+
+      const games = getActiveGames();
+      expect(games).toHaveLength(0);
+    });
+
     it('should remove game when phase is game-over', () => {
       const state = createMockGameState('game-1');
       saveActiveGame(state);
@@ -248,6 +260,65 @@ describe('active-games utilities', () => {
     });
   });
 
+  describe('archiveActiveGame', () => {
+    it('should archive a game and hide it from active games list', () => {
+      const state1 = createMockGameState('game-1');
+      const state2 = createMockGameState('game-2');
+      saveActiveGame(state1);
+      saveActiveGame(state2);
+
+      expect(getActiveGames()).toHaveLength(2);
+
+      archiveActiveGame('game-1');
+
+      const games = getActiveGames();
+      expect(games).toHaveLength(1);
+      expect(games[0]?.gameId).toBe('game-2');
+    });
+
+    it('should keep archived game in storage when including archived', () => {
+      const state = createMockGameState('game-1');
+      saveActiveGame(state);
+
+      archiveActiveGame('game-1');
+
+      expect(getActiveGames(false)).toHaveLength(0);
+      expect(getActiveGames(true)).toHaveLength(1);
+      expect(getActiveGames(true)[0]?.archived).toBe(true);
+    });
+
+    it('should do nothing if game does not exist', () => {
+      const state = createMockGameState('game-1');
+      saveActiveGame(state);
+
+      archiveActiveGame('nonexistent-game');
+
+      expect(getActiveGames()).toHaveLength(1);
+    });
+  });
+
+  describe('unarchiveActiveGame', () => {
+    it('should unarchive a game and show it in active games list', () => {
+      const state = createMockGameState('game-1');
+      saveActiveGame(state);
+      archiveActiveGame('game-1');
+
+      expect(getActiveGames()).toHaveLength(0);
+
+      unarchiveActiveGame('game-1');
+
+      const games = getActiveGames();
+      expect(games).toHaveLength(1);
+      expect(games[0]?.archived).toBe(false);
+    });
+
+    it('should do nothing if game does not exist', () => {
+      unarchiveActiveGame('nonexistent-game');
+
+      expect(getActiveGames()).toHaveLength(0);
+    });
+  });
+
   describe('getPhaseDescription', () => {
     it('should return correct descriptions for each phase', () => {
       expect(getPhaseDescription({ type: 'board-selection', round: 1 })).toBe('Selecting board');
@@ -259,6 +330,138 @@ describe('active-games utilities', () => {
       expect(getPhaseDescription({ type: 'all-rounds-results', results: [] })).toBe('Viewing all results');
       expect(getPhaseDescription({ type: 'share-final-results' })).toBe('Share results');
       expect(getPhaseDescription({ type: 'board-management' })).toBe('In progress');
+    });
+
+    it('should show waiting for opponent board message when applicable', () => {
+      const state = createMockGameState('test-user', { type: 'round-review', round: 2 });
+      state.opponent = { ...createMockOpponent(), type: 'human' };
+      state.currentRound = 2;
+      state.opponentSelectedBoard = null;
+
+      saveActiveGame(state);
+      const games = getActiveGames();
+      const game = games[0];
+
+      // Round 2, even round, opponent should go first (player created game so player went first in round 1)
+      expect(getPhaseDescription(game!.phase, game)).toBe('Waiting for opponent to choose board');
+    });
+
+    it('should not show waiting message when it is player turn', () => {
+      const state = createMockGameState('test-user', { type: 'round-review', round: 1 });
+      state.opponent = { ...createMockOpponent(), type: 'human' };
+      state.currentRound = 1;
+      state.opponentSelectedBoard = null;
+
+      saveActiveGame(state);
+      const games = getActiveGames();
+      const game = games[0];
+
+      // Round 1, player created game so player goes first
+      expect(getPhaseDescription(game!.phase, game)).toBe('Reviewing rounds');
+    });
+  });
+
+  describe('isWaitingForOpponentBoard', () => {
+    it('should return true when waiting for opponent to choose board in even round (player created game)', () => {
+      const state = createMockGameState('player-id', { type: 'waiting-for-opponent', round: 2 });
+      state.user.id = 'player-id';
+      state.gameCreatorId = 'player-id'; // Player created the game
+      state.opponent = { ...createMockOpponent(), type: 'human' };
+      state.currentRound = 2;
+      state.opponentSelectedBoard = null;
+
+      saveActiveGame(state);
+      const games = getActiveGames();
+      const game = games[0]!;
+
+      // Even round, opponent goes first
+      expect(isWaitingForOpponentBoard(game)).toBe(true);
+    });
+
+    it('should return false when waiting for opponent in odd round (player created game)', () => {
+      const state = createMockGameState('player-id', { type: 'waiting-for-opponent', round: 1 });
+      state.user.id = 'player-id';
+      state.gameCreatorId = 'player-id'; // Player created the game
+      state.opponent = { ...createMockOpponent(), type: 'human' };
+      state.currentRound = 1;
+      state.opponentSelectedBoard = null;
+
+      saveActiveGame(state);
+      const games = getActiveGames();
+      const game = games[0]!;
+
+      // Odd round, player goes first
+      expect(isWaitingForOpponentBoard(game)).toBe(false);
+    });
+
+    it('should return true when waiting for opponent in odd round (opponent created game)', () => {
+      const state = createMockGameState('opponent-id', { type: 'round-review', round: 3 });
+      state.user.id = 'player-id';
+      state.gameCreatorId = 'opponent-id'; // Opponent created the game
+      state.opponent = { ...createMockOpponent(), type: 'human' };
+      state.currentRound = 3;
+      state.opponentSelectedBoard = null;
+
+      saveActiveGame(state);
+      const games = getActiveGames();
+      const game = games[0]!;
+
+      // Odd round, but opponent created game so opponent goes first
+      expect(isWaitingForOpponentBoard(game)).toBe(true);
+    });
+
+    it('should return false when opponent has already selected board', () => {
+      const state = createMockGameState('player-id', { type: 'waiting-for-opponent', round: 2 });
+      state.user.id = 'player-id';
+      state.gameCreatorId = 'player-id';
+      state.opponent = { ...createMockOpponent(), type: 'human' };
+      state.currentRound = 2;
+      // Create a mock board instead of true
+      state.opponentSelectedBoard = {
+        id: 'board-1',
+        name: 'Test Board',
+        grid: [['empty', 'empty'], ['empty', 'empty']],
+        boardSize: 2,
+        createdAt: Date.now(),
+        sequence: [],
+        thumbnail: 'data:image/svg+xml,',
+      };
+
+      saveActiveGame(state);
+      const games = getActiveGames();
+      const game = games[0]!;
+
+      expect(isWaitingForOpponentBoard(game)).toBe(false);
+    });
+
+    it('should return false for CPU opponents', () => {
+      const state = createMockGameState('player-id', { type: 'waiting-for-opponent', round: 2 });
+      state.user.id = 'player-id';
+      state.gameCreatorId = 'player-id';
+      state.opponent = { ...createMockOpponent(), type: 'cpu' };
+      state.currentRound = 2;
+      state.opponentSelectedBoard = null;
+
+      saveActiveGame(state);
+      const games = getActiveGames();
+      const game = games[0]!;
+
+      expect(isWaitingForOpponentBoard(game)).toBe(false);
+    });
+
+    it('should return false when not in a waiting phase', () => {
+      const state = createMockGameState('player-id', { type: 'board-selection', round: 2 });
+      state.user.id = 'player-id';
+      state.gameCreatorId = 'player-id';
+      state.opponent = { ...createMockOpponent(), type: 'human' };
+      state.currentRound = 2;
+      state.opponentSelectedBoard = null;
+
+      saveActiveGame(state);
+      const games = getActiveGames();
+      const game = games[0]!;
+
+      expect(isWaitingForOpponentBoard(game)).toBe(false);
     });
   });
 });

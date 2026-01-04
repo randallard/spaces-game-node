@@ -1,0 +1,182 @@
+/* Remove Game Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* Modal Container */
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Title */
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Game Info */
+.gameInfo {
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.opponentName {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1.125rem;
+  margin-bottom: 0.25rem;
+}
+
+.gameStatus {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Options Container */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Individual Option */
+.option {
+  padding: 1.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.option:hover {
+  border-color: #3b82f6;
+}
+
+.optionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.optionDescription {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+}
+
+/* Archive Button */
+.archiveButton {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background-color: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.archiveButton:hover {
+  background-color: #d97706;
+}
+
+.archiveButton:active {
+  background-color: #b45309;
+}
+
+/* Delete Button */
+.deleteButton {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteButton:hover {
+  background-color: #dc2626;
+}
+
+.deleteButton:active {
+  background-color: #b91c1c;
+}
+
+/* Cancel Button */
+.cancelButton {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelButton:hover {
+  background-color: #4b5563;
+}
+
+.cancelButton:active {
+  background-color: #374151;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .modalContent {
+    padding: 1.5rem;
+  }
+
+  .modalTitle {
+    font-size: 1.25rem;
+  }
+
+  .options {
+    gap: 1rem;
+  }
+
+  .option {
+    padding: 1rem;
+  }
+
+  .optionTitle {
+    font-size: 1rem;
+  }
+
+  .optionDescription {
+    font-size: 0.875rem;
+  }
+}
