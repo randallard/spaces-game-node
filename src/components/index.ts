@@ -73,3 +73,12 @@ export type { CompletedRoundModalProps } from './CompletedRoundModal';
 
 export { ActiveGames } from './ActiveGames';
 export type { ActiveGamesProps } from './ActiveGames';
+
+export { RemoveGameModal } from './RemoveGameModal';
+export type { RemoveGameModalProps } from './RemoveGameModal';
+
+export { RemoveOpponentModal } from './RemoveOpponentModal';
+export type { RemoveOpponentModalProps } from './RemoveOpponentModal';
+
+export { WaitingForOpponent } from './WaitingForOpponent';
+export type { WaitingForOpponentProps } from './WaitingForOpponent';

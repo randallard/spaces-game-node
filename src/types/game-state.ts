@@ -80,6 +80,9 @@ export type GameState = {
   // Game session ID (generated when starting a game with human opponent)
   gameId: string | null; // null until game starts
 
+  // Game creator ID (user ID of whoever sent round 1 challenge)
+  gameCreatorId: string | null; // null until game starts, determines who goes first in odd rounds
+
   // Game mode
   gameMode: GameMode | null; // null until selected
 

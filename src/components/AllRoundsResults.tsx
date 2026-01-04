@@ -49,6 +49,10 @@ export interface AllRoundsResultsProps {
   onConnectDiscord?: () => void;
   /** Whether Discord connection is in progress */
   isConnectingDiscord?: boolean;
+  /** Whether we're waiting for opponent to select their next board */
+  waitingForOpponentBoard?: boolean;
+  /** The round number we're waiting for */
+  nextRound?: number;
 }
 
 /**
@@ -81,6 +85,8 @@ export function AllRoundsResults({
   userHasDiscord = false,
   onConnectDiscord,
   isConnectingDiscord = false,
+  waitingForOpponentBoard = false,
+  nextRound,
 }: AllRoundsResultsProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -400,12 +406,30 @@ export function AllRoundsResults({
         </div>
       )}
 
+      {/* Waiting for Opponent Message */}
+      {waitingForOpponentBoard && nextRound && (
+        <div className={styles.waitingMessage}>
+          <div className={styles.waitingIcon}>⏳</div>
+          <h3 className={styles.waitingTitle}>Next Up: Round {nextRound}</h3>
+          <p className={styles.waitingText}>
+            {opponentName} still needs to select their board for round {nextRound}.
+            {opponentHasDiscord && opponentDiscordUsername ? (
+              <> You'll receive a Discord notification (<strong>{opponentDiscordUsername}</strong>) after they select their board.</>
+            ) : (
+              <> After they select their board, they'll share the game link with you!</>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* Actions */}
-      <div className={styles.actions}>
-        <button onClick={onPlayAgain} className={styles.playAgainButton}>
-          {continueButtonText || 'Play Again'}
-        </button>
-      </div>
+      {!waitingForOpponentBoard && (
+        <div className={styles.actions}>
+          <button onClick={onPlayAgain} className={styles.playAgainButton}>
+            {continueButtonText || 'Play Again'}
+          </button>
+        </div>
+      )}
 
       {/* Help Modal */}
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />

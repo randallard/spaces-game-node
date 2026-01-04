@@ -57,6 +57,7 @@ const initialState: GameState = {
   user: mockUser,
   opponent: null,
   gameId: null,
+        gameCreatorId: null,
   gameMode: null,
   boardSize: null,
   currentRound: 1,
@@ -229,7 +230,7 @@ describe('useGameState', () => {
   });
 
   describe('advanceToNextRound', () => {
-    it('should advance to round 2', () => {
+    it('should advance to round 2 with board-selection phase when no round history', () => {
       const { result } = renderHook(() => useGameState(initialState));
 
       act(() => {
@@ -239,6 +240,42 @@ describe('useGameState', () => {
       expect(result.current.state.currentRound).toBe(2);
       expect(result.current.state.phase).toEqual({
         type: 'board-selection',
+        round: 2,
+      });
+      expect(result.current.state.playerSelectedBoard).toBeNull();
+      expect(result.current.state.opponentSelectedBoard).toBeNull();
+    });
+
+    it('should advance to round-review phase when round history exists', () => {
+      const mockRoundResult: RoundResult = {
+        round: 1,
+        winner: 'player',
+        playerBoard: mockBoard,
+        opponentBoard: mockBoard,
+        playerFinalPosition: { row: 0, col: 0 },
+        opponentFinalPosition: { row: 1, col: 1 },
+        playerOutcome: 'won',
+        playerPoints: 1,
+        opponentPoints: 0,
+      };
+
+      const stateWithHistory: GameState = {
+        ...initialState,
+        currentRound: 1,
+        roundHistory: [mockRoundResult],
+        playerScore: 1,
+        opponentScore: 0,
+      };
+
+      const { result } = renderHook(() => useGameState(stateWithHistory));
+
+      act(() => {
+        result.current.advanceToNextRound();
+      });
+
+      expect(result.current.state.currentRound).toBe(2);
+      expect(result.current.state.phase).toEqual({
+        type: 'round-review',
         round: 2,
       });
       expect(result.current.state.playerSelectedBoard).toBeNull();
@@ -420,6 +457,7 @@ describe('useGameState', () => {
         user: mockUser,
         opponent: mockHumanOpponent,
         gameId: null,
+        gameCreatorId: null,
         gameMode: null,
         boardSize: null,
         currentRound: 8,

@@ -249,10 +249,13 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
       }
 
       // Continue to next round
+      // If there's round history, show review panel first
+      const phaseType = prev.roundHistory.length > 0 ? 'round-review' : 'board-selection';
+
       return {
         ...prev,
         currentRound: nextRound,
-        phase: { type: 'board-selection', round: nextRound },
+        phase: { type: phaseType, round: nextRound },
         playerSelectedBoard: null,
         opponentSelectedBoard: null,
         checksum: '', // Checksum managed externally
@@ -295,6 +298,7 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
       user: prev.user, // Preserve user profile
       opponent: null,
       gameId: null,
+      gameCreatorId: null,
       gameMode: null,
       boardSize: null,
       currentRound: 1,
