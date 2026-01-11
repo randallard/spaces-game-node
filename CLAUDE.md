@@ -2,3 +2,4 @@
 - make sure all new code has good test coverage
 - do not push until I've verified locally
 - never hardcode endpoints - always set up to be configurable in environment or config files
+- always let me know if I need to restart the dev server or need to start with fresh local storage or just need to start with a fresh game

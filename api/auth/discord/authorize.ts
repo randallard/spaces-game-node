@@ -7,6 +7,10 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Timestamped logging helper
+const log = (message: string, ...args: any[]) => console.log(`[${new Date().toISOString()}] ${message}`, ...args);
+const logError = (message: string, ...args: any[]) => console.error(`[${new Date().toISOString()}] ${message}`, ...args);
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -20,15 +24,10 @@ export default async function handler(
     const clientId = process.env.DISCORD_CLIENT_ID;
     const redirectUri = process.env.DISCORD_REDIRECT_URI;
 
-    console.log('[Discord Auth] Environment check:', {
-      hasClientId: !!clientId,
-      hasRedirectUri: !!redirectUri,
-      clientId: clientId?.substring(0, 10) + '...',
-      allEnvKeys: Object.keys(process.env).filter(k => k.includes('DISCORD')),
-    });
+    log(`[Discord Auth] Environment check: hasClientId=${!!clientId}, hasRedirectUri=${!!redirectUri}, clientId=${clientId?.substring(0, 10) + '...'}`);
 
     if (!clientId || !redirectUri) {
-      console.error('[Discord Auth] Missing environment variables');
+      logError('[Discord Auth] Missing environment variables');
       return res.status(500).json({
         error: 'Server configuration error',
         debug: {
@@ -45,13 +44,13 @@ export default async function handler(
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('scope', 'identify'); // Only need to identify the user
 
-    console.log('[Discord Auth] Redirecting to Discord OAuth:', authUrl.toString().substring(0, 80) + '...');
+    log(`[Discord Auth] Redirecting to Discord OAuth: ${authUrl.toString().substring(0, 80) + '...'}`);
 
     // Redirect user to Discord
     return res.redirect(authUrl.toString());
 
   } catch (error) {
-    console.error('[Discord Auth] Error:', error);
+    logError('[Discord Auth] Error:', error);
     return res.status(500).json({ error: 'Failed to generate authorization URL' });
   }
 }

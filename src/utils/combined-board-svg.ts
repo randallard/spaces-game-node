@@ -52,33 +52,67 @@ function buildGridData(
   }
 
   // Process player sequence (up to playerMaxStep if provided)
+  // Note: Traps are always shown (they're part of board design), only pieces are limited by maxStep
+  console.log('[buildGridData] Processing player sequence, playerMaxStep:', playerMaxStep);
   playerBoard.sequence.forEach((move, step) => {
-    if (playerMaxStep !== undefined && step > playerMaxStep) return; // Skip steps beyond playerMaxStep
-    if (move.type === 'final') return; // Skip final moves
+    console.log(`[buildGridData] Player step ${step}: type=${move.type}, pos=(${move.position.row},${move.position.col}), playerMaxStep=${playerMaxStep}`);
+    if (move.type === 'final') {
+      console.log(`[buildGridData] Skipping player step ${step} because it's a final move`);
+      return; // Skip final moves
+    }
 
     const { row, col } = move.position;
     if (row >= 0 && row < size && col >= 0 && col < size) {
       const square = grid[row]![col]!;
 
       if (move.type === 'piece') {
+        // Only show pieces up to playerMaxStep
+        if (playerMaxStep !== undefined && step > playerMaxStep) {
+          console.log(`[buildGridData] Skipping player piece at step ${step} because step > playerMaxStep`);
+          return;
+        }
+        console.log(`[buildGridData] Adding player piece at (${row},${col}), step ${step}`);
         square.playerVisits.push(step);
       } else if (move.type === 'trap') {
+        // Always show traps (they're part of board design)
+        console.log(`[buildGridData] Adding player trap at (${row},${col}), step ${step}`);
         square.playerTrapStep = step;
       }
     }
   });
 
   // Process opponent sequence (rotated, up to opponentMaxStep if provided)
-  // Only show opponent trap if player actually hit it at that specific position
+  // Note: Opponent traps are only shown if player hit one (we don't reveal unsprung traps)
+  // But pieces are limited by opponentMaxStep
   const playerTrapPosition = result.simulationDetails?.playerTrapPosition;
+  const playerHitTrap = result.simulationDetails?.playerHitTrap;
 
   console.log('[buildGridData] Processing opponent sequence, opponentMaxStep:', opponentMaxStep);
+  console.log('[buildGridData] playerTrapPosition:', playerTrapPosition);
+  console.log('[buildGridData] playerHitTrap:', playerHitTrap);
+  console.log('[buildGridData] Opponent board name:', opponentBoard.name);
+  console.log('[buildGridData] Full opponent sequence:');
+  opponentBoard.sequence.forEach((move, i) => {
+    console.log(`  Step ${i}: type=${move.type}, pos=(${move.position.row},${move.position.col})`);
+  });
+  console.log('[buildGridData] Opponent board grid (ALL cells):');
+  opponentBoard.grid.forEach((row, r) => {
+    row.forEach((cell, c) => {
+      const rotated = rotatePosition(r, c, size);
+      console.log(`  Grid cell ORIGINAL(${r},${c}) = "${cell}", ROTATED to (${rotated.row},${rotated.col})`);
+
+      // Show traps from the grid if player hit one there
+      if (cell === 'trap' && playerTrapPosition &&
+          playerTrapPosition.row === rotated.row &&
+          playerTrapPosition.col === rotated.col) {
+        console.log(`  [MATCH] Grid trap at ROTATED(${rotated.row},${rotated.col}) matches playerTrapPosition!`);
+        const square = grid[rotated.row]![rotated.col]!;
+        square.opponentTrapStep = -1; // Use -1 to indicate it's a static grid trap
+      }
+    });
+  });
   opponentBoard.sequence.forEach((move, step) => {
     console.log(`[buildGridData] Opponent step ${step}: type=${move.type}, pos=(${move.position.row},${move.position.col}), opponentMaxStep=${opponentMaxStep}`);
-    if (opponentMaxStep !== undefined && step > opponentMaxStep) {
-      console.log(`[buildGridData] Skipping opponent step ${step} because step > opponentMaxStep`);
-      return; // Skip steps beyond opponentMaxStep
-    }
     if (move.type === 'final') {
       console.log(`[buildGridData] Skipping opponent step ${step} because it's a final move`);
       return; // Skip final moves
@@ -92,11 +126,21 @@ function buildGridData(
       const square = grid[row]![col]!;
 
       if (move.type === 'piece') {
+        // Only show pieces up to opponentMaxStep
+        if (opponentMaxStep !== undefined && step > opponentMaxStep) {
+          console.log(`[buildGridData] Skipping opponent piece at step ${step} because step > opponentMaxStep`);
+          return;
+        }
         console.log(`[buildGridData] Adding opponent piece at (${row},${col}), step ${step}`);
         square.opponentVisits.push(step);
       } else if (move.type === 'trap') {
-        // Only show opponent trap if player hit a trap at this exact position
-        if (playerTrapPosition && playerTrapPosition.row === row && playerTrapPosition.col === col) {
+        // Show opponent trap if:
+        // 1. Player hit it at this exact position, OR
+        // 2. Player hit a trap but position wasn't recorded (backward compatibility)
+        const showTrap = (playerTrapPosition && playerTrapPosition.row === row && playerTrapPosition.col === col) ||
+                        (playerHitTrap && !playerTrapPosition);
+
+        if (showTrap) {
           console.log(`[buildGridData] Adding opponent trap at (${row},${col}), step ${step}`);
           square.opponentTrapStep = step;
         } else {
@@ -251,19 +295,25 @@ export function generateCombinedBoardSvg(
         svg += `</g>`;
         svg += `<text x="${x + 5}" y="${y + 20}" font-size="16" fill="rgb(220, 38, 38)" text-anchor="middle" dy=".3em">${square.playerTrapStep! + 1}</text>`;
 
-        // Opponent trap (orange, rotated -3 degrees) with number
+        // Opponent trap (orange, rotated -3 degrees) with number (or no number if static grid trap)
         svg += `<g transform="translate(${x + 5} ${y + 5}) rotate(-3 15 15)">`;
         svg += `<path d="M0 0 l30 30 m0 -30 l-30 30" stroke="rgb(249, 115, 22)" stroke-width="4" opacity="0.6"/>`;
         svg += `</g>`;
-        svg += `<text x="${x + 25}" y="${y + 20}" font-size="16" fill="rgb(249, 115, 22)" text-anchor="middle" dy=".3em">${square.opponentTrapStep! + 1}</text>`;
+        // Only show step number if it's a sequence trap (step >= 0), not a static grid trap (step === -1)
+        if (square.opponentTrapStep! >= 0) {
+          svg += `<text x="${x + 25}" y="${y + 20}" font-size="16" fill="rgb(249, 115, 22)" text-anchor="middle" dy=".3em">${square.opponentTrapStep! + 1}</text>`;
+        }
       } else if (hasPlayerTrap) {
         // Only player trap with number
         svg += `<path d="M${x + 5} ${y + 5} l30 30 m0 -30 l-30 30" stroke="rgb(220, 38, 38)" stroke-width="4" opacity="0.6"/>`;
         svg += `<text x="${x + 35}" y="${y + 20}" font-size="16" fill="rgb(220, 38, 38)" text-anchor="middle" dy=".3em">${square.playerTrapStep! + 1}</text>`;
       } else if (hasOpponentTrap) {
-        // Only opponent trap with number
+        // Only opponent trap with number (or no number if static grid trap)
         svg += `<path d="M${x + 5} ${y + 5} l30 30 m0 -30 l-30 30" stroke="rgb(249, 115, 22)" stroke-width="4" opacity="0.6"/>`;
-        svg += `<text x="${x + 35}" y="${y + 20}" font-size="16" fill="rgb(249, 115, 22)" text-anchor="middle" dy=".3em">${square.opponentTrapStep! + 1}</text>`;
+        // Only show step number if it's a sequence trap (step >= 0), not a static grid trap (step === -1)
+        if (square.opponentTrapStep! >= 0) {
+          svg += `<text x="${x + 35}" y="${y + 20}" font-size="16" fill="rgb(249, 115, 22)" text-anchor="middle" dy=".3em">${square.opponentTrapStep! + 1}</text>`;
+        }
       }
     }
   }

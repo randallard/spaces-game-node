@@ -41,6 +41,8 @@ export interface ChallengeData {
   playerDiscordId?: string;
   /** Sender's Discord username (optional, for display) */
   playerDiscordUsername?: string;
+  /** Sender's Discord avatar hash (optional, for displaying profile picture) */
+  playerDiscordAvatar?: string;
   /** Previous round result (optional, to help receiver catch up on missed rounds) */
   previousRoundResult?: RoundResult;
 }
@@ -58,6 +60,7 @@ export interface ChallengeData {
  * @param opponentScore - Current opponent score (optional)
  * @param playerDiscordId - Sender's Discord ID (optional)
  * @param playerDiscordUsername - Sender's Discord username (optional)
+ * @param playerDiscordAvatar - Sender's Discord avatar hash (optional)
  * @param previousRoundResult - Previous round result (optional, for catching up)
  * @returns Full challenge URL
  */
@@ -72,6 +75,7 @@ export function generateChallengeUrl(
   opponentScore?: number,
   playerDiscordId?: string,
   playerDiscordUsername?: string,
+  playerDiscordAvatar?: string,
   previousRoundResult?: RoundResult,
   isRoundComplete?: boolean,
   gameCreatorId?: string
@@ -96,6 +100,7 @@ export function generateChallengeUrl(
     ...(opponentScore !== undefined && { opponentScore }),
     ...(playerDiscordId && { playerDiscordId }),
     ...(playerDiscordUsername && { playerDiscordUsername }),
+    ...(playerDiscordAvatar && { playerDiscordAvatar }),
     ...(previousRoundResult && { previousRoundResult }),
     ...(isRoundComplete && { isRoundComplete }),
   };
