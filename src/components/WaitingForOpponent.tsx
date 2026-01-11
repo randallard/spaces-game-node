@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, type ReactElement } from 'react';
+import { OpponentAvatar } from './OpponentAvatar';
 import styles from './ShareChallenge.module.css';
 
 export interface WaitingForOpponentProps {
@@ -19,6 +20,10 @@ export interface WaitingForOpponentProps {
   onGoHome: () => void;
   /** Whether opponent has Discord connected */
   opponentHasDiscord?: boolean;
+  /** Opponent's Discord ID (optional) */
+  opponentDiscordId?: string | undefined;
+  /** Opponent's Discord avatar hash (optional) */
+  opponentDiscordAvatar?: string | undefined;
 }
 
 /**
@@ -34,6 +39,8 @@ export function WaitingForOpponent({
   round,
   onGoHome,
   opponentHasDiscord = false,
+  opponentDiscordId,
+  opponentDiscordAvatar,
 }: WaitingForOpponentProps): ReactElement {
   const [copySuccess, setCopySuccess] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
@@ -113,7 +120,15 @@ export function WaitingForOpponent({
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <h1 className={styles.title}>Waiting for {opponentName}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
+          <OpponentAvatar
+            opponentName={opponentName}
+            discordId={opponentDiscordId}
+            discordAvatar={opponentDiscordAvatar}
+            size={64}
+          />
+          <h1 className={styles.title} style={{ margin: 0 }}>Waiting for {opponentName}</h1>
+        </div>
 
         <div className={styles.info}>
           <p className={styles.infoText}>

@@ -7,6 +7,10 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Timestamped logging helper
+const log = (message: string, ...args: any[]) => console.log(`[${new Date().toISOString()}] ${message}`, ...args);
+const logError = (message: string, ...args: any[]) => console.error(`[${new Date().toISOString()}] ${message}`, ...args);
+
 // Type definitions
 interface DiscordTokenResponse {
   access_token: string;
@@ -38,7 +42,7 @@ export default async function handler(
 
     // Check if user denied authorization
     if (oauthError) {
-      console.log('[Discord OAuth] User denied authorization:', oauthError);
+      log('[Discord OAuth] User denied authorization:', oauthError);
       // Redirect back to frontend with error
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return res.redirect(`${frontendUrl}/?discord_error=access_denied`);
@@ -49,10 +53,10 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing authorization code' });
     }
 
-    console.log('[Discord OAuth] Received authorization code:', code.substring(0, 10) + '...');
+    log('[Discord OAuth] Received authorization code:', code.substring(0, 10) + '...');
 
     // Exchange code for access token
-    console.log('[Discord OAuth] Exchanging code for token...');
+    log('[Discord OAuth] Exchanging code for token...');
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -67,13 +71,13 @@ export default async function handler(
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('[Discord OAuth] Token exchange failed:', errorText);
+      logError('[Discord OAuth] Token exchange failed:', errorText);
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return res.redirect(`${frontendUrl}/?discord_error=token_exchange_failed`);
     }
 
     const tokenData = await tokenResponse.json() as DiscordTokenResponse;
-    console.log('[Discord OAuth] Token received, fetching user info...');
+    log('[Discord OAuth] Token received, fetching user info...');
 
     // Get user info with access token
     const userResponse = await fetch('https://discord.com/api/users/@me', {
@@ -82,13 +86,13 @@ export default async function handler(
 
     if (!userResponse.ok) {
       const errorText = await userResponse.text();
-      console.error('[Discord OAuth] User fetch failed:', errorText);
+      logError('[Discord OAuth] User fetch failed:', errorText);
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return res.redirect(`${frontendUrl}/?discord_error=user_fetch_failed`);
     }
 
     const user = await userResponse.json() as DiscordUser;
-    console.log('[Discord OAuth] User authenticated:', {
+    log('[Discord OAuth] User authenticated:', {
       id: user.id,
       username: user.username,
       globalName: user.global_name,
@@ -106,7 +110,7 @@ export default async function handler(
     return res.redirect(redirectUrl.toString());
 
   } catch (error) {
-    console.error('[Discord OAuth] Error:', error);
+    logError('[Discord OAuth] Error:', error);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     return res.redirect(`${frontendUrl}/?discord_error=server_error`);
   }

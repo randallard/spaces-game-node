@@ -16,6 +16,7 @@ export type Opponent = {
   // Discord integration
   discordId?: string | undefined; // Discord user ID (for sending notifications)
   discordUsername?: string | undefined; // Discord username for display
+  discordAvatar?: string | undefined; // Discord avatar hash (for displaying profile picture)
 };
 
 export type OpponentStats = {

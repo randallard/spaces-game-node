@@ -9,6 +9,7 @@ import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
 import { HelpModal } from './HelpModal';
+import { OpponentAvatar } from './OpponentAvatar';
 import styles from './RoundResults.module.css';
 
 export interface RoundResultsProps {
@@ -38,6 +39,10 @@ export interface RoundResultsProps {
   isTutorial?: boolean;
   /** Optional flag indicating if waiting for opponent to respond */
   waitingForOpponentResponse?: boolean;
+  /** Opponent's Discord ID (optional) */
+  opponentDiscordId?: string | undefined;
+  /** Opponent's Discord avatar hash (optional) */
+  opponentDiscordAvatar?: string | undefined;
 }
 
 /**
@@ -65,6 +70,8 @@ export function RoundResults({
   onExplanationStyleChange,
   isTutorial = false,
   waitingForOpponentResponse = false,
+  opponentDiscordId,
+  opponentDiscordAvatar,
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard } = result;
 
@@ -302,6 +309,14 @@ export function RoundResults({
       }
     }
 
+    // Update cumulative positions with new positions
+    if (newPlayerPosition) {
+      playerPosition = newPlayerPosition;
+    }
+    if (newOpponentPosition) {
+      opponentPosition = newOpponentPosition;
+    }
+
     // After both actions are processed, check for trap hits and collisions (only if round hasn't ended)
     if (!playerRoundEnded && !opponentRoundEnded) {
       if (newPlayerPosition) {
@@ -330,8 +345,8 @@ export function RoundResults({
         }
       }
 
-      // Check for collision if both players moved to a position
-      if (newPlayerPosition && newOpponentPosition && positionsMatch(newPlayerPosition, newOpponentPosition)) {
+      // Check for collision - both players at same position (regardless of when they arrived)
+      if (playerPosition && opponentPosition && positionsMatch(playerPosition, opponentPosition)) {
         if (lively) {
           explanations.push('  Crash! They collide!');
           explanations.push(`  ${playerName} -1 point!`);
@@ -625,6 +640,7 @@ export function RoundResults({
                 <span>{playerName}</span>
               </div>
               <div className={styles.legendItem}>
+                {/* In replay view, show purple circle. Discord avatar shown in active games/opponents/history */}
                 <div className={styles.legendCircle} style={{ backgroundColor: 'rgb(147, 51, 234)' }}></div>
                 <span>{opponentName}</span>
               </div>

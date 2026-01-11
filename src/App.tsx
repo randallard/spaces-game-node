@@ -16,6 +16,8 @@ import { getActiveGames, saveActiveGame, removeActiveGame, archiveActiveGame, ty
 import {
   UserProfile,
   OpponentManager,
+  OpponentAvatar,
+  ActiveGameView,
   SavedBoards,
   BoardSizeSelector,
   RoundResults,
@@ -35,7 +37,6 @@ import {
   CompletedRoundModal,
   ActiveGames,
   RemoveOpponentModal,
-  WaitingForOpponent,
 } from '@/components';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId, RoundResult } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
@@ -458,6 +459,14 @@ function App(): React.ReactElement {
     if (result.collision !== undefined) swapped.collision = result.collision;
 
     if (result.simulationDetails) {
+      // Helper to rotate position 180 degrees
+      const rotatePosition = (row: number, col: number, size: number) => ({
+        row: size - 1 - row,
+        col: size - 1 - col,
+      });
+
+      const boardSize = result.playerBoard.boardSize;
+
       swapped.simulationDetails = {
         playerMoves: result.simulationDetails.opponentMoves,
         opponentMoves: result.simulationDetails.playerMoves,
@@ -465,13 +474,23 @@ function App(): React.ReactElement {
         opponentHitTrap: result.simulationDetails.playerHitTrap,
         playerLastStep: result.simulationDetails.opponentLastStep,
         opponentLastStep: result.simulationDetails.playerLastStep,
+        ...(result.simulationDetails.opponentTrapPosition && {
+          // Rotate opponent's trap position back for player 2's view
+          playerTrapPosition: rotatePosition(
+            result.simulationDetails.opponentTrapPosition.row,
+            result.simulationDetails.opponentTrapPosition.col,
+            boardSize
+          ),
+        }),
+        ...(result.simulationDetails.playerTrapPosition && {
+          // Rotate player's trap position back for player 2's view
+          opponentTrapPosition: rotatePosition(
+            result.simulationDetails.playerTrapPosition.row,
+            result.simulationDetails.playerTrapPosition.col,
+            boardSize
+          ),
+        }),
       };
-      if (result.simulationDetails.opponentTrapPosition) {
-        swapped.simulationDetails.playerTrapPosition = result.simulationDetails.opponentTrapPosition;
-      }
-      if (result.simulationDetails.playerTrapPosition) {
-        swapped.simulationDetails.opponentTrapPosition = result.simulationDetails.playerTrapPosition;
-      }
     }
 
     return swapped;
@@ -779,6 +798,7 @@ function App(): React.ReactElement {
             id: challengeData.playerId, // Override with the ID from challenge to ensure consistency
             discordId: challengeData.playerDiscordId, // Save Discord ID for notifications
             discordUsername: challengeData.playerDiscordUsername, // Save Discord username
+            discordAvatar: challengeData.playerDiscordAvatar, // Save Discord avatar hash
           };
           // Save to localStorage
           setSavedOpponents([...(savedOpponents || []), opponent]);
@@ -790,6 +810,7 @@ function App(): React.ReactElement {
             id: challengeData.playerId, // Update to use canonical ID
             discordId: challengeData.playerDiscordId,
             discordUsername: challengeData.playerDiscordUsername,
+            discordAvatar: challengeData.playerDiscordAvatar,
           };
           // Replace the old opponent with updated one
           const updatedOpponents = (savedOpponents || []).map(o =>
@@ -802,6 +823,7 @@ function App(): React.ReactElement {
             ...opponent,
             discordId: challengeData.playerDiscordId,
             discordUsername: challengeData.playerDiscordUsername,
+            discordAvatar: challengeData.playerDiscordAvatar,
           };
           // Update in localStorage
           const existingIndex = (savedOpponents || []).findIndex(o => o.id === opponent!.id);
@@ -1040,6 +1062,7 @@ function App(): React.ReactElement {
           id: incomingChallenge.playerId,
           discordId: incomingChallenge.playerDiscordId,
           discordUsername: incomingChallenge.playerDiscordUsername,
+          discordAvatar: incomingChallenge.playerDiscordAvatar,
         };
         setSavedOpponents([...(savedOpponents || []), opponent]);
       }
@@ -1555,6 +1578,7 @@ function App(): React.ReactElement {
             state.playerScore + (result.winner === 'player' ? (result.playerPoints ?? 0) : 0), // Updated player score from opponent's perspective
             savedUser.discordId,
             savedUser.discordUsername,
+            savedUser.discordAvatar,
             result, // Include the round result
             true, // isRoundComplete - this is a round complete notification
             state.gameCreatorId || undefined // Pass the original game creator ID
@@ -1603,6 +1627,7 @@ function App(): React.ReactElement {
           state.opponentScore,
           savedUser.discordId,
           savedUser.discordUsername,
+          savedUser.discordAvatar,
           previousRoundResult,
           undefined, // isRoundComplete
           state.gameCreatorId || undefined
@@ -2096,9 +2121,18 @@ function App(): React.ReactElement {
                     savedOpponents.filter(o => !o.archived).map((opponent) => (
                       <div key={opponent.id} className={styles.opponentItem}>
                         <div className={styles.opponentInfo}>
-                          <span className={styles.opponentIcon}>
-                            {getOpponentIcon(opponent)}
-                          </span>
+                          {opponent.type === 'human' ? (
+                            <OpponentAvatar
+                              opponentName={opponent.name}
+                              discordId={opponent.discordId}
+                              discordAvatar={opponent.discordAvatar}
+                              size={48}
+                            />
+                          ) : (
+                            <span className={styles.opponentIcon}>
+                              {getOpponentIcon(opponent)}
+                            </span>
+                          )}
                           <div className={styles.opponentDetails}>
                             <span className={styles.opponentName}>{opponent.name}</span>
                             <span className={styles.opponentRecord}>
@@ -2385,65 +2419,89 @@ function App(): React.ReactElement {
         );
       }
 
-      case 'board-selection': {
-        // Filter boards by selected board size
-        const filteredBoards = state.boardSize
-          ? (savedBoards || []).filter(board => board.boardSize === state.boardSize)
-          : (savedBoards || []);
+      case 'board-selection':
+      case 'share-challenge':
+      case 'waiting-for-opponent': {
+        // Unified active game view for all these states
+        if (!state.boardSize || !state.gameId) {
+          console.error('[active-game] Missing required state');
+          return null;
+        }
 
-        // Check if responding to a challenge
-        const isRespondingToChallenge = !!state.opponentSelectedBoard;
+        // Determine game state for ActiveGameView
+        let gameState: 'waiting-for-player' | 'waiting-for-opponent-to-start' | 'waiting-for-opponent-to-continue';
+
+        if (state.phase.type === 'board-selection') {
+          // Check if player has already selected their board
+          if (state.playerSelectedBoard) {
+            // Player already selected, now waiting for opponent
+            gameState = 'waiting-for-opponent-to-continue';
+          } else {
+            // Player still needs to select a board
+            gameState = 'waiting-for-player';
+          }
+        } else if (state.phase.type === 'share-challenge') {
+          // Just selected board, waiting for opponent to start
+          gameState = 'waiting-for-opponent-to-start';
+        } else {
+          // waiting-for-opponent phase
+          gameState = 'waiting-for-opponent-to-continue';
+        }
+
+        // Generate challenge URL (needed for re-send link)
+        const previousRoundResult = state.roundHistory.length > 0
+          ? state.roundHistory[state.roundHistory.length - 1]
+          : undefined;
+
+        const challengeUrl = state.playerSelectedBoard
+          ? generateChallengeUrl(
+              state.playerSelectedBoard,
+              state.phase.round,
+              state.gameMode || 'round-by-round',
+              state.gameId,
+              state.user.id,
+              state.user.name,
+              state.playerScore,
+              state.opponentScore,
+              savedUser?.discordId,
+              savedUser?.discordUsername,
+              savedUser?.discordAvatar,
+              previousRoundResult,
+              undefined,
+              state.gameCreatorId || undefined
+            )
+          : '#'; // Placeholder if no board selected yet
 
         return (
           <div style={{ position: 'relative' }}>
-            <div style={{ marginBottom: '2rem' }}>
-              {isRespondingToChallenge ? (
-                <>
-                  <h2>Respond to Challenge - Round {state.phase.round}</h2>
-                  <p style={{ marginBottom: '0.5rem' }}>
-                    Select your board to compete against the challenge!
-                  </p>
-                  {state.boardSize && (
-                    <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                      Board Size: {state.boardSize}×{state.boardSize}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <>
-                  <h2>Round {state.phase.round} of 5</h2>
-                  <p>
-                    Score: {state.user.name} {state.playerScore} - {state.opponent?.name}{' '}
-                    {state.opponentScore}
-                  </p>
-                  {state.boardSize && (
-                    <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                      Board Size: {state.boardSize}×{state.boardSize}
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-            <SavedBoards
-              boards={filteredBoards}
+            <ActiveGameView
+              currentRound={state.currentRound}
+              totalRounds={5}
+              playerScore={state.playerScore}
+              opponentScore={state.opponentScore}
+              playerName={state.user.name}
+              opponentName={state.opponent?.name || 'Opponent'}
+              boardSize={state.boardSize}
+              challengeUrl={challengeUrl}
+              gameState={gameState}
+              playerBoards={savedBoards || []}
+              user={savedUser!}
+              roundHistory={state.roundHistory}
               onBoardSelected={handleBoardSelect}
               onBoardSaved={handleBoardSave}
               onBoardDeleted={handleBoardDelete}
-              currentRound={state.currentRound}
-              userName={state.user.name}
-              opponentName={state.opponent?.name || 'Opponent'}
-              user={savedUser}
-              initialBoardSize={filteredBoards.length === 0 && state.boardSize && !state.opponentSelectedBoard ? state.boardSize : null}
-              onInitialBoardSizeHandled={() => {
-                // Size has been handled, no need to do anything
-              }}
-              roundHistory={state.roundHistory}
-              playerScore={state.playerScore}
-              opponentScore={state.opponentScore}
               showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
               onShowCompleteResultsChange={handleShowCompleteResultsChange}
               explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
               onExplanationStyleChange={handleExplanationStyleChange}
+              opponentHasDiscord={!!(state.opponent?.discordId)}
+              onGoHome={handleGoHome}
+              onShareModalClosed={() => {
+                // When share modal closes, transition from share-challenge to waiting-for-opponent
+                if (state.phase.type === 'share-challenge') {
+                  setPhase({ type: 'waiting-for-opponent', round: state.currentRound });
+                }
+              }}
             />
 
             {/* Loading overlay */}
@@ -2490,63 +2548,6 @@ function App(): React.ReactElement {
         );
       }
 
-      case 'share-challenge': {
-        // Generate challenge URL for the selected board
-        if (!state.playerSelectedBoard || !state.boardSize || !state.gameId) {
-          console.error('[share-challenge] Missing required state:', {
-            hasPlayerBoard: !!state.playerSelectedBoard,
-            hasBoardSize: !!state.boardSize,
-            hasGameId: !!state.gameId,
-            state
-          });
-          return null;
-        }
-
-        // Include the most recent round result (if any) to help opponent catch up
-        const previousRoundResult = state.roundHistory.length > 0
-          ? state.roundHistory[state.roundHistory.length - 1]
-          : undefined;
-
-        const challengeUrl = generateChallengeUrl(
-          state.playerSelectedBoard,
-          state.phase.round,
-          state.gameMode || 'round-by-round',
-          state.gameId,
-          state.user.id,
-          state.user.name,
-          state.playerScore,
-          state.opponentScore,
-          savedUser?.discordId,
-          savedUser?.discordUsername,
-          previousRoundResult,
-          undefined, // isRoundComplete
-          state.gameCreatorId || undefined
-        );
-
-        return (
-          <ShareChallenge
-            challengeUrl={challengeUrl}
-            opponentName={state.opponent?.name || 'Your Friend'}
-            boardSize={state.boardSize}
-            round={state.phase.round}
-            onCancel={handleGoHome}
-            opponentHasDiscord={!!(state.opponent?.discordId)}
-            userHasDiscord={!!(savedUser?.discordId && savedUser?.discordUsername)}
-            onConnectDiscord={() => {
-              // Set loading state
-              setIsConnectingDiscord(true);
-              // Save that we're in share-challenge flow
-              sessionStorage.setItem('discord-oauth-return', 'share-challenge');
-              // Save complete game state to restore after OAuth
-              sessionStorage.setItem('discord-oauth-saved-state', JSON.stringify(state));
-              // Redirect to Discord OAuth
-              window.location.href = getApiEndpoint('/api/auth/discord/authorize');
-            }}
-            isConnectingDiscord={isConnectingDiscord}
-          />
-        );
-      }
-
       case 'share-final-results': {
         // Generate final results URL after round 5
         if (!state.boardSize || !state.gameId) {
@@ -2573,50 +2574,6 @@ function App(): React.ReactElement {
               // After sharing final results, go to game-over
               advanceToNextRound();
             }}
-          />
-        );
-      }
-
-      case 'waiting-for-opponent': {
-        // Player is waiting for opponent to make their move
-        if (!state.playerSelectedBoard || !state.boardSize || !state.gameId) {
-          console.error('[waiting-for-opponent] Missing required state:', {
-            hasPlayerBoard: !!state.playerSelectedBoard,
-            hasBoardSize: !!state.boardSize,
-            hasGameId: !!state.gameId,
-          });
-          return null;
-        }
-
-        // Include the most recent round result (if any) to help opponent catch up
-        const previousRoundResult = state.roundHistory.length > 0
-          ? state.roundHistory[state.roundHistory.length - 1]
-          : undefined;
-
-        const challengeUrl = generateChallengeUrl(
-          state.playerSelectedBoard,
-          state.phase.round,
-          state.gameMode || 'round-by-round',
-          state.gameId,
-          state.user.id,
-          state.user.name,
-          state.playerScore,
-          state.opponentScore,
-          savedUser?.discordId,
-          savedUser?.discordUsername,
-          previousRoundResult,
-          undefined, // isRoundComplete
-          state.gameCreatorId || undefined
-        );
-
-        return (
-          <WaitingForOpponent
-            challengeUrl={challengeUrl}
-            opponentName={state.opponent?.name || 'Your Friend'}
-            boardSize={state.boardSize}
-            round={state.phase.round}
-            onGoHome={handleGoHome}
-            opponentHasDiscord={!!(state.opponent?.discordId)}
           />
         );
       }
@@ -2713,6 +2670,8 @@ function App(): React.ReactElement {
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
             waitingForOpponentResponse={waitingForOpponent}
+            opponentDiscordId={state.opponent?.discordId}
+            opponentDiscordAvatar={state.opponent?.discordAvatar}
           />
         );
 

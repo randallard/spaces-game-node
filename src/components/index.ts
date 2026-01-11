@@ -8,6 +8,12 @@ export type { UserProfileProps } from './UserProfile';
 export { OpponentManager } from './OpponentManager';
 export type { OpponentManagerProps } from './OpponentManager';
 
+export { OpponentAvatar } from './OpponentAvatar';
+export type { OpponentAvatarProps } from './OpponentAvatar';
+
+export { ActiveGameView } from './ActiveGameView';
+export type { ActiveGameViewProps } from './ActiveGameView';
+
 export { BoardCreator } from './BoardCreator';
 export type { BoardCreatorProps } from './BoardCreator';
 

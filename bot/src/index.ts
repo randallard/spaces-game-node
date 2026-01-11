@@ -15,9 +15,14 @@ const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const API_KEY = process.env.API_KEY || 'dev-api-key';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+// Timestamped logging helper
+const log = (message: string) => console.log(`[${new Date().toISOString()}] ${message}`);
+const logError = (message: string, ...args: any[]) => console.error(`[${new Date().toISOString()}] ${message}`, ...args);
+const logWarn = (message: string) => console.warn(`[${new Date().toISOString()}] ${message}`);
+
 // Validate environment variables
 if (!BOT_TOKEN) {
-  console.error('❌ DISCORD_BOT_TOKEN is required');
+  logError('❌ DISCORD_BOT_TOKEN is required');
   process.exit(1);
 }
 
@@ -117,24 +122,24 @@ function formatNotificationMessage(data: NotificationData): string {
 // Send Discord DM
 async function sendDiscordDM(discordId: string, message: string): Promise<boolean> {
   try {
-    console.log(`[BOT] Attempting to send DM to user ${discordId}`);
+    log(`[BOT] Attempting to send DM to user ${discordId}`);
 
     const user = await client.users.fetch(discordId);
     if (!user) {
-      console.error(`[BOT] User ${discordId} not found`);
+      logError(`[BOT] User ${discordId} not found`);
       return false;
     }
 
-    console.log(`[BOT] Found user: ${user.tag}, attempting to send DM...`);
+    log(`[BOT] Found user: ${user.tag}, attempting to send DM...`);
     await user.send(message);
-    console.log(`[BOT] ✅ DM sent successfully to ${user.tag}`);
+    log(`[BOT] ✅ DM sent successfully to ${user.tag}`);
     return true;
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`[BOT] ❌ Failed to send DM to ${discordId}:`, error.message);
-      console.error(`[BOT] Error details:`, error.stack);
+      logError(`[BOT] ❌ Failed to send DM to ${discordId}:`, error.message);
+      logError(`[BOT] Error details:`, error.stack);
     } else {
-      console.error(`[BOT] ❌ Failed to send DM to ${discordId}:`, error);
+      logError(`[BOT] ❌ Failed to send DM to ${discordId}:`, error);
     }
     return false;
   }
@@ -159,7 +164,7 @@ app.post('/notify', async (req, res) => {
   // Verify API key
   const apiKey = req.headers['x-api-key'];
   if (apiKey !== API_KEY) {
-    console.warn('[BOT] Unauthorized notification request');
+    logWarn('[BOT] Unauthorized notification request');
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -169,11 +174,11 @@ app.post('/notify', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  console.log(`[BOT] Received ${eventType} notification for user ${discordId}`);
+  log(`[BOT] Received ${eventType} notification for user ${discordId}`);
 
   // Check if bot is ready
   if (!client.isReady()) {
-    console.error('[BOT] Bot is not ready yet');
+    logError('[BOT] Bot is not ready yet');
     return res.status(503).json({ error: 'Bot is not ready' });
   }
 
@@ -189,27 +194,27 @@ app.post('/notify', async (req, res) => {
 });
 
 // Discord bot event handlers
-client.once('ready', () => {
-  console.log(`✅ Discord bot logged in as ${client.user?.tag}`);
-  console.log(`🚀 Bot server running on port ${PORT}`);
+client.once('clientReady', () => {
+  log(`✅ Discord bot logged in as ${client.user?.tag}`);
+  log(`🚀 Bot server running on port ${PORT}`);
 });
 
 client.on('error', (error) => {
-  console.error('❌ Discord client error:', error);
+  logError('❌ Discord client error:', error);
 });
 
 // Start the bot
 async function start() {
   try {
-    console.log('🔄 Logging in to Discord...');
+    log('🔄 Logging in to Discord...');
     await client.login(BOT_TOKEN);
 
     // Start Express server after bot is ready
     app.listen(PORT, () => {
-      console.log(`📡 HTTP server listening on port ${PORT}`);
+      log(`📡 HTTP server listening on port ${PORT}`);
     });
   } catch (error) {
-    console.error('❌ Failed to start bot:', error);
+    logError('❌ Failed to start bot:', error);
     process.exit(1);
   }
 }

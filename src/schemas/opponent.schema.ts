@@ -18,6 +18,7 @@ export const OpponentSchema = z.object({
   // Discord integration
   discordId: z.string().optional(),
   discordUsername: z.string().max(32).optional(),
+  discordAvatar: z.string().optional(),
 });
 
 export const OpponentStatsSchema = z.object({

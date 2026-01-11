@@ -8,6 +8,7 @@ import styles from './ActiveGames.module.css';
 import { getOpponentIcon } from '@/utils/app-helpers';
 import { getPhaseDescription, isWaitingForOpponentBoard, type ActiveGameInfo } from '@/utils/active-games';
 import { RemoveGameModal } from './RemoveGameModal';
+import { OpponentAvatar } from './OpponentAvatar';
 
 export type ActiveGamesProps = {
   games: ActiveGameInfo[];
@@ -48,7 +49,16 @@ export function ActiveGames({ games, onResumeGame, onArchiveGame, onDeleteGame }
               <div key={game.gameId} className={styles.gameItem}>
                 <div className={styles.gameInfo}>
                   <span className={styles.opponentIcon}>
-                    {getOpponentIcon(game.opponent)}
+                    {game.opponent.type === 'human' ? (
+                      <OpponentAvatar
+                        opponentName={game.opponent.name}
+                        discordId={game.opponent.discordId}
+                        discordAvatar={game.opponent.discordAvatar}
+                        size={48}
+                      />
+                    ) : (
+                      getOpponentIcon(game.opponent)
+                    )}
                     {waitingForOpponentBoard && (
                       <span className={styles.notificationBadge} title="Waiting for opponent to choose their board">
                         ⚠️

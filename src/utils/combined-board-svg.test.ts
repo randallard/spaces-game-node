@@ -502,4 +502,138 @@ describe('generateCombinedBoardSvg', () => {
     expect(svg).toContain('>1<');
     expect(svg).toContain('>2<');
   });
+
+  it('should show all four corners when both opponents choose identical boards', () => {
+    // Create identical boards for both players
+    // Grid layout: piece in top-left (0,0) and bottom-left (1,0)
+    const identicalGrid: Array<Array<'empty' | 'piece'>> = [
+      ['piece', 'empty'],
+      ['piece', 'empty'],
+    ];
+
+    const identicalSequence = [
+      { row: 0, col: 0, type: 'piece' as const }, // Step 1
+      { row: 1, col: 0, type: 'piece' as const }, // Step 2
+    ];
+
+    const playerBoard = createTestBoard('Player', identicalGrid, identicalSequence);
+    const opponentBoard = createTestBoard('Opponent', identicalGrid, identicalSequence);
+
+    // When opponent's board is rotated 180 degrees:
+    // - Opponent's (0,0) becomes (1,1) in player's view
+    // - Opponent's (1,0) becomes (0,1) in player's view
+    // Player has pieces at (0,0) and (1,0)
+    // So there's no overlap in this case
+
+    const result = createTestResult(
+      playerBoard,
+      opponentBoard,
+      { row: 1, col: 0 }, // Player ends at bottom-left
+      { row: 1, col: 0 }  // Opponent ends at bottom-left (rotates to 0,1 in player's view)
+    );
+
+    const result_obj = generateCombinedBoardSvg(playerBoard, opponentBoard, result);
+    const svg = result_obj.svg;
+
+    // Should show both blue and purple pieces
+    expect(svg).toContain('rgb(37, 99, 235)'); // Blue (player)
+    expect(svg).toContain('rgb(147, 51, 234)'); // Purple (opponent)
+
+    // Player has pieces at (0,0) and (1,0) with steps 1,2
+    expect(svg).toContain('>1<');
+    expect(svg).toContain('>2<');
+  });
+
+  it('should show opponent trap when both players choose identical boards with traps', () => {
+    // Both players choose the same board:
+    // - Piece at (1,0) step 1 (bottom-left)
+    // - Trap at (1,1) step 2 (bottom-right)
+    // - Piece at (0,0) step 3 (top-left)
+    //
+    // IMPORTANT: In real boards, the grid has 'trap' at the trap position
+    // We test this WITHOUT the trap in the grid to replicate the bug
+    const identicalGrid: Array<Array<'empty' | 'piece' | 'trap'>> = [
+      ['piece', 'empty'],
+      ['piece', 'empty'], // NO trap in grid - trap only in sequence
+    ];
+
+    const identicalSequence = [
+      { row: 1, col: 0, type: 'piece' as const }, // Step 1 at (1,0)
+      { row: 1, col: 1, type: 'trap' as const },  // Step 2 at (1,1)
+      { row: 0, col: 0, type: 'piece' as const }, // Step 3 at (0,0)
+    ];
+
+    const ryanBoard = createTestBoard('Ryan', identicalGrid, identicalSequence);
+    const tedBoard = createTestBoard('Ted', identicalGrid, identicalSequence);
+
+    // From Ryan's perspective (Ryan = player, Ted = opponent)
+    // After 180° rotation:
+    // - Ryan's board: piece at (1,0), trap at (1,1), piece at (0,0)
+    // - Ted's board rotated:
+    //   - (1,0) → (0,1) piece step 1
+    //   - (1,1) → (0,0) trap step 2
+    //   - (0,0) → (1,1) piece step 3
+    //
+    // Ryan's piece at step 3 is at (0,0), which is where Ted's trap rotates to
+    // So Ryan hits Ted's trap at (0,0)
+    const ryanResult = createTestResult(
+      ryanBoard,
+      tedBoard,
+      { row: 0, col: 0 }, // Ryan ends at (0,0)
+      { row: 0, col: 0 }  // Ted ends at (0,0), which rotates to (1,1) in Ryan's view
+    );
+
+    // Ryan hit Ted's trap at (0,0) in Ryan's view
+    // After the fix in App.tsx, playerTrapPosition should be rotated back to (0,0)
+    // The original simulation set opponentTrapPosition = (1,1) (Ryan's rotated piece position)
+    // App.tsx now rotates it: (1,1) → (0,0) before setting as Ryan's playerTrapPosition
+    ryanResult.simulationDetails!.playerHitTrap = true;
+    ryanResult.simulationDetails!.playerTrapPosition = { row: 0, col: 0 }; // After rotation fix
+
+    const ryanView = generateCombinedBoardSvg(ryanBoard, tedBoard, ryanResult);
+
+    // Ryan's view should show:
+    // (0,0): Blue piece "3" + Orange trap "2" (Ted's trap)
+    // (0,1): Purple piece "1" (Ted's piece)
+    // (1,0): Blue piece "1" (Ryan's piece)
+    // (1,1): Purple piece "3" (Ted's piece) + Red trap "2" (Ryan's trap)
+
+    // Should show Ryan's trap (red)
+    expect(ryanView.svg).toContain('rgb(220, 38, 38)'); // Red for player trap
+
+    // Should show Ted's trap (orange) - THIS IS THE BUG
+    expect(ryanView.svg).toContain('rgb(249, 115, 22)'); // Orange for opponent trap
+
+    // From Ted's perspective (Ted = player, Ryan = opponent)
+    // After 180° rotation:
+    // - Ted's board: piece at (1,0), trap at (1,1), piece at (0,0)
+    // - Ryan's board rotated:
+    //   - (1,0) → (0,1) piece step 1
+    //   - (1,1) → (0,0) trap step 2
+    //   - (0,0) → (1,1) piece step 3
+    const tedResult = createTestResult(
+      tedBoard,
+      ryanBoard,
+      { row: 0, col: 0 }, // Ted ends at (0,0)
+      { row: 0, col: 0 }  // Ryan ends at (0,0), which rotates to (1,1) in Ted's view
+    );
+
+    // Ted hit Ryan's trap at the rotated position (0,0)
+    tedResult.simulationDetails!.playerHitTrap = true;
+    tedResult.simulationDetails!.playerTrapPosition = { row: 0, col: 0 };
+
+    const tedView = generateCombinedBoardSvg(tedBoard, ryanBoard, tedResult);
+
+    // Ted's view should show:
+    // (0,0): Blue piece "3" + Orange trap "2" (Ryan's trap) - THIS WORKS
+    // (0,1): Purple piece "1" (Ryan's piece)
+    // (1,0): Blue piece "1" (Ted's piece)
+    // (1,1): Purple piece "3" (Ryan's piece) + Red trap "2" (Ted's trap)
+
+    // Should show Ted's trap (red)
+    expect(tedView.svg).toContain('rgb(220, 38, 38)'); // Red for player trap
+
+    // Should show Ryan's trap (orange)
+    expect(tedView.svg).toContain('rgb(249, 115, 22)'); // Orange for opponent trap
+  });
 });

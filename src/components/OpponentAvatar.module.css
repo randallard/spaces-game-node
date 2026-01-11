@@ -1,0 +1,22 @@
+/**
+ * OpponentAvatar component styles
+ */
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.initialsAvatar {
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgb(147, 51, 234), rgb(79, 70, 229));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  user-select: none;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}

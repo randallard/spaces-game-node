@@ -7,6 +7,10 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Timestamped logging helper
+const log = (message: string) => console.log(`[${new Date().toISOString()}] ${message}`);
+const logError = (message: string, ...args: any[]) => console.error(`[${new Date().toISOString()}] ${message}`, ...args);
+
 // Type definitions for request body
 interface NotificationRequest {
   discordId: string;
@@ -61,18 +65,13 @@ export default async function handler(
       });
     }
 
-    console.log('[Discord Notify] Received notification request:', {
-      discordId: body.discordId,
-      eventType: body.eventType,
-      playerName: body.gameData.playerName,
-      round: body.gameData.round,
-    });
+    log(`[Discord Notify] Received notification request: discordId=${body.discordId}, eventType=${body.eventType}, playerName=${body.gameData.playerName}, round=${body.gameData.round}`);
 
     // Forward to Discord bot
     const botUrl = process.env.BOT_URL || 'http://localhost:3002';
     const botApiKey = process.env.BOT_API_KEY || 'dev-spaces-game-secret-key';
 
-    console.log('[Discord Notify] Forwarding to bot:', botUrl);
+    log(`[Discord Notify] Forwarding to bot: ${botUrl}`);
 
     const botResponse = await fetch(`${botUrl}/notify`, {
       method: 'POST',
@@ -92,7 +91,7 @@ export default async function handler(
 
     if (!botResponse.ok) {
       const errorText = await botResponse.text();
-      console.error('[Discord Notify] Bot request failed:', errorText);
+      logError('[Discord Notify] Bot request failed:', errorText);
       return res.status(500).json({
         success: false,
         error: 'Failed to send notification',
@@ -101,7 +100,7 @@ export default async function handler(
     }
 
     const botResult = await botResponse.json();
-    console.log('[Discord Notify] ✅ Notification sent via bot');
+    log('[Discord Notify] ✅ Notification sent via bot');
 
     return res.status(200).json({
       success: true,
@@ -110,7 +109,7 @@ export default async function handler(
     });
 
   } catch (error) {
-    console.error('[Discord Notify] Error:', error);
+    logError('[Discord Notify] Error:', error);
     return res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error'
