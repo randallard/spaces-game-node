@@ -4,7 +4,9 @@ This guide explains how to set up Redis through the Vercel Marketplace for the U
 
 ## What is Vercel Marketplace Redis?
 
-As of January 2026, Vercel has moved storage solutions to the Marketplace. Redis Cloud is the primary Redis provider available through Vercel Marketplace, offering a durable, serverless key-value store compatible with the `@vercel/kv` SDK.
+As of January 2026, Vercel has moved storage solutions to the Marketplace. **Serverless Redis** (powered by Upstash) is available through Vercel Marketplace, offering a durable, serverless key-value store compatible with the `@vercel/kv` SDK.
+
+Upstash is what Vercel KV was originally built on, so this is a seamless transition with the same SDK and API.
 
 We use it to store challenge data server-side and generate short URLs for Discord notifications.
 
@@ -24,14 +26,15 @@ Discord buttons have a 512-character URL limit. With full round history, challen
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Navigate to the **Storage** tab
 3. Click **Create Database**
-4. Under "Storage partners," click **View all partners**
-5. Find **Redis Cloud** (formerly Vercel KV)
-6. Click **Continue**
+4. You should see **Serverless Redis** (powered by Upstash)
+5. Click **Continue**
+
+**Note:** You may also see other Redis providers like "Redis Cloud" under "View all partners". Either will work, but **Serverless Redis (Upstash)** is recommended as it's what Vercel KV was built on.
 
 ### 2. Configure Your Database
 
 1. Select your plan:
-   - **Free tier** available (starts at $0)
+   - **Free tier** available (pay-per-request, starts at $0)
    - Upgrade options available for production workloads
 2. Enter a database name (e.g., `spaces-game-redis`) or use auto-generated name
 3. Click **Create**
@@ -59,7 +62,7 @@ This automatically adds the required environment variables to your Vercel projec
 - `KV_REST_API_TOKEN`
 - `KV_REST_API_READ_ONLY_TOKEN`
 
-**Note:** The `@vercel/kv` SDK is compatible with Redis Cloud through Vercel Marketplace.
+**Note:** The `@vercel/kv` SDK is fully compatible with Upstash Redis (Serverless Redis) through Vercel Marketplace. In fact, Vercel KV was originally built on Upstash.
 
 ### 5. Local Development Setup (Optional)
 
@@ -90,19 +93,23 @@ git push
 
 Vercel will automatically deploy with Redis enabled.
 
-## Pricing
+## Pricing (Upstash Serverless Redis)
 
 **Free Tier:**
 - Starts at $0/month
+- Pay-per-request pricing (only pay for what you use)
+- 10,000 commands/day free
 - Perfect for getting started and testing
-- Specific limits vary (check Redis Cloud pricing for current details)
+- Never pay more than the cap price
 
 **Production Tiers:**
-- Pay-as-you-go options available
-- Multi-zone high availability (coming soon)
-- Region selection (coming soon)
+- Pay-as-you-go based on actual usage
+- Data replicated across 8+ regions globally for lowest latency
+- Add/remove regions without downtime
 
 URLs are stored for 30 days with automatic expiration (TTL).
+
+For detailed pricing, visit [Upstash Pricing](https://upstash.com/pricing/redis).
 
 ## Testing
 
@@ -140,14 +147,15 @@ URLs are stored for 30 days with automatic expiration (TTL).
 - Connect/disconnect projects
 - Delete database
 
-### Via Redis Cloud Console
+### Via Upstash Console
 1. In Vercel Dashboard, click on your database
-2. Click **Open in Redis Cloud**
+2. Click **Open in Upstash** (or similar link to external console)
 3. Access advanced features:
    - Password management
    - Eviction policies
    - Detailed analytics
    - Performance tuning
+   - Region management
 
 ## Troubleshooting
 
@@ -260,20 +268,25 @@ Check Vercel logs for:
 
 Monitor Redis usage in:
 - Vercel Dashboard → Storage → Your Redis Database
-- Redis Cloud Console (via "Open in Redis Cloud")
+- Upstash Console (via "Open in Upstash" or external link)
 
 ## Migration Notes (from old Vercel KV)
 
-If you previously used Vercel KV (before January 2026):
-- The `@vercel/kv` SDK remains compatible
-- Redis Cloud is the recommended replacement
+If you previously used Vercel KV (before November 2024):
+- The `@vercel/kv` SDK remains 100% compatible
+- Upstash (Serverless Redis) is the same provider that powered Vercel KV
 - Same environment variable names
+- Same API and SDK
 - No code changes required
 - Just follow the new Marketplace setup flow
 
+**Note:** Vercel automatically migrated existing KV stores to the Marketplace starting in November 2024.
+
 ## Additional Resources
 
-- [Vercel Marketplace - Redis](https://vercel.com/marketplace/redis)
-- [Redis Cloud Vercel Integration Docs](https://redis.io/docs/latest/operate/rc/cloud-integrations/vercel/)
+- [Vercel Marketplace - Upstash](https://vercel.com/marketplace/upstash)
+- [Upstash Vercel Integration Docs](https://upstash.com/docs/redis/howto/vercelintegration)
+- [Upstash Redis Documentation](https://upstash.com/docs/redis)
 - [Vercel Storage Overview](https://vercel.com/docs/storage)
 - [@vercel/kv SDK Documentation](https://vercel.com/docs/storage/vercel-kv/kv-reference)
+- [Upstash Pricing](https://upstash.com/pricing/redis)
