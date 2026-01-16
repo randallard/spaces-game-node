@@ -4,7 +4,7 @@
  * Receives notification requests via HTTP and sends Discord DMs
  */
 
-import { Client, GatewayIntentBits, Partials } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import express from 'express';
 import dotenv from 'dotenv';
 
@@ -88,21 +88,18 @@ function formatNotificationMessage(data: NotificationData): string {
     case 'turn-ready':
       return `🎮 **Your turn in Spaces Game!**\n\n` +
         `${data.playerName} has completed Round ${data.round}.\n` +
-        `It's your move!\n\n` +
-        `${data.gameUrl}`;
+        `It's your move!`;
 
     case 'game-complete':
       const resultEmoji = data.result === 'win' ? '🎉' : data.result === 'loss' ? '😔' : '🤝';
       const resultText = data.result === 'win' ? 'You won!' : data.result === 'loss' ? 'You lost' : "It's a tie!";
       return `${resultEmoji} **Game Complete!**\n\n` +
         `${resultText}\n` +
-        `Final Score: ${data.playerScore} - ${data.opponentScore}\n\n` +
-        `${data.gameUrl}`;
+        `Final Score: ${data.playerScore} - ${data.opponentScore}`;
 
     case 'challenge-sent':
       return `⚔️ **New Challenge!**\n\n` +
-        `${data.playerName} has challenged you to a ${data.boardSize}×${data.boardSize} game!\n\n` +
-        `${data.gameUrl}`;
+        `${data.playerName} has challenged you to a ${data.boardSize}×${data.boardSize} game!`;
 
     case 'round-complete':
       const roundResultEmoji = data.result === 'win' ? '🎉' : data.result === 'loss' ? '😢' : '🤝';
@@ -111,16 +108,15 @@ function formatNotificationMessage(data: NotificationData): string {
         `${data.playerName} has finished their turn.\n` +
         `${roundResultText}\n` +
         `Current Score: ${data.playerScore} - ${data.opponentScore}\n\n` +
-        `Review the round and play your next move:\n` +
-        `${data.gameUrl}`;
+        `Review the round and play your next move:`;
 
     default:
       return 'You have a new notification from Spaces Game!';
   }
 }
 
-// Send Discord DM
-async function sendDiscordDM(discordId: string, message: string): Promise<boolean> {
+// Send Discord DM with embed and button (supports long URLs)
+async function sendDiscordDM(discordId: string, message: string, gameUrl?: string): Promise<boolean> {
   try {
     log(`[BOT] Attempting to send DM to user ${discordId}`);
 
@@ -131,7 +127,39 @@ async function sendDiscordDM(discordId: string, message: string): Promise<boolea
     }
 
     log(`[BOT] Found user: ${user.tag}, attempting to send DM...`);
-    await user.send(message);
+
+    // If we have a gameUrl, use an embed with a button (if URL is short enough)
+    if (gameUrl) {
+      const MAX_BUTTON_URL_LENGTH = 512; // Discord's limit for button URLs
+
+      if (gameUrl.length <= MAX_BUTTON_URL_LENGTH) {
+        // URL is short enough for a button
+        const embed = new EmbedBuilder()
+          .setDescription(message)
+          .setColor(0x5865F2); // Discord blurple
+
+        const button = new ButtonBuilder()
+          .setLabel('Play Game')
+          .setStyle(ButtonStyle.Link)
+          .setURL(gameUrl);
+
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
+
+        await user.send({ embeds: [embed], components: [row] });
+      } else {
+        // URL is too long for button, include it in the message
+        log(`[BOT] URL too long for button (${gameUrl.length} chars), sending as text`);
+        const embed = new EmbedBuilder()
+          .setDescription(`${message}\n\n**Game Link:**\n${gameUrl}`)
+          .setColor(0x5865F2); // Discord blurple
+
+        await user.send({ embeds: [embed] });
+      }
+    } else {
+      // No URL, just send plain message
+      await user.send(message);
+    }
+
     log(`[BOT] ✅ DM sent successfully to ${user.tag}`);
     return true;
   } catch (error) {
@@ -184,7 +212,7 @@ app.post('/notify', async (req, res) => {
 
   // Format and send message
   const message = formatNotificationMessage(gameData);
-  const success = await sendDiscordDM(discordId, message);
+  const success = await sendDiscordDM(discordId, message, gameData.gameUrl);
 
   if (success) {
     res.json({ success: true, message: 'Notification sent' });
