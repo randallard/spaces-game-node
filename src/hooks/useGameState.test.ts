@@ -68,6 +68,7 @@ const initialState: GameState = {
   playerSelectedDeck: null,
   opponentSelectedDeck: null,
   roundHistory: [],
+      lastDiscordNotificationTime: null,
   checksum: '',
 };
 
@@ -468,6 +469,7 @@ describe('useGameState', () => {
         playerSelectedDeck: null,
         opponentSelectedDeck: null,
         roundHistory: [],
+      lastDiscordNotificationTime: null,
         checksum: 'abc123',
       };
 

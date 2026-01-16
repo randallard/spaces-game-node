@@ -609,7 +609,7 @@ describe('ShareChallenge', () => {
         />
       );
 
-      expect(screen.getByText(/Notification automatically sent to/)).toBeInTheDocument();
+      expect(screen.getByText(/Discord notification sent to/)).toBeInTheDocument();
       expect(screen.getByText('Bob')).toBeInTheDocument();
     });
 
@@ -627,7 +627,7 @@ describe('ShareChallenge', () => {
       expect(screen.getByText(/4×4 Board/)).toBeInTheDocument();
     });
 
-    it('should not show copy/share buttons when opponent has Discord', () => {
+    it('should show copy/share buttons when opponent has Discord', () => {
       render(
         <ShareChallenge
           {...defaultProps}
@@ -635,8 +635,9 @@ describe('ShareChallenge', () => {
         />
       );
 
-      expect(screen.queryByText(/Copy Link/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/Share Challenge/)).not.toBeInTheDocument();
+      // Copy/Share buttons should be visible for manual sharing backup
+      expect(screen.getByText(/Copy Link/)).toBeInTheDocument();
+      expect(screen.getByText(/Share Challenge/)).toBeInTheDocument();
     });
 
     it('should show back to home button when opponent has Discord', () => {
@@ -860,7 +861,7 @@ describe('ShareChallenge', () => {
       );
 
       expect(screen.getByText('Turn Complete!')).toBeInTheDocument();
-      expect(screen.getByText(/Notification automatically sent to/)).toBeInTheDocument();
+      expect(screen.getByText(/Discord notification sent to/)).toBeInTheDocument();
       expect(screen.getByText(/Connect to Discord if you want to receive notifications automatically/)).toBeInTheDocument();
     });
 

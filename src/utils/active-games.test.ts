@@ -58,6 +58,7 @@ describe('active-games utilities', () => {
     playerSelectedDeck: null,
     opponentSelectedDeck: null,
     roundHistory: [],
+      lastDiscordNotificationTime: null,
     checksum: '',
   });
 

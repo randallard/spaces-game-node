@@ -309,6 +309,7 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
       playerSelectedDeck: null,
       opponentSelectedDeck: null,
       roundHistory: [],
+      lastDiscordNotificationTime: null,
       checksum: '', // Checksum managed externally
     }));
   }, []);

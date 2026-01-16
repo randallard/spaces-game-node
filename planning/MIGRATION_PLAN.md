@@ -580,6 +580,98 @@ function renderPhase(phase: GamePhase) {
 
 ---
 
-**Document Status:** Draft v1.0
-**Last Updated:** 2025-11-05
-**Author:** Migration Plan (AI-Generated)
+## Recent Changes & State Management Improvements
+
+### Derived State Migration (In Progress)
+
+**Goal:** Reduce redundant state and derive values from authoritative sources to prevent state inconsistencies.
+
+#### Changes Completed
+
+1. **Incomplete Round Display (2025-01-14)**
+   - Added `playerSelectedBoard` and `opponentSelectedBoard` to track current round selections
+   - Created "Current Round" display in round history when waiting for opponent
+   - Shows player's board thumbnail with "?" placeholder for opponent's board
+   - Auto-expands round history section when incomplete round exists
+   - Files: `SavedBoards.tsx`, `ActiveGameView.tsx`, `App.tsx`
+
+2. **Discord Notification Score Fix (2025-01-14)**
+   - Fixed bug where Discord notifications showed incorrect scores (e.g., "2-0" instead of "2-1")
+   - Root cause: Only adding points if player won, not adding both players' points
+   - Changed from: `state.opponentScore + (result.winner === 'opponent' ? points : 0)`
+   - Changed to: `state.opponentScore + (result.opponentPoints ?? 0)`
+   - File: `App.tsx:1597-1598`
+
+3. **Round History Visibility (2025-01-14)**
+   - Fixed issue where round history panel wasn't showing when waiting for opponent
+   - Added `showBoardSelection` prop to control board selection UI independently
+   - Round history now always visible during active games
+   - File: `ActiveGameView.tsx`, `SavedBoards.tsx`
+
+4. **Console Log Cleanup (2025-01-14)**
+   - Removed verbose step-by-step logs from game simulation (50+ lines per round → 3 lines)
+   - Removed render logs from RoundResults component
+   - Consolidated combined-board-svg logs with coordinate display
+   - Files: `game-simulation.ts`, `RoundResults.tsx`, `combined-board-svg.ts`
+
+5. **Trap Visibility During Replay (2025-01-14)**
+   - Fixed bug where traps appeared at step 0 during replay animation
+   - Added `playerMaxStep` and `opponentMaxStep` checks for trap rendering
+   - Traps now only appear when actually placed in sequence
+   - File: `combined-board-svg.ts:68-70, 119-121`
+
+6. **UI Flow Fixes (2025-01-14)**
+   - Fixed "Back to Home" button in ShareChallenge modal
+   - Fixed "re-send link" button visibility logic for human opponents
+   - Fixed board selection UI hiding when waiting for opponent
+   - Files: `ShareChallenge.tsx`, `ActiveGameView.tsx`
+
+#### Potential State Issues to Address
+
+**Redundant State (Needs Cleanup):**
+- `currentRound` vs `phase.round` - Two sources of truth for current round number
+- `playerScore` and `opponentScore` vs `roundHistory` - Scores could be derived from round history
+- `playerSelectedBoard` and `opponentSelectedBoard` - Should these be in phase state instead?
+
+**Derived Values (Consider Computing):**
+- Total scores: `playerScore` and `opponentScore` can be computed from `roundHistory`
+- Game progress: Could derive from `roundHistory.length` and `totalRounds`
+- Round winner: Already computed in simulation, stored in `RoundResult`
+
+**State Machine Issues:**
+- Phase transitions have implicit state (e.g., `waiting-for-opponent` phase doesn't store who's selected)
+- `gameState` prop computed in `App.tsx` but could be derived from phase + board selections
+- Multiple conditional checks for "is player waiting" vs "is opponent waiting"
+
+#### Recommended Next Steps
+
+1. **Consolidate Round Tracking**
+   - Make `currentRound` the single source of truth
+   - Remove `round` from phase types (use `state.currentRound` instead)
+   - Update all references to `phase.round` → `state.currentRound`
+
+2. **Derive Scores from Round History**
+   - Remove `playerScore` and `opponentScore` from state
+   - Create `useDerivedScores()` hook or helper function
+   - Compute from: `roundHistory.reduce((sum, r) => sum + r.playerPoints, 0)`
+
+3. **Clean Up Board Selection State**
+   - Move `playerSelectedBoard` and `opponentSelectedBoard` into phase state
+   - Update phase type: `{ type: 'board-selection'; round: number; playerBoard?: Board; opponentBoard?: Board }`
+   - Makes "who has selected" explicit in the phase
+
+4. **Simplify Game State Props**
+   - Derive `gameState` from phase type + board selections
+   - Remove need to pass computed `gameState` through component tree
+   - Use discriminated union pattern consistently
+
+5. **Add State Validation**
+   - Ensure Zod schemas match current state structure
+   - Add runtime validation when loading from localStorage
+   - Add migration path for old state structures
+
+---
+
+**Document Status:** Living Document (Updated Regularly)
+**Last Updated:** 2025-01-14
+**Author:** Migration Plan (AI-Generated + Manual Updates)

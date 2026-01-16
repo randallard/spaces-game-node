@@ -47,6 +47,7 @@ const mockGameState: GameState = {
   playerSelectedDeck: null,
   opponentSelectedDeck: null,
   roundHistory: [],
+      lastDiscordNotificationTime: null,
   checksum: '',
 };
 
