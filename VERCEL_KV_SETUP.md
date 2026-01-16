@@ -26,10 +26,16 @@ Discord buttons have a 512-character URL limit. With full round history, challen
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Navigate to the **Storage** tab
 3. Click **Create Database**
-4. You should see **Serverless Redis** (powered by Upstash)
+4. Look for **Serverless Redis** or **Upstash** (may be under "View all partners")
 5. Click **Continue**
 
-**Note:** You may also see other Redis providers like "Redis Cloud" under "View all partners". Either will work, but **Serverless Redis (Upstash)** is recommended as it's what Vercel KV was built on.
+**⚠️ IMPORTANT:** You **MUST** use **Upstash Redis** (Serverless Redis), not Redis Cloud!
+
+Our code uses the `@vercel/kv` SDK, which **only works with Upstash**. Redis Cloud does not provide the REST API interface that `@vercel/kv` requires.
+
+If you accidentally created a Redis Cloud database:
+1. Delete it from Vercel Storage dashboard
+2. Create a new database, selecting **Upstash** or **Serverless Redis**
 
 ### 2. Configure Your Database
 
@@ -56,13 +62,26 @@ Discord buttons have a 512-character URL limit. With full round history, challen
    - ✅ Development (optional, for local testing)
 5. Click **Connect**
 
-This automatically adds the required environment variables to your Vercel project:
-- `KV_URL`
-- `KV_REST_API_URL`
-- `KV_REST_API_TOKEN`
-- `KV_REST_API_READ_ONLY_TOKEN`
+### 5. Verify Environment Variables
 
-**Note:** The `@vercel/kv` SDK is fully compatible with Upstash Redis (Serverless Redis) through Vercel Marketplace. In fact, Vercel KV was originally built on Upstash.
+After connecting your project, verify the environment variables were added:
+
+1. Go to your Vercel project → **Settings** → **Environment Variables**
+2. You should see these variables (added automatically by Upstash):
+   - `KV_REST_API_URL`
+   - `KV_REST_API_TOKEN`
+   - `KV_REST_API_READ_ONLY_TOKEN`
+   - `KV_URL` (optional)
+
+**✅ If you see these variables:** You're all set! The `@vercel/kv` SDK will work automatically.
+
+**❌ If you only see `KV_REDIS_URL` or `REDIS_URL`:** You created a Redis Cloud database by mistake. Redis Cloud is **not compatible** with `@vercel/kv`. You need to:
+
+1. Delete the Redis Cloud database
+2. Create a new **Upstash** or **Serverless Redis** database
+3. Reconnect to your project
+
+The `@vercel/kv` SDK requires Upstash's REST API, which only Upstash provides.
 
 ### 5. Local Development Setup (Optional)
 
@@ -159,13 +178,24 @@ For detailed pricing, visit [Upstash Pricing](https://upstash.com/pricing/redis)
 
 ## Troubleshooting
 
-### Error: "Cannot read properties of null"
+### Error: "Cannot read properties of null" or "kv is not defined"
 
-**Cause:** Redis database not connected to project
+**Cause:** Wrong Redis provider (Redis Cloud instead of Upstash) OR database not connected to project
 
 **Solution:**
+
+**Check your environment variables first:**
+1. Vercel Project → Settings → Environment Variables
+2. Look for `KV_REST_API_URL`
+
+**If you see `KV_REDIS_URL` or `REDIS_URL` instead:**
+- You created Redis Cloud by mistake
+- Delete it and create **Upstash/Serverless Redis** instead
+- `@vercel/kv` ONLY works with Upstash
+
+**If environment variables are missing:**
 1. Go to Vercel Dashboard → Storage
-2. Find your Redis database
+2. Find your Upstash Redis database
 3. Click **Connect Project**
 4. Select your project and environments
 5. Redeploy your project
