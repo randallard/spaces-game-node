@@ -51,10 +51,18 @@ export interface ActiveGameViewProps {
   onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
   /** Whether opponent has Discord connected */
   opponentHasDiscord?: boolean;
+  /** Timestamp of last Discord notification sent (ISO string) */
+  lastDiscordNotificationTime?: string | null;
   /** Callback to go home */
   onGoHome?: () => void;
   /** Callback when share modal is closed (to transition from share-challenge to waiting-for-opponent) */
   onShareModalClosed?: () => void;
+  /** Whether opponent is a CPU (to hide re-send link and share modal) */
+  isCpuOpponent?: boolean;
+  /** Player's selected board for current round (if any) */
+  playerSelectedBoard?: Board | null;
+  /** Opponent's selected board for current round (if any) */
+  opponentSelectedBoard?: Board | null;
 }
 
 /**
@@ -82,17 +90,23 @@ export function ActiveGameView({
   explanationStyle = 'lively',
   onExplanationStyleChange,
   opponentHasDiscord = false,
+  onGoHome,
   onShareModalClosed,
+  isCpuOpponent = false,
+  playerSelectedBoard,
+  opponentSelectedBoard,
+  lastDiscordNotificationTime,
 }: ActiveGameViewProps): ReactElement {
   const [showShareModal, setShowShareModal] = useState(false);
 
   // Auto-open share modal when in waiting-for-opponent-to-start state
   // (this happens right after selecting a board)
+  // ONLY for human opponents - CPU opponents skip the share modal
   useEffect(() => {
-    if (gameState === 'waiting-for-opponent-to-start') {
+    if (gameState === 'waiting-for-opponent-to-start' && !isCpuOpponent) {
       setShowShareModal(true);
     }
-  }, [gameState]);
+  }, [gameState, isCpuOpponent]);
 
   // Filter boards by size
   const filteredBoards = playerBoards.filter(board => board.boardSize === boardSize);
@@ -138,13 +152,16 @@ export function ActiveGameView({
         </div>
         <div className={styles.matchupInfo}>
           {opponentName} vs {playerName}
-          <button
-            onClick={handleReSendLink}
-            className={styles.reSendLink}
-            title="Click to re-send game link"
-          >
-            (click here to re-send game link)
-          </button>
+          {/* Only show re-send link for human opponents, except when selecting round 1 board */}
+          {!isCpuOpponent && !(currentRound === 1 && gameState === 'waiting-for-player') && (
+            <button
+              onClick={handleReSendLink}
+              className={styles.reSendLink}
+              title="Click to re-send game link"
+            >
+              (click here to re-send game link)
+            </button>
+          )}
         </div>
       </div>
 
@@ -153,7 +170,7 @@ export function ActiveGameView({
         {getStatusMessage()}
       </div>
 
-      {/* Board Selection - Always Available (includes Previous Rounds) */}
+      {/* Board Selection and Round History - Always visible */}
       <div className={styles.boardSelectionSection}>
         <SavedBoards
           boards={filteredBoards}
@@ -173,6 +190,10 @@ export function ActiveGameView({
           {...(onShowCompleteResultsChange && { onShowCompleteResultsChange })}
           explanationStyle={explanationStyle}
           {...(onExplanationStyleChange && { onExplanationStyleChange })}
+          playerSelectedBoard={playerSelectedBoard ?? null}
+          opponentSelectedBoard={opponentSelectedBoard ?? null}
+          // Only allow board selection when waiting for player
+          showBoardSelection={gameState === 'waiting-for-player'}
         />
       </div>
 
@@ -194,7 +215,11 @@ export function ActiveGameView({
             boardSize={boardSize}
             round={currentRound}
             onCancel={handleCloseShareModal}
+            {...(onGoHome && { onGoHome })}
             opponentHasDiscord={opponentHasDiscord}
+            userHasDiscord={false}
+            isConnectingDiscord={false}
+            lastDiscordNotificationTime={lastDiscordNotificationTime ?? null}
           />
         </div>
       )}

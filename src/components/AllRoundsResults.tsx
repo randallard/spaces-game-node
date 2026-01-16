@@ -53,6 +53,8 @@ export interface AllRoundsResultsProps {
   waitingForOpponentBoard?: boolean;
   /** The round number we're waiting for */
   nextRound?: number;
+  /** Whether opponent is CPU (to hide Discord connection UI) */
+  isCpuOpponent?: boolean;
 }
 
 /**
@@ -87,6 +89,7 @@ export function AllRoundsResults({
   isConnectingDiscord = false,
   waitingForOpponentBoard = false,
   nextRound,
+  isCpuOpponent = false,
 }: AllRoundsResultsProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -353,8 +356,8 @@ export function AllRoundsResults({
         </div>
       </div>
 
-      {/* Discord Status Section (only show in review mode) */}
-      {isReview && (opponentHasDiscord || onConnectDiscord) && (
+      {/* Discord Status Section (only show in review mode for human opponents) */}
+      {isReview && !isCpuOpponent && (opponentHasDiscord || onConnectDiscord) && (
         <div className={styles.discordSection}>
           {/* Show opponent's Discord status */}
           {opponentHasDiscord && (

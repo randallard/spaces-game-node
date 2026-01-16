@@ -52,12 +52,8 @@ function buildGridData(
   }
 
   // Process player sequence (up to playerMaxStep if provided)
-  // Note: Traps are always shown (they're part of board design), only pieces are limited by maxStep
-  console.log('[buildGridData] Processing player sequence, playerMaxStep:', playerMaxStep);
   playerBoard.sequence.forEach((move, step) => {
-    console.log(`[buildGridData] Player step ${step}: type=${move.type}, pos=(${move.position.row},${move.position.col}), playerMaxStep=${playerMaxStep}`);
     if (move.type === 'final') {
-      console.log(`[buildGridData] Skipping player step ${step} because it's a final move`);
       return; // Skip final moves
     }
 
@@ -68,14 +64,14 @@ function buildGridData(
       if (move.type === 'piece') {
         // Only show pieces up to playerMaxStep
         if (playerMaxStep !== undefined && step > playerMaxStep) {
-          console.log(`[buildGridData] Skipping player piece at step ${step} because step > playerMaxStep`);
           return;
         }
-        console.log(`[buildGridData] Adding player piece at (${row},${col}), step ${step}`);
         square.playerVisits.push(step);
       } else if (move.type === 'trap') {
-        // Always show traps (they're part of board design)
-        console.log(`[buildGridData] Adding player trap at (${row},${col}), step ${step}`);
+        // Only show traps up to playerMaxStep (for replay animation)
+        if (playerMaxStep !== undefined && step > playerMaxStep) {
+          return;
+        }
         square.playerTrapStep = step;
       }
     }
@@ -87,40 +83,28 @@ function buildGridData(
   const playerTrapPosition = result.simulationDetails?.playerTrapPosition;
   const playerHitTrap = result.simulationDetails?.playerHitTrap;
 
-  console.log('[buildGridData] Processing opponent sequence, opponentMaxStep:', opponentMaxStep);
-  console.log('[buildGridData] playerTrapPosition:', playerTrapPosition);
-  console.log('[buildGridData] playerHitTrap:', playerHitTrap);
-  console.log('[buildGridData] Opponent board name:', opponentBoard.name);
-  console.log('[buildGridData] Full opponent sequence:');
-  opponentBoard.sequence.forEach((move, i) => {
-    console.log(`  Step ${i}: type=${move.type}, pos=(${move.position.row},${move.position.col})`);
-  });
-  console.log('[buildGridData] Opponent board grid (ALL cells):');
+  // Check grid for opponent traps that player hit
   opponentBoard.grid.forEach((row, r) => {
     row.forEach((cell, c) => {
       const rotated = rotatePosition(r, c, size);
-      console.log(`  Grid cell ORIGINAL(${r},${c}) = "${cell}", ROTATED to (${rotated.row},${rotated.col})`);
 
       // Show traps from the grid if player hit one there
       if (cell === 'trap' && playerTrapPosition &&
           playerTrapPosition.row === rotated.row &&
           playerTrapPosition.col === rotated.col) {
-        console.log(`  [MATCH] Grid trap at ROTATED(${rotated.row},${rotated.col}) matches playerTrapPosition!`);
         const square = grid[rotated.row]![rotated.col]!;
         square.opponentTrapStep = -1; // Use -1 to indicate it's a static grid trap
       }
     });
   });
+
   opponentBoard.sequence.forEach((move, step) => {
-    console.log(`[buildGridData] Opponent step ${step}: type=${move.type}, pos=(${move.position.row},${move.position.col}), opponentMaxStep=${opponentMaxStep}`);
     if (move.type === 'final') {
-      console.log(`[buildGridData] Skipping opponent step ${step} because it's a final move`);
       return; // Skip final moves
     }
 
     const rotated = rotatePosition(move.position.row, move.position.col, size);
     const { row, col } = rotated;
-    console.log(`[buildGridData] Rotated opponent position: (${row},${col})`);
 
     if (row >= 0 && row < size && col >= 0 && col < size) {
       const square = grid[row]![col]!;
@@ -128,12 +112,15 @@ function buildGridData(
       if (move.type === 'piece') {
         // Only show pieces up to opponentMaxStep
         if (opponentMaxStep !== undefined && step > opponentMaxStep) {
-          console.log(`[buildGridData] Skipping opponent piece at step ${step} because step > opponentMaxStep`);
           return;
         }
-        console.log(`[buildGridData] Adding opponent piece at (${row},${col}), step ${step}`);
         square.opponentVisits.push(step);
       } else if (move.type === 'trap') {
+        // Only show traps up to opponentMaxStep (for replay animation)
+        if (opponentMaxStep !== undefined && step > opponentMaxStep) {
+          return;
+        }
+
         // Show opponent trap if:
         // 1. Player hit it at this exact position, OR
         // 2. Player hit a trap but position wasn't recorded (backward compatibility)
@@ -141,10 +128,7 @@ function buildGridData(
                         (playerHitTrap && !playerTrapPosition);
 
         if (showTrap) {
-          console.log(`[buildGridData] Adding opponent trap at (${row},${col}), step ${step}`);
           square.opponentTrapStep = step;
-        } else {
-          console.log(`[buildGridData] Skipping opponent trap at (${row},${col}) - player didn't hit it there`);
         }
       }
     }
@@ -204,23 +188,24 @@ export function generateCombinedBoardSvg(
   const cellSize = 45;
   const viewBoxSize = size * cellSize + 10;
 
-  console.log('[generateCombinedBoardSvg] Board size:', size);
-  console.log('[generateCombinedBoardSvg] Player board:', playerBoard.name, 'Sequence length:', playerBoard.sequence.length);
-  console.log('[generateCombinedBoardSvg] Opponent board:', opponentBoard.name, 'Sequence length:', opponentBoard.sequence.length);
+  // Show what we're rendering (useful for debugging replay steps)
+  const renderContext = playerMaxStep !== undefined || opponentMaxStep !== undefined
+    ? `replay step (player:${playerMaxStep}, opponent:${opponentMaxStep})`
+    : 'full board';
+
+  console.log(`[generateCombinedBoardSvg] ${renderContext}`, {
+    boardSize: size,
+    playerBoard: playerBoard.name,
+    playerSequence: playerBoard.sequence.filter(m => m.type !== 'final').map((m, i) => `${i + 1}:${m.type}@(${m.position.row},${m.position.col})`).join(' '),
+    opponentBoard: opponentBoard.name,
+    opponentSequence: opponentBoard.sequence.filter(m => m.type !== 'final').map((m, i) => `${i + 1}:${m.type}@(${m.position.row},${m.position.col})`).join(' '),
+    opponentSequenceRotated: opponentBoard.sequence.filter(m => m.type !== 'final').map((m, i) => {
+      const rotated = rotatePosition(m.position.row, m.position.col, size);
+      return `${i + 1}:${m.type}@(${rotated.row},${rotated.col})`;
+    }).join(' '),
+  });
 
   const grid = buildGridData(playerBoard, opponentBoard, result, playerMaxStep, opponentMaxStep);
-
-  console.log('[generateCombinedBoardSvg] Grid data built, checking for pieces...');
-  let totalPlayerVisits = 0;
-  let totalOpponentVisits = 0;
-  for (let i = 0; i < size; i++) {
-    for (let j = 0; j < size; j++) {
-      const square = grid[i]![j]!;
-      totalPlayerVisits += square.playerVisits.length;
-      totalOpponentVisits += square.opponentVisits.length;
-    }
-  }
-  console.log('[generateCombinedBoardSvg] Total player visits:', totalPlayerVisits, 'Total opponent visits:', totalOpponentVisits);
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}">`;
   svg += `<rect width="${viewBoxSize}" height="${viewBoxSize}" fill="rgb(30, 41, 59)"/>`;
@@ -320,8 +305,6 @@ export function generateCombinedBoardSvg(
 
   svg += '</g></svg>';
 
-  console.log('[generateCombinedBoardSvg] SVG generated, length:', svg.length, 'First 200 chars:', svg.substring(0, 200));
-
   // Create data URI using base64 encoding (better cross-browser compatibility)
   // Use modern TextEncoder API for proper UTF-8 handling
   let dataUri: string;
@@ -334,7 +317,6 @@ export function generateCombinedBoardSvg(
     }
     const base64 = btoa(binaryString);
     dataUri = `data:image/svg+xml;base64,${base64}`;
-    console.log('[generateCombinedBoardSvg] Data URI length:', dataUri.length);
   } catch (error) {
     console.error('[generateCombinedBoardSvg] Error encoding SVG:', error);
     // Fallback to simple URL encoding

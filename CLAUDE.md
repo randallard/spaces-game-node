@@ -3,3 +3,4 @@
 - do not push until I've verified locally
 - never hardcode endpoints - always set up to be configurable in environment or config files
 - always let me know if I need to restart the dev server or need to start with fresh local storage or just need to start with a fresh game
+- at the end of your explanation - tell me if anything needs to be restarted or what I need to do in order to see the changes

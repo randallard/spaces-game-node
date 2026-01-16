@@ -597,6 +597,18 @@
   box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
 }
 
+.historyCardIncomplete {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+  cursor: default;
+  opacity: 0.7;
+}
+
+.historyCardIncomplete:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .historyCardHeader {
   display: flex;
   justify-content: space-between;
