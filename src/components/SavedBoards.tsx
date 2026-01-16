@@ -50,6 +50,12 @@ export interface SavedBoardsProps {
   explanationStyle?: 'lively' | 'technical';
   /** Optional callback when the explanation style preference changes */
   onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
+  /** Player's selected board for current incomplete round (if waiting for opponent) */
+  playerSelectedBoard?: Board | null;
+  /** Opponent's selected board for current incomplete round */
+  opponentSelectedBoard?: Board | null;
+  /** Whether to show board selection UI (default: true) */
+  showBoardSelection?: boolean;
 }
 
 type ViewMode = 'list' | 'select-size' | 'create';
@@ -140,6 +146,9 @@ export function SavedBoards({
   onShowCompleteResultsChange,
   explanationStyle = 'lively',
   onExplanationStyleChange,
+  playerSelectedBoard = null,
+  opponentSelectedBoard = null,
+  showBoardSelection = true,
 }: SavedBoardsProps): ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedBoardSize, setSelectedBoardSize] = useState<BoardSize>(2);
@@ -147,8 +156,18 @@ export function SavedBoards({
   const [customSize, setCustomSize] = useState<string>('');
   const [customError, setCustomError] = useState<string>('');
   const [selectedHistoryRound, setSelectedHistoryRound] = useState<number | null>(null);
-  const [showRoundHistory, setShowRoundHistory] = useState<boolean>(false);
   const [showRotationHelp, setShowRotationHelp] = useState<boolean>(false);
+  const [showRoundHistory, setShowRoundHistory] = useState<boolean>(false);
+
+  // Auto-expand round history if there's an incomplete round and no completed rounds yet
+  const hasIncompleteRound = !!(playerSelectedBoard && !opponentSelectedBoard);
+
+  // Auto-expand round history when there's an incomplete round and no completed rounds
+  useEffect(() => {
+    if (hasIncompleteRound && roundHistory.length === 0 && !showRoundHistory) {
+      setShowRoundHistory(true);
+    }
+  }, [hasIncompleteRound, roundHistory.length, showRoundHistory]);
 
   // Handle initial board size if provided (use useEffect to avoid setState during render)
   useEffect(() => {
@@ -388,7 +407,7 @@ export function SavedBoards({
 
   return (
     <div className={styles.container}>
-      {!isManagementMode && (
+      {!isManagementMode && showBoardSelection && (
         <div className={styles.header}>
           <h2 className={styles.title}>Select a Board for Round {currentRound}</h2>
           <p className={styles.subtitle}>
@@ -398,12 +417,16 @@ export function SavedBoards({
       )}
 
       {/* Round History Section */}
-      {!isManagementMode && roundHistory.length > 0 && (
+      {!isManagementMode && (roundHistory.length > 0 || (playerSelectedBoard && !opponentSelectedBoard)) && (
         <div className={styles.roundHistorySection}>
           <div className={styles.roundHistoryHeader}>
             <div className={styles.roundHistoryTitleGroup}>
               <h3 className={styles.roundHistoryTitle}>
-                Previous Rounds ({roundHistory.length})
+                {hasIncompleteRound && roundHistory.length === 0
+                  ? 'Current Round'
+                  : hasIncompleteRound
+                    ? `Round History (${roundHistory.length} complete)`
+                    : `Previous Rounds (${roundHistory.length})`}
               </h3>
               <button
                 className={styles.helpIconButton}
@@ -420,7 +443,7 @@ export function SavedBoards({
               className={styles.toggleHistoryButton}
               onClick={() => setShowRoundHistory(!showRoundHistory)}
             >
-              {showRoundHistory ? 'Hide' : 'Show'} Previous Rounds
+              {showRoundHistory ? 'Hide' : 'Show'} {hasIncompleteRound && roundHistory.length === 0 ? 'Current Round' : 'Round History'}
             </button>
           </div>
 
@@ -495,6 +518,49 @@ export function SavedBoards({
                     </button>
                   );
                 })}
+
+                {/* Show incomplete round if player has selected but opponent hasn't */}
+                {playerSelectedBoard && !opponentSelectedBoard && (
+                  <div
+                    className={`${styles.historyCard} ${styles.historyCardIncomplete}`}
+                    title="Waiting for opponent to select their board"
+                  >
+                    <div className={styles.historyCardHeader}>
+                      <span className={styles.historyRoundNumber}>Round {currentRound}</span>
+                      <span className={styles.historyWinner} style={{ color: '#94a3b8' }}>
+                        In Progress...
+                      </span>
+                    </div>
+
+                    <div className={styles.historyThumbnails}>
+                      <div className={styles.historyThumbWrapper}>
+                        <span className={styles.historyThumbLabel}>{userName}</span>
+                        <img
+                          src={generateBoardThumbnail(playerSelectedBoard)}
+                          alt={`${userName}'s board`}
+                          className={styles.historyThumb}
+                        />
+                      </div>
+                      <div className={styles.historyThumbWrapper}>
+                        <span className={styles.historyThumbLabel}>{opponentName}</span>
+                        <div className={styles.historyThumb} style={{
+                          backgroundColor: '#475569',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '2rem',
+                          opacity: 0.5
+                        }}>
+                          ?
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.historyPoints} style={{ color: '#94a3b8' }}>
+                      - - -
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -551,6 +617,9 @@ export function SavedBoards({
         </div>
       )}
 
+      {/* Board Selection UI - Only show when player needs to select a board */}
+      {showBoardSelection && (
+      <>
       {boards.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>📋</div>
@@ -609,6 +678,8 @@ export function SavedBoards({
             ))}
           </div>
         </>
+      )}
+      </>
       )}
     </div>
   );

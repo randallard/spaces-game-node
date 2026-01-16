@@ -59,7 +59,6 @@ function positionKey(row: number, col: number): string {
  * @example
  * ```ts
  * const result = simulateRound(1, playerBoard, opponentBoard);
- * console.log(`Winner: ${result.winner}`);
  * console.log(`Player: ${result.playerPoints} points`);
  * ```
  */
@@ -70,25 +69,7 @@ export function simulateRound(
 ): RoundResult {
   const size = playerBoard.grid.length;
 
-  console.log('\n====== Starting New Game Round ======');
-  console.log(`Round: ${round}`);
-
-  // Log player sequence
-  console.log('\nPlayer Sequence:');
-  playerBoard.sequence.forEach((move, i) => {
-    const typeStr = move.type === 'piece' ? 'Move' : move.type === 'trap' ? 'Trap' : 'Final';
-    console.log(`  Step ${i}: (${move.position.row}, ${move.position.col}) - ${typeStr}`);
-  });
-
-  // Log opponent sequence (with rotation)
-  console.log('\nOpponent Sequence:');
-  opponentBoard.sequence.forEach((move, i) => {
-    const rotated = rotatePosition(move.position.row, move.position.col, size);
-    const typeStr = move.type === 'piece' ? 'Move' : move.type === 'trap' ? 'Trap' : 'Final';
-    console.log(
-      `  Step ${i}: (${move.position.row}, ${move.position.col}) rotated to (${rotated.row}, ${rotated.col}) - ${typeStr}`
-    );
-  });
+  console.log(`[Game Simulation] Round ${round}: ${playerBoard.name} vs ${opponentBoard.name}`);
 
   // Initialize game state - positions start as null (not set) just like Rust's Option<Position>
   let playerScore = 0;
@@ -118,7 +99,6 @@ export function simulateRound(
 
   // Step-by-step simulation
   for (let step = 0; step < maxSteps; step++) {
-    console.log(`\n=== Processing Step ${step} ===`);
 
     // Process player's move
     if (!playerRoundEnded && step < playerBoard.sequence.length) {
@@ -126,25 +106,20 @@ export function simulateRound(
       const cellContent = playerBoard.grid[move.position.row]?.[move.position.col];
 
       if (move.type === 'piece' || cellContent === 'piece') {
-        console.log(`Player moving to (${move.position.row}, ${move.position.col})`);
         // Check for forward movement before updating position
         if (playerPosition !== null && playerPosition.row > move.position.row) {
           playerScore++;
-          console.log(`Player scored forward move point! Score now ${playerScore}`);
         }
         playerPosition = move.position;
         playerMoves++;
         playerLastStep = step;
       } else if (move.type === 'trap' || cellContent === 'trap') {
-        console.log(`Player placed trap at (${move.position.row}, ${move.position.col})`);
         traps.playerTraps.set(positionKey(move.position.row, move.position.col), step);
         playerLastStep = step;
       } else if (move.type === 'final' || cellContent === 'final') {
-        console.log('Player reached goal!');
         playerGoalReached = true;
         playerPosition = move.position; // Update position to goal (off-board)
         playerScore++;
-        console.log(`Player scored goal point! Score now ${playerScore}`);
         playerRoundEnded = true;
         playerLastStep = step;
       }
@@ -157,25 +132,20 @@ export function simulateRound(
       const cellContent = opponentBoard.grid[move.position.row]?.[move.position.col];
 
       if (move.type === 'piece' || cellContent === 'piece') {
-        console.log(`Opponent moving to (${rotated.row}, ${rotated.col})`);
         // Check for forward movement before updating position
         if (opponentPosition !== null && opponentPosition.row < rotated.row) {
           opponentScore++;
-          console.log(`Opponent scored forward move point! Score now ${opponentScore}`);
         }
         opponentPosition = rotated;
         opponentMoves++;
         opponentLastStep = step;
       } else if (move.type === 'trap' || cellContent === 'trap') {
-        console.log(`Opponent placed trap at (${rotated.row}, ${rotated.col})`);
         traps.opponentTraps.set(positionKey(rotated.row, rotated.col), step);
         opponentLastStep = step;
       } else if (move.type === 'final' || cellContent === 'final') {
-        console.log('Opponent reached goal!');
         opponentGoalReached = true;
         opponentPosition = rotated; // Update position to goal (off-board)
         opponentScore++;
-        console.log(`Opponent scored goal point! Score now ${opponentScore}`);
         opponentRoundEnded = true;
         opponentLastStep = step;
       }
@@ -190,17 +160,12 @@ export function simulateRound(
       playerPosition.row === opponentPosition.row &&
       playerPosition.col === opponentPosition.col
     ) {
-      console.log(
-        `\nCOLLISION at square (${playerPosition.row}, ${playerPosition.col})!`
-      );
       // Both players lose 1 point (minimum 0)
       if (playerScore > 0) {
         playerScore--;
-        console.log(`Player lost point from collision! Score now ${playerScore}`);
       }
       if (opponentScore > 0) {
         opponentScore--;
-        console.log(`Opponent lost point from collision! Score now ${opponentScore}`);
       }
       break; // End round immediately
     }
@@ -211,12 +176,8 @@ export function simulateRound(
         positionKey(playerPosition.row, playerPosition.col)
       );
       if (trapStep !== undefined && trapStep <= step) {
-        console.log(
-          `\nPlayer hit opponent trap at (${playerPosition.row}, ${playerPosition.col})!`
-        );
         if (playerScore > 0) {
           playerScore--;
-          console.log(`Player lost point from trap! Score now ${playerScore}`);
         }
         playerHitTrap = true;
         playerTrapPosition = { row: playerPosition.row, col: playerPosition.col };
@@ -230,12 +191,8 @@ export function simulateRound(
         positionKey(opponentPosition.row, opponentPosition.col)
       );
       if (trapStep !== undefined && trapStep <= step) {
-        console.log(
-          `\nOpponent hit player trap at (${opponentPosition.row}, ${opponentPosition.col})!`
-        );
         if (opponentScore > 0) {
           opponentScore--;
-          console.log(`Opponent lost point from trap! Score now ${opponentScore}`);
         }
         opponentHitTrap = true;
         opponentTrapPosition = { row: opponentPosition.row, col: opponentPosition.col };
@@ -245,13 +202,11 @@ export function simulateRound(
 
     // Stop if both players have ended their round
     if (playerRoundEnded && opponentRoundEnded) {
-      console.log('\nBoth players have ended their round');
       break;
     }
 
     // Stop if either player has reached their goal
     if (playerGoalReached || opponentGoalReached) {
-      console.log('\nEnding round for goal reached');
       break;
     }
   }
@@ -267,18 +222,6 @@ export function simulateRound(
   const finalPlayerPosition = playerPosition || { row: size - 1, col: 0 };
   const finalOpponentPosition = opponentPosition || { row: 0, col: size - 1 };
 
-  console.log('\n====== Round Summary ======');
-  console.log(`Final player score: ${playerScore}`);
-  console.log(`Final opponent score: ${opponentScore}`);
-  console.log(`Winner: ${winner}`);
-  console.log(`Player final position: (${finalPlayerPosition.row}, ${finalPlayerPosition.col})`);
-  console.log(`Opponent final position: (${finalOpponentPosition.row}, ${finalOpponentPosition.col})`);
-  console.log(`Player moves: ${playerMoves}`);
-  console.log(`Opponent moves: ${opponentMoves}`);
-  console.log(`Player hit trap: ${playerHitTrap}`);
-  console.log(`Opponent hit trap: ${opponentHitTrap}`);
-  console.log(`Player goal reached: ${playerGoalReached}`);
-  console.log(`Opponent goal reached: ${opponentGoalReached}`);
 
   // Determine visual outcomes based on what happened
   // Priority: goal > trapped > stuck (if opponent reached goal) > forward > stuck
@@ -306,6 +249,8 @@ export function simulateRound(
   const collision =
     finalPlayerPosition.row === finalOpponentPosition.row &&
     finalPlayerPosition.col === finalOpponentPosition.col;
+
+  console.log(`[Game Simulation] Result: ${winner} | Player: ${playerScore}pts${playerHitTrap ? ' (trapped)' : playerGoalReached ? ' (goal)' : ''} | Opponent: ${opponentScore}pts${opponentHitTrap ? ' (trapped)' : opponentGoalReached ? ' (goal)' : ''}`);
 
   return {
     round,
@@ -358,7 +303,7 @@ export function simulateAllRounds(
     throw new Error('Both decks must have exactly 10 boards');
   }
 
-  console.log('\n====== Starting Deck vs Deck (10 Rounds) ======');
+  console.log('[Game Simulation] Deck mode: 10 rounds');
 
   // Use provided creatures or select random ones
   const finalPlayerCreature = playerCreature || getRandomCreature();
@@ -379,9 +324,9 @@ export function simulateAllRounds(
     results.push(result);
   }
 
-  console.log('\n====== All Rounds Complete ======');
-  console.log(`Total Player Score: ${results.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0)}`);
-  console.log(`Total Opponent Score: ${results.reduce((sum, r) => sum + (r.opponentPoints ?? 0), 0)}`);
+  const totalPlayerScore = results.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0);
+  const totalOpponentScore = results.reduce((sum, r) => sum + (r.opponentPoints ?? 0), 0);
+  console.log(`[Game Simulation] Deck complete: Player ${totalPlayerScore} - Opponent ${totalOpponentScore}`);
 
   return results;
 }

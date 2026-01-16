@@ -9,7 +9,6 @@ import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
 import { HelpModal } from './HelpModal';
-import { OpponentAvatar } from './OpponentAvatar';
 import styles from './RoundResults.module.css';
 
 export interface RoundResultsProps {
@@ -70,8 +69,6 @@ export function RoundResults({
   onExplanationStyleChange,
   isTutorial = false,
   waitingForOpponentResponse = false,
-  opponentDiscordId,
-  opponentDiscordAvatar,
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard } = result;
 
@@ -149,33 +146,19 @@ export function RoundResults({
       )
       : opponentBoard.sequence.length - 1;
 
-  console.log('[RoundResults] playerLastStep:', playerLastStep, 'opponentLastStep:', opponentLastStep);
-  console.log('[RoundResults] Player sequence length:', playerBoard.sequence.length, 'Opponent sequence length:', opponentBoard.sequence.length);
-  console.log('[RoundResults] simulationDetails:', result.simulationDetails);
-
   const maxSteps = Math.max(playerLastStep, opponentLastStep) + 1;
 
   // Generate combined board SVG (either full or up to current step during replay)
   const combinedBoardSvgData = useMemo(
     () => {
-      console.log('[RoundResults] Generating combined board SVG...', {
-        isReplaying,
-        playerBoard: playerBoard?.name,
-        opponentBoard: opponentBoard?.name,
-      });
-
       if (isReplaying) {
         // During replay, show only up to current step for both players
         const playerReplayMax = Math.min(currentStep - 1, playerLastStep);
         const opponentReplayMax = Math.min(currentStep - 1, opponentLastStep);
-        const data = generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerReplayMax, opponentReplayMax);
-        console.log('[RoundResults] Generated SVG (replay):', data.svg.substring(0, 100));
-        return data;
+        return generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerReplayMax, opponentReplayMax);
       }
       // Normal view, show only executed moves (hide opponent moves that weren't executed)
-      const data = generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerLastStep, opponentLastStep);
-      console.log('[RoundResults] Generated SVG (normal):', data.svg.substring(0, 100));
-      return data;
+      return generateCombinedBoardSvg(playerBoard, opponentBoard, result, playerLastStep, opponentLastStep);
     },
     [playerBoard, opponentBoard, result, currentStep, isReplaying, playerLastStep, opponentLastStep]
   );

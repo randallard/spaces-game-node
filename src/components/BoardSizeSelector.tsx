@@ -27,6 +27,8 @@ export interface BoardSizeSelectorProps {
   user?: UserProfile | null;
   /** Callback to navigate to board creation */
   onCreateBoards?: (size: number) => void;
+  /** Game mode being played */
+  gameMode?: 'round-by-round' | 'deck' | null;
 }
 
 /**
@@ -45,6 +47,7 @@ export function BoardSizeSelector({
   onGenerateCpuBoards,
   user,
   onCreateBoards,
+  gameMode,
 }: BoardSizeSelectorProps): ReactElement {
   const [customSize, setCustomSize] = useState<string>('');
   const [customError, setCustomError] = useState<string>('');
@@ -157,9 +160,17 @@ export function BoardSizeSelector({
     onSizeSelected(size);
   };
 
+  // Format game mode display
+  const gameModeDisplay = gameMode === 'round-by-round' ? 'Round by Round' : gameMode === 'deck' ? 'Deck Mode' : '';
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Choose Board Size</h1>
+      {opponent && (
+        <p className={styles.subtitle} style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+          {gameModeDisplay && `${gameModeDisplay} • `}{opponent.name}
+        </p>
+      )}
       <p className={styles.subtitle}>
         Select the board size for this game. All boards used in this game must match this size.
       </p>
