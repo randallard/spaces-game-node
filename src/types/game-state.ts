@@ -105,6 +105,9 @@ export type GameState = {
   // Round history
   roundHistory: RoundResult[];
 
+  // Discord notification tracking
+  lastDiscordNotificationTime: string | null; // ISO timestamp of last successful notification
+
   // Validation
   checksum: string; // For state integrity validation
 };

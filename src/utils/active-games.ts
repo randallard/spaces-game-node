@@ -62,14 +62,40 @@ export function getActiveGames(includeArchived = false): ActiveGameInfo[] {
  * Save or update an active game
  */
 export function saveActiveGame(state: GameState): void {
-  // Only save if we have a gameId and opponent
-  if (!state.gameId || !state.opponent) {
+  // Only save if we have an opponent
+  if (!state.opponent) {
+    return;
+  }
+
+  // For CPU games, generate a local gameId if one doesn't exist
+  // This allows CPU games to appear in active games list
+  let gameId = state.gameId;
+  if (!gameId && (state.opponent.type === 'cpu' || state.opponent.type === 'remote-cpu')) {
+    // Check if we already have an active game with this opponent
+    const games = getActiveGames(true); // Include archived
+    const existingGame = games.find(g =>
+      g.opponent.id === state.opponent?.id &&
+      g.boardSize === state.boardSize &&
+      g.gameMode === state.gameMode
+    );
+
+    if (existingGame) {
+      // Reuse existing game ID
+      gameId = existingGame.gameId;
+    } else {
+      // Generate a new stable ID based on opponent, boardSize, and gameMode
+      gameId = `cpu-${state.opponent.id}-${state.boardSize}-${state.gameMode}-${Date.now()}`;
+    }
+  }
+
+  // If still no gameId (shouldn't happen), don't save
+  if (!gameId) {
     return;
   }
 
   // Don't save if game is over
   if (state.phase.type === 'game-over') {
-    removeActiveGame(state.gameId);
+    removeActiveGame(gameId);
     return;
   }
 
@@ -87,7 +113,7 @@ export function saveActiveGame(state: GameState): void {
     const games = getActiveGames();
 
     const activeGame: ActiveGameInfo = {
-      gameId: state.gameId,
+      gameId,
       opponent: state.opponent,
       currentRound: state.currentRound,
       totalRounds: state.gameMode === 'deck' ? 10 : 5,
@@ -101,7 +127,7 @@ export function saveActiveGame(state: GameState): void {
     };
 
     // Remove existing game with same ID and add updated version
-    const filteredGames = games.filter(g => g.gameId !== state.gameId);
+    const filteredGames = games.filter(g => g.gameId !== gameId);
     filteredGames.unshift(activeGame); // Add to beginning (most recent first)
 
     localStorage.setItem(ACTIVE_GAMES_KEY, JSON.stringify(filteredGames));

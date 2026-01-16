@@ -43,6 +43,7 @@ const createMockGameState = (gameId: string): GameState => ({
   playerSelectedDeck: null,
   opponentSelectedDeck: null,
   roundHistory: [],
+      lastDiscordNotificationTime: null,
   checksum: '',
 });
 

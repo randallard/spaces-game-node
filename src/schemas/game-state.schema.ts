@@ -86,6 +86,7 @@ export const GameStateSchema = z.object({
   playerSelectedDeck: DeckSchema.nullable(),
   opponentSelectedDeck: DeckSchema.nullable(),
   roundHistory: z.array(RoundResultSchema),
+  lastDiscordNotificationTime: z.string().nullable(),
   checksum: z.string(),
 });
 

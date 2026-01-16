@@ -111,6 +111,7 @@ export function createInitialState(user: UserProfile | null): GameState {
     playerSelectedDeck: null,
     opponentSelectedDeck: null,
     roundHistory: [],
+    lastDiscordNotificationTime: null,
     checksum: '',
   };
 }

@@ -3,7 +3,8 @@
  * @module components/ShareChallenge
  */
 
-import { useState, useCallback, type ReactElement } from 'react';
+import { useState, useCallback, useMemo, type ReactElement } from 'react';
+import { parseChallengeUrl, type ChallengeData } from '@/utils/challenge-url';
 import styles from './ShareChallenge.module.css';
 
 export interface ShareChallengeProps {
@@ -15,8 +16,10 @@ export interface ShareChallengeProps {
   boardSize: number;
   /** Round number */
   round: number;
-  /** Callback when user cancels */
+  /** Callback when user cancels/closes modal */
   onCancel: () => void;
+  /** Callback when user clicks "Back to Home" */
+  onGoHome?: () => void;
   /** Whether opponent has Discord connected */
   opponentHasDiscord?: boolean;
   /** Whether current user has Discord connected */
@@ -25,6 +28,8 @@ export interface ShareChallengeProps {
   onConnectDiscord?: () => void;
   /** Whether Discord connection is in progress */
   isConnectingDiscord?: boolean;
+  /** Timestamp of last Discord notification sent (ISO string) */
+  lastDiscordNotificationTime?: string | null;
 }
 
 /**
@@ -42,13 +47,21 @@ export function ShareChallenge({
   boardSize,
   round,
   onCancel,
+  onGoHome,
   opponentHasDiscord = false,
   userHasDiscord = false,
   onConnectDiscord,
   isConnectingDiscord = false,
+  lastDiscordNotificationTime,
 }: ShareChallengeProps): ReactElement {
   const [copySuccess, setCopySuccess] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [showData, setShowData] = useState(false);
+
+  // Parse challenge data from URL
+  const challengeData = useMemo<ChallengeData | null>(() => {
+    return parseChallengeUrl(challengeUrl);
+  }, [challengeUrl]);
 
   /**
    * Copy URL to clipboard
@@ -122,7 +135,34 @@ export function ShareChallenge({
     }
   }, [challengeUrl, opponentName, boardSize, round, handleCopyToClipboard]);
 
-  // If opponent has Discord, show notification status instead of sharing UI
+  /**
+   * Format challenge data for display
+   */
+  const formatChallengeData = useCallback((data: ChallengeData | null): string => {
+    if (!data) return 'Unable to parse challenge data';
+
+    return JSON.stringify({
+      gameId: data.gameId,
+      round: data.round,
+      gameMode: data.gameMode,
+      boardSize: data.boardSize,
+      playerName: data.playerName,
+      playerId: data.playerId,
+      ...(data.gameCreatorId && { gameCreatorId: data.gameCreatorId }),
+      ...(data.playerScore !== undefined && { playerScore: data.playerScore }),
+      ...(data.opponentScore !== undefined && { opponentScore: data.opponentScore }),
+      ...(data.isFinalResults && { isFinalResults: data.isFinalResults }),
+      ...(data.isRoundComplete && { isRoundComplete: data.isRoundComplete }),
+      ...(data.playerDiscordId && { playerDiscordId: data.playerDiscordId }),
+      ...(data.playerDiscordUsername && { playerDiscordUsername: data.playerDiscordUsername }),
+      ...(data.playerDiscordAvatar && { playerDiscordAvatar: data.playerDiscordAvatar }),
+      ...(data.previousRoundResult && { previousRoundResult: 'RoundResult data included' }),
+      ...(data.previousRoundResults && { previousRoundResults: `${data.previousRoundResults.length} rounds included` }),
+      playerBoard: data.playerBoard || 'N/A',
+    }, null, 2);
+  }, []);
+
+  // If opponent has Discord, show notification status with manual sharing option
   if (opponentHasDiscord) {
     return (
       <div className={styles.container}>
@@ -132,7 +172,25 @@ export function ShareChallenge({
           <div className={styles.notificationStatus}>
             <div className={styles.notificationIcon}>🔔</div>
             <p className={styles.notificationText}>
-              Notification automatically sent to <strong>{opponentName}</strong>
+              Discord notification sent to <strong>{opponentName}</strong>
+              {lastDiscordNotificationTime && (
+                <>
+                  {' '}at{' '}
+                  <span className={styles.timestamp}>
+                    {new Date(lastDiscordNotificationTime).toUTCString()}
+                  </span>
+                  {' '}
+                  <a
+                    href="https://dateful.com/convert/utc"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.utcHelp}
+                    title="What time is this in my timezone?"
+                  >
+                    ?
+                  </a>
+                </>
+              )}
             </p>
           </div>
 
@@ -141,6 +199,70 @@ export function ShareChallenge({
               Round {round} • {boardSize}×{boardSize} Board
             </p>
           </div>
+
+          {/* Manual sharing option (backup) */}
+          <div className={styles.instructions}>
+            <p>Want to share the link manually?</p>
+          </div>
+
+          {/* Success message */}
+          {copySuccess && (
+            <div className={styles.successMessage}>
+              ✓ Link copied to clipboard!
+            </div>
+          )}
+
+          {/* Error message */}
+          {shareError && (
+            <div className={styles.errorMessage}>
+              {shareError}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className={styles.actions}>
+            {/* Native share button (preferred on mobile) */}
+            {typeof navigator !== 'undefined' && 'share' in navigator && (
+              <button
+                onClick={handleNativeShare}
+                className={styles.primaryButton}
+              >
+                📤 Share Challenge
+              </button>
+            )}
+
+            {/* Clipboard copy button */}
+            <button
+              onClick={handleCopyToClipboard}
+              className={(typeof navigator !== 'undefined' && 'share' in navigator) ? styles.secondaryButton : styles.primaryButton}
+            >
+              📋 Copy Link
+            </button>
+          </div>
+
+          {/* URL preview (collapsed) */}
+          <details className={styles.urlDetails}>
+            <summary className={styles.urlSummary}>View link</summary>
+            <div className={styles.urlPreview}>
+              <div className={styles.urlToggle}>
+                <button
+                  onClick={() => setShowData(false)}
+                  className={!showData ? styles.urlToggleActive : styles.urlToggleInactive}
+                >
+                  URL
+                </button>
+                <button
+                  onClick={() => setShowData(true)}
+                  className={showData ? styles.urlToggleActive : styles.urlToggleInactive}
+                >
+                  Data
+                </button>
+              </div>
+              <code className={styles.urlCode}>
+                {showData ? formatChallengeData(challengeData) : challengeUrl}
+              </code>
+            </div>
+          </details>
 
           {/* Discord connection hint for user */}
           {!userHasDiscord && onConnectDiscord && (
@@ -157,7 +279,14 @@ export function ShareChallenge({
 
           {/* Cancel button */}
           <button
-            onClick={onCancel}
+            onClick={() => {
+              if (onGoHome) {
+                onCancel(); // Close modal first
+                onGoHome(); // Then go home
+              } else {
+                onCancel(); // Just close modal
+              }
+            }}
             className={styles.cancelButton}
           >
             Back to Home
@@ -225,7 +354,23 @@ export function ShareChallenge({
         <details className={styles.urlDetails}>
           <summary className={styles.urlSummary}>View link</summary>
           <div className={styles.urlPreview}>
-            <code className={styles.urlCode}>{challengeUrl}</code>
+            <div className={styles.urlToggle}>
+              <button
+                onClick={() => setShowData(false)}
+                className={!showData ? styles.urlToggleActive : styles.urlToggleInactive}
+              >
+                URL
+              </button>
+              <button
+                onClick={() => setShowData(true)}
+                className={showData ? styles.urlToggleActive : styles.urlToggleInactive}
+              >
+                Data
+              </button>
+            </div>
+            <code className={styles.urlCode}>
+              {showData ? formatChallengeData(challengeData) : challengeUrl}
+            </code>
           </div>
         </details>
 
@@ -244,7 +389,14 @@ export function ShareChallenge({
 
         {/* Cancel button */}
         <button
-          onClick={onCancel}
+          onClick={() => {
+            if (onGoHome) {
+              onCancel(); // Close modal first
+              onGoHome(); // Then go home
+            } else {
+              onCancel(); // Just close modal
+            }
+          }}
           className={styles.cancelButton}
         >
           Back to Home
