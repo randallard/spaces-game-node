@@ -191,7 +191,10 @@ export async function generateChallengeUrlShortened(
     };
 
     // Call the shorten API
-    const response = await fetch(getApiEndpoint('/api/shorten'), {
+    const apiEndpoint = getApiEndpoint('/api/shorten');
+    console.log('[generateChallengeUrlShortened] Calling API:', apiEndpoint);
+
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -202,19 +205,25 @@ export async function generateChallengeUrlShortened(
       }),
     });
 
+    console.log('[generateChallengeUrlShortened] Response status:', response.status);
+
     if (!response.ok) {
-      console.error('[generateChallengeUrlShortened] Failed to shorten URL:', response.statusText);
+      const errorText = await response.text();
+      console.error('[generateChallengeUrlShortened] Failed to shorten URL:', response.statusText, errorText);
       return null;
     }
 
     const result = await response.json();
+    console.log('[generateChallengeUrlShortened] API result:', result);
     const { shortId } = result;
 
     // Get current URL origin and path
     const baseUrl = window.location.origin + window.location.pathname;
 
     // Return short URL with short ID
-    return `${baseUrl}#s=${shortId}`;
+    const shortUrl = `${baseUrl}#s=${shortId}`;
+    console.log('[generateChallengeUrlShortened] ✅ Generated short URL:', shortUrl);
+    return shortUrl;
   } catch (error) {
     console.error('[generateChallengeUrlShortened] Error:', error);
     return null;

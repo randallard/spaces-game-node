@@ -132,31 +132,86 @@ For detailed pricing, visit [Upstash Pricing](https://upstash.com/pricing/redis)
 
 ## Testing
 
-### Test URL Shortening
+### Local Testing (Without Vercel KV)
 
-1. Start a game with a human opponent (Discord connected)
-2. Complete a round
-3. Check the browser console for:
-   ```
-   [Shorten] Storing challenge data with ID: abc12345, TTL: 2592000s
-   [Shorten] ✅ Challenge data stored successfully
-   ```
-4. The Discord notification should contain a short URL like:
-   ```
-   https://yourgame.com/#s=abc12345
-   ```
+You can test URL shortening locally without setting up Vercel KV using our file-based mock storage:
 
-### Test URL Expansion
+**1. Switch to local mock storage:**
+```bash
+./scripts/use-local-kv.sh
+```
 
-1. Open the short URL from Discord
-2. Check browser console for:
-   ```
-   [parseChallengeUrlAsync] Detected shortened URL, fetching full data...
-   [Expand] Retrieving challenge data for ID: abc12345
-   [Expand] ✅ Challenge data retrieved successfully
-   [parseChallengeUrlAsync] ✅ Successfully expanded shortened URL
-   ```
-3. Game should load with full round history intact
+**2. Start Vercel dev server:**
+```bash
+vercel dev --listen 3001
+```
+
+**3. In another terminal, start the frontend:**
+```bash
+pnpm dev
+```
+
+**4. Test the flow:**
+- Start a game with a human opponent (Discord connected)
+- Complete a round
+- Discord notification should have a **button** with short URL like: `http://localhost:5173/spaces-game-node/#s=abc12345`
+- Click the button - game should load correctly
+
+**5. Check logs:**
+
+Vercel dev server log should show:
+```
+[Shorten] [LOCAL MOCK] Storing challenge data with ID: abc12345, TTL: 2592000s
+[Shorten] [LOCAL MOCK] ✅ Challenge data stored successfully (1 items stored)
+[Expand] [LOCAL MOCK] Retrieving challenge data for ID: abc12345
+[Expand] [LOCAL MOCK] ✅ Challenge data retrieved successfully
+```
+
+Browser console should show:
+```
+[generateChallengeUrlShortened] ✅ Generated short URL: http://localhost:5173/spaces-game-node/#s=abc12345
+[parseChallengeUrlAsync] Detected shortened URL, fetching full data...
+[parseChallengeUrlAsync] ✅ Successfully expanded shortened URL
+```
+
+**6. Switch back to production versions before committing:**
+```bash
+./scripts/use-vercel-kv.sh
+```
+
+**Notes:**
+- Local mock uses file-based storage in `.vercel/kv-local.json`
+- Storage persists across server restarts
+- URLs expire after 30 days (same as production)
+- CORS is configured for `localhost:5173` and `localhost:3000`
+
+### Production Testing (With Vercel KV)
+
+After deploying with Vercel KV set up:
+
+**1. Test URL Shortening:**
+- Start a game with a human opponent (Discord connected)
+- Complete a round
+- Check the browser console for:
+  ```
+  [Shorten] Storing challenge data with ID: abc12345, TTL: 2592000s
+  [Shorten] ✅ Challenge data stored successfully
+  ```
+- The Discord notification should contain a short URL like:
+  ```
+  https://yourgame.com/#s=abc12345
+  ```
+
+**2. Test URL Expansion:**
+- Open the short URL from Discord
+- Check browser console for:
+  ```
+  [parseChallengeUrlAsync] Detected shortened URL, fetching full data...
+  [Expand] Retrieving challenge data for ID: abc12345
+  [Expand] ✅ Challenge data retrieved successfully
+  [parseChallengeUrlAsync] ✅ Successfully expanded shortened URL
+  ```
+- Game should load with full round history intact
 
 ## Managing Your Database
 
