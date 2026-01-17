@@ -281,6 +281,66 @@ After deploying with Vercel KV set up:
 3. Check function logs in Vercel Dashboard
 4. System will fall back to compressed URLs
 
+### Error: "Cannot find package '@vercel/kv'" (Production)
+
+**Cause:** The `@vercel/kv` package is in `devDependencies` instead of `dependencies`
+
+**Symptoms:**
+- URL shortening works locally
+- Production deployment fails with module not found error
+- Function logs show: `Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@vercel/kv'`
+
+**Solution:**
+```bash
+# Move @vercel/kv to production dependencies
+pnpm add @vercel/kv
+
+# Commit and deploy
+git add package.json pnpm-lock.yaml
+git commit -m "fix: move @vercel/kv to production dependencies"
+git push
+```
+
+### Error: 404 on Static Assets (Vercel Deployment)
+
+**Cause:** Vite `base` path configured for GitHub Pages but not Vercel
+
+**Symptoms:**
+- Page loads blank
+- Console shows 404 errors for `/spaces-game-node/assets/*`
+- Works on GitHub Pages but not Vercel
+
+**Solution:**
+Update `vite.config.ts` to detect Vercel environment:
+```typescript
+export default defineConfig(({ mode }) => ({
+  plugins: [react()],
+  // Use base path for GitHub Pages, but not for Vercel
+  base: process.env.VERCEL ? '/' : (mode === 'production' ? '/spaces-game-node/' : '/'),
+  // ... rest of config
+}))
+```
+
+### Error: Discord Notifications Fail in Production
+
+**Cause:** Discord bot running locally (`localhost:3002`) is not accessible from Vercel servers
+
+**Symptoms:**
+- URL shortening works
+- `/api/discord/notify` returns 500 error
+- Function logs show: `fetch failed` when trying to reach `http://localhost:3002`
+
+**Solution:**
+Deploy the Discord bot to a hosting service:
+- Railway (recommended, free tier available)
+- Fly.io
+- Render
+- Any VPS
+
+Then update Vercel environment variables:
+- `BOT_URL` → Your deployed bot URL (e.g., `https://your-bot.railway.app`)
+- `BOT_API_KEY` → Secure API key for bot authentication
+
 ## API Endpoints
 
 ### POST /api/shorten
