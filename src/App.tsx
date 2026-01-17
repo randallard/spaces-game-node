@@ -177,6 +177,9 @@ function App(): React.ReactElement {
     []
   );
 
+  // State for shortened challenge URL (for ActiveGameView)
+  const [shortenedChallengeUrl, setShortenedChallengeUrl] = useState<string | null>(null);
+
   // Initialize default CPU data on first load
   useEffect(() => {
     // Check if CPU opponents already exist
@@ -298,6 +301,58 @@ function App(): React.ReactElement {
     resetGame,
     loadState,
   } = useGameState(initialState);
+
+  // Generate shortened challenge URL when player selects board
+  useEffect(() => {
+    const generateShortenedUrl = async () => {
+      if (state.playerSelectedBoard && state.gameId && state.opponent?.type === 'human') {
+        const previousRoundResult = state.roundHistory.length > 0
+          ? state.roundHistory[state.roundHistory.length - 1]
+          : undefined;
+
+        // Try shortened URL first, fallback to compressed
+        const url = await generateChallengeUrlShortened(
+          state.playerSelectedBoard,
+          state.currentRound,
+          state.gameMode || 'round-by-round',
+          state.gameId,
+          state.user.id,
+          state.user.name,
+          state.playerScore,
+          state.opponentScore,
+          savedUser?.discordId,
+          savedUser?.discordUsername,
+          savedUser?.discordAvatar,
+          previousRoundResult,
+          undefined,
+          state.gameCreatorId || undefined,
+          state.roundHistory
+        ) || generateChallengeUrl(
+          state.playerSelectedBoard,
+          state.currentRound,
+          state.gameMode || 'round-by-round',
+          state.gameId,
+          state.user.id,
+          state.user.name,
+          state.playerScore,
+          state.opponentScore,
+          savedUser?.discordId,
+          savedUser?.discordUsername,
+          savedUser?.discordAvatar,
+          previousRoundResult,
+          undefined,
+          state.gameCreatorId || undefined,
+          state.roundHistory
+        );
+
+        setShortenedChallengeUrl(url);
+      } else {
+        setShortenedChallengeUrl(null);
+      }
+    };
+
+    generateShortenedUrl();
+  }, [state.playerSelectedBoard, state.gameId, state.currentRound, state.opponent?.type, state.roundHistory, state.gameMode, state.user.id, state.user.name, state.playerScore, state.opponentScore, state.gameCreatorId, savedUser?.discordId, savedUser?.discordUsername, savedUser?.discordAvatar]);
 
   // Profile modal state
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -1704,7 +1759,8 @@ function App(): React.ReactElement {
         // Send Discord notification to opponent that round is complete
         if (state.opponent?.type === 'human' && savedUser?.name && state.gameId) {
           // Include the just-completed round result so opponent can see what happened
-          const roundResultUrl = generateChallengeUrl(
+          // Try shortened URL first, fallback to compressed if shortening fails
+          const roundResultUrl = await generateChallengeUrlShortened(
             board, // Player's board for this round
             state.currentRound,
             state.gameMode || 'round-by-round',
@@ -1720,6 +1776,22 @@ function App(): React.ReactElement {
             true, // isRoundComplete - this is a round complete notification
             state.gameCreatorId || undefined, // Pass the original game creator ID
             state.roundHistory // Include ALL previous rounds for complete history sync
+          ) || generateChallengeUrl(
+            board,
+            state.currentRound,
+            state.gameMode || 'round-by-round',
+            state.gameId,
+            savedUser.id,
+            savedUser.name,
+            state.opponentScore,
+            state.playerScore + (result.winner === 'player' ? (result.playerPoints ?? 0) : 0),
+            savedUser.discordId,
+            savedUser.discordUsername,
+            savedUser.discordAvatar,
+            result,
+            true,
+            state.gameCreatorId || undefined,
+            state.roundHistory
           );
 
           // Determine result from opponent's perspective
@@ -2621,30 +2693,8 @@ function App(): React.ReactElement {
           gameState = 'waiting-for-opponent-to-continue';
         }
 
-        // Generate challenge URL (needed for re-send link)
-        const previousRoundResult = state.roundHistory.length > 0
-          ? state.roundHistory[state.roundHistory.length - 1]
-          : undefined;
-
-        const challengeUrl = state.playerSelectedBoard && state.gameId
-          ? generateChallengeUrl(
-              state.playerSelectedBoard,
-              state.currentRound,
-              state.gameMode || 'round-by-round',
-              state.gameId,
-              state.user.id,
-              state.user.name,
-              state.playerScore,
-              state.opponentScore,
-              savedUser?.discordId,
-              savedUser?.discordUsername,
-              savedUser?.discordAvatar,
-              previousRoundResult,
-              undefined,
-              state.gameCreatorId || undefined,
-              state.roundHistory // Include ALL previous rounds for complete history sync
-            )
-          : '#'; // Placeholder if no board selected yet
+        // Use shortened challenge URL (generated in useEffect above)
+        const challengeUrl = shortenedChallengeUrl || '#';
 
         return (
           <div style={{ position: 'relative' }}>
