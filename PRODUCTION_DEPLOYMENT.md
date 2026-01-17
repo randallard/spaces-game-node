@@ -20,6 +20,67 @@ This guide covers deploying Spaces Game to production with Vercel (frontend + AP
 
 ## 📋 Pre-Deployment Checklist
 
+### 0. Vercel Project Setup & Configuration
+
+**IMPORTANT: Complete these steps before deploying**
+
+#### Connect GitHub Repository
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
+2. Click "New Project" or select existing project
+3. Click "Import Git Repository"
+4. Select your GitHub repo: `randallard/spaces-game-node`
+5. Configure project:
+   - **Framework Preset:** Vite
+   - **Build Command:** `pnpm run build`
+   - **Output Directory:** `dist`
+   - **Install Command:** `pnpm install`
+
+#### Set Production Branch
+1. Go to **Settings → Environments**
+2. Click on **Production** environment
+3. Under **Branch Tracking**, ensure it's set to `main`
+
+#### Fix Common Deployment Issues
+
+**Issue 1: Base Path Mismatch**
+- ❌ **Problem:** Vite configured for GitHub Pages (`/spaces-game-node/`) causes 404s on Vercel
+- ✅ **Solution:** Already fixed in `vite.config.ts` - detects Vercel environment automatically
+
+**Issue 2: Missing Production Dependencies**
+- ❌ **Problem:** `@vercel/kv` in devDependencies causes module not found errors
+- ✅ **Solution:** Already fixed - `@vercel/kv` moved to dependencies
+
+Verify in `package.json`:
+```json
+"dependencies": {
+  "@vercel/kv": "^3.0.0",
+  "nanoid": "^5.1.6",
+  // ... other deps
+}
+```
+
+#### Set Up Vercel KV (URL Shortening)
+1. Go to **Storage** tab in Vercel dashboard
+2. Click "Create Database"
+3. Select **Serverless Redis** (Upstash) - NOT Redis Cloud
+4. Configure:
+   - Name: `upstash-kv-cheese` (or your preference)
+   - Plan: Free tier (pay-per-request)
+5. Click "Create"
+6. Connect to your project:
+   - Click "Connect Project"
+   - Select `spaces-game-api`
+   - Check: Production ✅ Preview ✅ Development ✅
+   - Click "Connect"
+
+Environment variables will be added automatically:
+- `KV_REST_API_URL`
+- `KV_REST_API_TOKEN`
+- `KV_REST_API_READ_ONLY_TOKEN`
+- `KV_URL`
+
+**Verify in Settings → Environment Variables** - all should say "All Environments"
+
 ### 1. Discord Application Setup
 
 **Go to:** https://discord.com/developers/applications
@@ -367,7 +428,44 @@ curl https://your-bot-app.railway.app/health
 
 ## 🆘 Troubleshooting
 
-### "OAuth redirect_uri mismatch"
+### Common Deployment Issues
+
+#### "Cannot find package '@vercel/kv'" in Production
+
+**Problem:** Build succeeds but function fails at runtime
+
+**Symptoms:**
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@vercel/kv' imported from /var/task/api/shorten.js
+```
+
+**Cause:** Package in `devDependencies` instead of `dependencies`
+
+**Solution:**
+```bash
+pnpm add @vercel/kv
+git commit -am "fix: move @vercel/kv to production dependencies"
+git push
+```
+
+#### Blank Page / 404 on Assets
+
+**Problem:** Page loads blank, console shows 404 errors
+
+**Symptoms:**
+```
+Failed to load resource: /spaces-game-node/assets/index-xxx.js (404)
+```
+
+**Cause:** Vite `base` path configured for GitHub Pages
+
+**Solution:** Already fixed in `vite.config.ts` - ensure you have:
+```typescript
+base: process.env.VERCEL ? '/' : (mode === 'production' ? '/spaces-game-node/' : '/'),
+```
+
+#### "OAuth redirect_uri mismatch"
+
 **Problem:** Discord OAuth fails with redirect URI error
 
 **Solution:**
@@ -376,8 +474,20 @@ curl https://your-bot-app.railway.app/health
 3. No trailing slash
 4. HTTPS in production
 
-### "Bot not sending DMs"
-**Problem:** Notifications not arriving
+#### "Bot not sending DMs" / Discord 500 Error
+
+**Problem:** URL shortening works but Discord notifications fail
+
+**Symptoms:**
+- Browser console: `[Discord] Failed to send notification: 500`
+- Vercel function logs: `fetch failed` when calling bot
+
+**Cause:** Bot running locally (`localhost:3002`) not accessible from Vercel
+
+**Solution:**
+1. Deploy bot to Railway/Fly.io/Render
+2. Update Vercel environment variable: `BOT_URL` → deployed bot URL
+3. Ensure `BOT_API_KEY` matches in both environments
 
 **Check:**
 1. Railway logs: `railway logs`
@@ -386,6 +496,21 @@ curl https://your-bot-app.railway.app/health
 4. Bot token is valid
 5. `BOT_URL` in Vercel matches Railway URL
 6. `BOT_API_KEY` matches in both Vercel and Railway
+
+#### URL Shortening Not Working
+
+**Problem:** Discord gets long URLs instead of short ones
+
+**Check:**
+1. Vercel KV connected: Settings → Storage
+2. Environment variables present: `KV_REST_API_URL`, `KV_REST_API_TOKEN`
+3. Function logs in Vercel: `/api/shorten` should show success
+4. Browser console: Should see `[generateChallengeUrlShortened] ✅ Generated short URL`
+
+**Common causes:**
+- Vercel KV not connected to project
+- Wrong Redis provider (Redis Cloud instead of Upstash)
+- Environment variables not set for Production environment
 
 ### "Vercel function timeout"
 **Problem:** API functions timing out
