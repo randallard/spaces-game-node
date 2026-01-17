@@ -2,9 +2,23 @@
 
 A turn-based strategy board game built with React, TypeScript, and Vite.
 
-try the initial implementation at https://randallard.github.io/spaces-game/
+## 🎮 Play Now
 
-and the current implementation of this one at https://randallard.github.io/spaces-game-node/ 
+**Production (Full Features):** https://spaces-game-api.vercel.app
+- ✅ Discord integration
+- ✅ Multiplayer notifications
+- ✅ URL shortening
+- ✅ All features enabled
+
+**GitHub Pages (Limited):** https://randallard.github.io/spaces-game-node/
+- ⚠️ Frontend only - no API endpoints
+- ❌ Discord notifications disabled
+- ❌ URL shortening disabled
+- ✅ Local games and AI opponents work
+
+**Legacy version:** https://randallard.github.io/spaces-game/
+
+> **Note:** GitHub Pages deployment has limited functionality due to lack of backend API support. For the complete experience with Discord integration and multiplayer features, use the Vercel production URL. 
 
 ## Overview
 
@@ -15,12 +29,15 @@ Spaces Game is a competitive strategy game where players create 2x2 board patter
 - **Board Creation**: Design 2x2 grids with strategic piece and trap placements
 - **Turn-Based Gameplay**: No time pressure - play at your own pace
 - **Multiple Opponents**: Play against friends or the CPU
+- **Discord Integration**: OAuth login, DM notifications, profile display (Vercel only)
+- **URL Shortening**: Vercel KV-powered short URLs for Discord compatibility (Vercel only)
 - **URL Sharing**: Share game states via compressed URL hashes
 - **Win/Loss Tracking**: Track statistics per opponent
 - **LocalStorage Persistence**: Saves boards and user data locally
 
 ## Tech Stack
 
+### Frontend
 - **React 19.1** - UI framework
 - **TypeScript 5.9** - Type safety with strict mode
 - **Vite 7.1** - Fast dev server and build tool
@@ -28,6 +45,12 @@ Spaces Game is a competitive strategy game where players create 2x2 board patter
 - **lz-string 1.5** - URL compression
 - **Vitest 3.0** - Unit/integration testing
 - **CSS Modules** - Scoped styling
+
+### Backend (Vercel Production)
+- **Vercel Serverless Functions** - API endpoints
+- **Vercel KV (Upstash)** - Redis for URL shortening
+- **Discord.js** - Discord bot integration (Railway)
+- **Express** - Bot API server
 
 ## Getting Started
 
@@ -110,6 +133,47 @@ spaces-game-node/
 └── index.html                   # HTML entry point
 ```
 
+## Deployment
+
+### Production (Vercel + Railway)
+
+**Status:** ✅ Fully deployed and operational
+
+**Services:**
+- **Frontend + API:** https://spaces-game-api.vercel.app (Vercel)
+- **Discord Bot:** https://spaces-game-bot-production.up.railway.app (Railway)
+- **Storage:** Vercel KV (Upstash Redis)
+
+**Deployment Guides:**
+- [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) - Complete deployment walkthrough
+- [VERCEL_KV_SETUP.md](VERCEL_KV_SETUP.md) - URL shortening setup and troubleshooting
+
+**What's Working:**
+- ✅ URL shortening with Vercel KV (for Discord compatibility)
+- ✅ Discord OAuth integration
+- ✅ Discord DM notifications via Railway bot
+- ✅ Multiplayer game state synchronization
+- ✅ All API endpoints operational
+
+**Known Limitations:**
+- GitHub Pages deployment lacks API support (Discord, URL shortening disabled)
+- Round 1 challenges use compressed URLs (short enough without shortening)
+- Round 2+ challenges use shortened URLs (contains round history)
+
+### GitHub Pages (Legacy/Limited)
+
+**Status:** ⚠️ Deployed but limited functionality
+
+**URL:** https://randallard.github.io/spaces-game-node/
+
+**Limitations:**
+- No backend API endpoints
+- Discord integration unavailable
+- URL shortening disabled
+- Multiplayer notifications unavailable
+
+**Use Case:** Demo, testing, local games only
+
 ## Architecture
 
 This project follows patterns from [kings-cooking](https://github.com/randallard/kings-cooking):
@@ -124,8 +188,14 @@ See `planning/MIGRATION_PLAN.md` for detailed architecture decisions.
 
 ## Documentation
 
+### User Guides
 - [Adding Creatures](docs/ADDING_CREATURES.md) - Guide for adding new creature graphics
 - [Minimal Board Encoding](docs/MINIMAL_BOARD_ENCODING.md) - URL compression format
+
+### Deployment
+- [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) - Vercel + Railway deployment guide
+- [VERCEL_KV_SETUP.md](VERCEL_KV_SETUP.md) - URL shortening setup with troubleshooting
+- [GAME_PHASES.md](GAME_PHASES.md) - Game state machine documentation
 
 ## License
 
