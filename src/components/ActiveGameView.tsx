@@ -25,8 +25,10 @@ export interface ActiveGameViewProps {
   opponentName: string;
   /** Board size */
   boardSize: number;
-  /** Challenge URL to share/re-send */
+  /** Challenge URL to share/re-send (shortened or compressed) */
   challengeUrl: string;
+  /** Fallback compressed URL (for View Link panel) */
+  fallbackUrl?: string;
   /** Current game state - determines what message to show */
   gameState: 'waiting-for-player' | 'waiting-for-opponent-to-start' | 'waiting-for-opponent-to-continue';
   /** Player's saved boards */
@@ -78,6 +80,7 @@ export function ActiveGameView({
   opponentName,
   boardSize,
   challengeUrl,
+  fallbackUrl,
   gameState,
   playerBoards,
   user,
@@ -211,6 +214,7 @@ export function ActiveGameView({
         >
           <ShareChallenge
             challengeUrl={challengeUrl}
+            {...(fallbackUrl && { fallbackUrl })}
             opponentName={opponentName}
             boardSize={boardSize}
             round={currentRound}
