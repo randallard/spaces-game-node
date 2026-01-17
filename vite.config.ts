@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  base: mode === 'production' ? '/spaces-game-node/' : '/', // GitHub Pages base path in production only
+  // Use base path for GitHub Pages, but not for Vercel
+  base: process.env.VERCEL ? '/' : (mode === 'production' ? '/spaces-game-node/' : '/'),
   build: {
     outDir: 'dist',
     sourcemap: true,
