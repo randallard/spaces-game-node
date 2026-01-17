@@ -31,6 +31,7 @@
     "validate": "pnpm run check && pnpm run lint && pnpm run test:coverage"
   },
   "dependencies": {
+    "@vercel/kv": "^3.0.0",
     "lz-string": "^1.5.0",
     "nanoid": "^5.1.6",
     "react": "^19.1.1",
