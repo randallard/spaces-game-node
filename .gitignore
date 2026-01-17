@@ -40,3 +40,10 @@ bot/.env
 # Vercel
 .vercel
 .vercel.json
+
+# Local development URL shortening mocks (don't commit - use scripts to swap)
+api/_storage.local.ts
+api/*.local.ts
+api/*.prod
+scripts/use-local-kv.sh
+scripts/use-vercel-kv.sh
