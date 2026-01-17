@@ -177,8 +177,9 @@ function App(): React.ReactElement {
     []
   );
 
-  // State for shortened challenge URL (for ActiveGameView)
+  // State for shortened challenge URL and fallback compressed URL (for ActiveGameView)
   const [shortenedChallengeUrl, setShortenedChallengeUrl] = useState<string | null>(null);
+  const [fallbackCompressedUrl, setFallbackCompressedUrl] = useState<string | null>(null);
 
   // Initialize default CPU data on first load
   useEffect(() => {
@@ -302,7 +303,7 @@ function App(): React.ReactElement {
     loadState,
   } = useGameState(initialState);
 
-  // Generate shortened challenge URL when player selects board
+  // Generate shortened challenge URL and fallback compressed URL when player selects board
   useEffect(() => {
     const generateShortenedUrl = async () => {
       if (state.playerSelectedBoard && state.gameId && state.opponent?.type === 'human') {
@@ -310,24 +311,8 @@ function App(): React.ReactElement {
           ? state.roundHistory[state.roundHistory.length - 1]
           : undefined;
 
-        // Try shortened URL first, fallback to compressed
-        const url = await generateChallengeUrlShortened(
-          state.playerSelectedBoard,
-          state.currentRound,
-          state.gameMode || 'round-by-round',
-          state.gameId,
-          state.user.id,
-          state.user.name,
-          state.playerScore,
-          state.opponentScore,
-          savedUser?.discordId,
-          savedUser?.discordUsername,
-          savedUser?.discordAvatar,
-          previousRoundResult,
-          undefined,
-          state.gameCreatorId || undefined,
-          state.roundHistory
-        ) || generateChallengeUrl(
+        // Always generate the compressed URL as fallback
+        const compressedUrl = generateChallengeUrl(
           state.playerSelectedBoard,
           state.currentRound,
           state.gameMode || 'round-by-round',
@@ -345,10 +330,31 @@ function App(): React.ReactElement {
           state.roundHistory
         );
 
-        setShortenedChallengeUrl(url);
-      } else {
-        setShortenedChallengeUrl(null);
+        setFallbackCompressedUrl(compressedUrl);
+
+        // Try shortened URL first
+        const shortenedUrl = await generateChallengeUrlShortened(
+          state.playerSelectedBoard,
+          state.currentRound,
+          state.gameMode || 'round-by-round',
+          state.gameId,
+          state.user.id,
+          state.user.name,
+          state.playerScore,
+          state.opponentScore,
+          savedUser?.discordId,
+          savedUser?.discordUsername,
+          savedUser?.discordAvatar,
+          previousRoundResult,
+          undefined,
+          state.gameCreatorId || undefined,
+          state.roundHistory
+        );
+
+        // Use shortened if available, otherwise use compressed
+        setShortenedChallengeUrl(shortenedUrl || compressedUrl);
       }
+      // Don't clear URLs when conditions aren't met - preserve them for the share modal
     };
 
     generateShortenedUrl();
@@ -2707,6 +2713,7 @@ function App(): React.ReactElement {
               opponentName={state.opponent?.name || 'Opponent'}
               boardSize={state.boardSize}
               challengeUrl={challengeUrl}
+              {...(fallbackCompressedUrl && { fallbackUrl: fallbackCompressedUrl })}
               gameState={gameState}
               playerBoards={savedBoards || []}
               user={savedUser!}

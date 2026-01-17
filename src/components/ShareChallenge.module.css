@@ -199,6 +199,18 @@
   color: #374151;
 }
 
+.urlLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.urlLabel:first-child {
+  margin-top: 0;
+}
+
 .urlCode {
   display: block;
   font-family: 'Courier New', Courier, monospace;

@@ -8,8 +8,10 @@ import { parseChallengeUrl, type ChallengeData } from '@/utils/challenge-url';
 import styles from './ShareChallenge.module.css';
 
 export interface ShareChallengeProps {
-  /** The challenge URL to share */
+  /** The challenge URL to share (shortened or compressed) */
   challengeUrl: string;
+  /** The fallback compressed URL (for View Link panel) */
+  fallbackUrl?: string;
   /** Opponent name */
   opponentName: string;
   /** Board size */
@@ -43,6 +45,7 @@ export interface ShareChallengeProps {
  */
 export function ShareChallenge({
   challengeUrl,
+  fallbackUrl,
   opponentName,
   boardSize,
   round,
@@ -58,10 +61,17 @@ export function ShareChallenge({
   const [shareError, setShareError] = useState<string | null>(null);
   const [showData, setShowData] = useState(false);
 
-  // Parse challenge data from URL
+  // Determine which URL to display in the View Link panel
+  // Use fallback if provided, otherwise use challengeUrl
+  const urlForDisplay = fallbackUrl || challengeUrl;
+
+  // Determine if we're showing a shortened URL
+  const isShortened = challengeUrl.includes('#s=');
+
+  // Parse challenge data from the fallback/compressed URL
   const challengeData = useMemo<ChallengeData | null>(() => {
-    return parseChallengeUrl(challengeUrl);
-  }, [challengeUrl]);
+    return parseChallengeUrl(urlForDisplay);
+  }, [urlForDisplay]);
 
   /**
    * Copy URL to clipboard
@@ -242,8 +252,15 @@ export function ShareChallenge({
 
           {/* URL preview (collapsed) */}
           <details className={styles.urlDetails}>
-            <summary className={styles.urlSummary}>View link</summary>
+            <summary className={styles.urlSummary}>View link data</summary>
             <div className={styles.urlPreview}>
+              {isShortened && (
+                <>
+                  <div className={styles.urlLabel}>Shortened URL (shared):</div>
+                  <code className={styles.urlCode}>{challengeUrl}</code>
+                  <div className={styles.urlLabel}>Fallback URL:</div>
+                </>
+              )}
               <div className={styles.urlToggle}>
                 <button
                   onClick={() => setShowData(false)}
@@ -259,7 +276,7 @@ export function ShareChallenge({
                 </button>
               </div>
               <code className={styles.urlCode}>
-                {showData ? formatChallengeData(challengeData) : challengeUrl}
+                {showData ? formatChallengeData(challengeData) : urlForDisplay}
               </code>
             </div>
           </details>
@@ -352,8 +369,15 @@ export function ShareChallenge({
 
         {/* URL preview (collapsed) */}
         <details className={styles.urlDetails}>
-          <summary className={styles.urlSummary}>View link</summary>
+          <summary className={styles.urlSummary}>View link data</summary>
           <div className={styles.urlPreview}>
+            {isShortened && (
+              <>
+                <div className={styles.urlLabel}>Shortened URL (shared):</div>
+                <code className={styles.urlCode}>{challengeUrl}</code>
+                <div className={styles.urlLabel}>Fallback URL:</div>
+              </>
+            )}
             <div className={styles.urlToggle}>
               <button
                 onClick={() => setShowData(false)}
@@ -369,7 +393,7 @@ export function ShareChallenge({
               </button>
             </div>
             <code className={styles.urlCode}>
-              {showData ? formatChallengeData(challengeData) : challengeUrl}
+              {showData ? formatChallengeData(challengeData) : urlForDisplay}
             </code>
           </div>
         </details>
