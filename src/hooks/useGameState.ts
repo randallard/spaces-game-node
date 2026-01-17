@@ -256,8 +256,11 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
         ...prev,
         currentRound: nextRound,
         phase: { type: phaseType, round: nextRound },
+        // Clear player's board, but preserve opponent's board if they already selected for this round
+        // (This happens when opponent goes first in alternating rounds and player is catching up)
         playerSelectedBoard: null,
-        opponentSelectedBoard: null,
+        // Keep opponentSelectedBoard if it exists (opponent may have selected first for this round)
+        opponentSelectedBoard: prev.opponentSelectedBoard,
         checksum: '', // Checksum managed externally
       };
     });
