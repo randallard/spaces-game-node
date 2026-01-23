@@ -1340,4 +1340,129 @@ describe('BoardCreator', () => {
       );
     });
   });
+
+  describe('Supermove (trap at current position)', () => {
+    it('should allow placing trap at current piece position', () => {
+      render(<BoardCreator {...defaultProps} />);
+
+      // Start at bottom-left (1,0)
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Should show "Trap Here" button on current piece
+      expect(screen.getByText('Trap Here')).toBeInTheDocument();
+    });
+
+    it('should place trap at current position without moving piece', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start at bottom-left (1,0)
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Place trap at current position
+      const trapHereButton = screen.getByText('Trap Here');
+      fireEvent.click(trapHereButton);
+
+      // Should show both piece (order 1) and trap (order 2) at same position
+      expect(screen.getByText('1')).toBeInTheDocument(); // piece
+      expect(screen.getByText('2')).toBeInTheDocument(); // trap
+
+      // "Trap Here" button should disappear (already trapped)
+      expect(screen.queryByText('Trap Here')).not.toBeInTheDocument();
+    });
+
+    it('should allow move after placing trap at current position', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start at bottom-left (1,0)
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Place trap at current position (supermove step 1)
+      const trapHereButton = screen.getByText('Trap Here');
+      fireEvent.click(trapHereButton);
+
+      // Move up (supermove step 2)
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Should now have piece at (0,0) with order 3
+      expect(screen.getByText('3')).toBeInTheDocument();
+    });
+
+    it('should support Shift+X keyboard shortcut for trap at current position', () => {
+      render(<BoardCreator {...defaultProps} />);
+
+      // Start at bottom-left (1,0)
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Press Shift+X to place trap at current position
+      fireEvent.keyDown(document, { key: 'x', code: 'KeyX', shiftKey: true });
+
+      // Should show both piece (order 1) and trap (order 2)
+      expect(screen.getByText('1')).toBeInTheDocument();
+      expect(screen.getByText('2')).toBeInTheDocument();
+    });
+
+    it('should create valid board with supermove sequence', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={2}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start at bottom-left (1,0)
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Supermove: trap at current position
+      fireEvent.keyDown(document, { key: 'x', code: 'KeyX', shiftKey: true });
+
+      // Move up
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Complete
+      fireEvent.keyDown(document, { key: 'Enter', code: 'Enter' });
+
+      // Save
+      const saveButton = screen.getByText('Save Board');
+      fireEvent.click(saveButton);
+
+      // Verify saved board has correct sequence
+      expect(onBoardSaved).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sequence: [
+            { position: { row: 1, col: 0 }, type: 'piece', order: 1 },
+            { position: { row: 1, col: 0 }, type: 'trap', order: 2 }, // trap at same position
+            { position: { row: 0, col: 0 }, type: 'piece', order: 3 },
+            { position: { row: -1, col: 0 }, type: 'final', order: 4 },
+          ],
+        })
+      );
+    });
+  });
 });
