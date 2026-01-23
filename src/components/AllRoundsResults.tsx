@@ -4,9 +4,10 @@
  */
 
 import { type ReactElement, useState } from 'react';
-import type { RoundResult } from '@/types';
+import type { RoundResult, Board, UserProfile } from '@/types';
 import { RoundResults } from './RoundResults';
 import { HelpModal } from './HelpModal';
+import { SavedBoards } from './SavedBoards';
 import { generateOpponentThumbnail, generateBoardThumbnail } from '@/utils/svg-thumbnail';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
@@ -55,6 +56,20 @@ export interface AllRoundsResultsProps {
   nextRound?: number;
   /** Whether opponent is CPU (to hide Discord connection UI) */
   isCpuOpponent?: boolean;
+  /** Game info header props (when isReview={true}) */
+  currentRound?: number;
+  totalRounds?: number;
+  boardSize?: number;
+  onResendLink?: () => void;
+  /** Board selection props (optional, for review mode) */
+  boards?: Board[];
+  onBoardSelected?: (board: Board) => void;
+  onBoardSaved?: (board: Board) => void;
+  onBoardDeleted?: (boardId: string) => void;
+  showBoardSelection?: boolean;
+  playerSelectedBoard?: Board | null;
+  opponentSelectedBoard?: Board | null;
+  user?: UserProfile | null;
 }
 
 /**
@@ -90,6 +105,18 @@ export function AllRoundsResults({
   waitingForOpponentBoard = false,
   nextRound,
   isCpuOpponent = false,
+  currentRound,
+  totalRounds,
+  boardSize,
+  onResendLink,
+  boards,
+  onBoardSelected,
+  onBoardSaved,
+  onBoardDeleted,
+  showBoardSelection = false,
+  playerSelectedBoard,
+  opponentSelectedBoard,
+  user,
 }: AllRoundsResultsProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -123,8 +150,17 @@ export function AllRoundsResults({
   // Handle continuing to next round in modal
   const handleContinueFromRound = () => {
     if (selectedRound !== null && selectedRound < results.length) {
-      // Advance to next round
-      setSelectedRound(selectedRound + 1);
+      // Check if next round exists and has valid data
+      const nextRound = selectedRound + 1;
+      const nextResult = results[nextRound - 1];
+
+      // Only advance if next round has both boards (is complete)
+      if (nextResult && nextResult.playerBoard && nextResult.opponentBoard) {
+        setSelectedRound(nextRound);
+      } else {
+        // Next round is incomplete, close modal
+        setSelectedRound(null);
+      }
     } else {
       // Last round, close modal
       setSelectedRound(null);
@@ -156,11 +192,21 @@ export function AllRoundsResults({
             playerScore={runningTotal.player}
             opponentScore={runningTotal.opponent}
             onContinue={handleContinueFromRound}
-            continueButtonText={
-              selectedRound === results.length
-                ? 'Back to All Rounds'
-                : `Continue to Round ${selectedRound + 1}`
-            }
+            continueButtonText={(() => {
+              // Check if this is the last complete round
+              if (selectedRound === results.length) {
+                return 'Back to All Rounds';
+              }
+
+              // Check if next round exists and is complete
+              const nextRound = selectedRound + 1;
+              const nextResult = results[nextRound - 1];
+              if (!nextResult || !nextResult.playerBoard || !nextResult.opponentBoard) {
+                return 'Back to All Rounds';
+              }
+
+              return `Continue to Round ${nextRound}`;
+            })()}
             showCompleteResultsByDefault={showCompleteResultsByDefault}
             onShowCompleteResultsChange={onShowCompleteResultsChange}
             explanationStyle={explanationStyle}
@@ -184,26 +230,56 @@ export function AllRoundsResults({
         </div>
       )}
 
-      {/* Header for review mode */}
+      {/* Game Info Header - shown when review mode with game context */}
+      {isReview && currentRound && totalRounds && boardSize && (
+        <div className={styles.gameInfoHeader}>
+          <h2 className={styles.roundInfo}>
+            Round {currentRound} of {totalRounds}
+          </h2>
+          <div className={styles.scoreInfo}>
+            Score: {playerName} {playerScore} - {opponentName} {opponentScore}
+          </div>
+          <div className={styles.boardSizeInfo}>
+            Board Size: {boardSize}×{boardSize}
+          </div>
+          <div className={styles.matchupInfo}>
+            {opponentName} vs {playerName}
+            {/* Re-send link for human opponents */}
+            {onResendLink && !isCpuOpponent && (
+              <button
+                onClick={onResendLink}
+                className={styles.reSendLink}
+                title="Click to re-send game link"
+              >
+                (click here to re-send game link)
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Review Section Header */}
       {isReview && (
-        <div className={styles.header}>
-          <h2 className={styles.title}>Previous Rounds</h2>
+        <div className={styles.reviewSection}>
+          <h2 className={styles.reviewTitle}>Previous Rounds</h2>
           <p className={styles.reviewSubtitle}>Review the game so far before selecting your next board</p>
         </div>
       )}
 
-      {/* Final Score */}
-      <div className={styles.finalScore}>
-        <div className={styles.scoreBox}>
-          <span className={styles.scoreLabel}>{playerName}</span>
-          <span className={styles.scoreValue}>{playerScore}</span>
+      {/* Final Score - only for non-review mode */}
+      {!isReview && (
+        <div className={styles.finalScore}>
+          <div className={styles.scoreBox}>
+            <span className={styles.scoreLabel}>{playerName}</span>
+            <span className={styles.scoreValue}>{playerScore}</span>
+          </div>
+          <span className={styles.scoreDivider}>-</span>
+          <div className={styles.scoreBox}>
+            <span className={styles.scoreLabel}>{opponentName}</span>
+            <span className={styles.scoreValue}>{opponentScore}</span>
+          </div>
         </div>
-        <span className={styles.scoreDivider}>-</span>
-        <div className={styles.scoreBox}>
-          <span className={styles.scoreLabel}>{opponentName}</span>
-          <span className={styles.scoreValue}>{opponentScore}</span>
-        </div>
-      </div>
+      )}
 
       {/* Rounds Grid */}
       <div className={styles.roundsSection}>
@@ -247,28 +323,38 @@ export function AllRoundsResults({
         <div className={styles.roundsGrid}>
           {results.map((result) => {
             const roundWinner = result.winner;
-            const roundWinnerClass =
-              roundWinner === 'player'
-                ? styles.roundWinnerPlayer
-                : roundWinner === 'opponent'
-                ? styles.roundWinnerOpponent
-                : styles.roundWinnerTie;
+            const isIncomplete = roundWinner === undefined;
+            const roundWinnerClass = isIncomplete
+              ? styles.roundIncomplete
+              : roundWinner === 'player'
+              ? styles.roundWinnerPlayer
+              : roundWinner === 'opponent'
+              ? styles.roundWinnerOpponent
+              : styles.roundWinnerTie;
 
             return (
               <button
                 key={result.round}
                 className={`${styles.roundCard} ${roundWinnerClass}`}
-                onClick={() => setSelectedRound(result.round)}
+                onClick={() => !isIncomplete && setSelectedRound(result.round)}
+                disabled={isIncomplete}
               >
                 <div className={styles.roundHeader}>
                   <span className={styles.roundNumber}>Round {result.round}</span>
-                  <span className={styles.roundWinnerLabel}>
-                    {roundWinner === 'player'
-                      ? `${playerName} Won`
-                      : roundWinner === 'opponent'
-                      ? `${opponentName} Won`
-                      : 'Tie'}
-                  </span>
+                  {roundWinner !== undefined && (
+                    <span className={styles.roundWinnerLabel}>
+                      {roundWinner === 'player'
+                        ? `${playerName} Won`
+                        : roundWinner === 'opponent'
+                        ? `${opponentName} Won`
+                        : 'Tie'}
+                    </span>
+                  )}
+                  {roundWinner === undefined && (
+                    <span className={styles.roundWinnerLabel} style={{ color: '#999', fontStyle: 'italic' }}>
+                      In Progress
+                    </span>
+                  )}
                 </div>
 
                 {/* Board Thumbnails - shown when viewMode is 'thumbnails' or 'both' */}
@@ -276,23 +362,35 @@ export function AllRoundsResults({
                   <div className={styles.boardThumbnails}>
                     <div className={styles.thumbnailWrapper}>
                       <span className={styles.thumbnailLabel}>{playerName}</span>
-                      <img
-                        src={generateBoardThumbnail(result.playerBoard)}
-                        alt={result.playerBoard.name}
-                        className={styles.thumbnail}
-                      />
+                      {result.playerBoard ? (
+                        <img
+                          src={generateBoardThumbnail(result.playerBoard)}
+                          alt={result.playerBoard.name}
+                          className={styles.thumbnail}
+                        />
+                      ) : (
+                        <div className={styles.thumbnailPlaceholder}>
+                          ?
+                        </div>
+                      )}
                     </div>
                     <div className={styles.thumbnailWrapper}>
                       <span className={styles.thumbnailLabel}>{opponentName}</span>
-                      <img
-                        src={generateOpponentThumbnail(
-                          result.opponentBoard,
-                          result.simulationDetails?.opponentLastStep,
-                          result.simulationDetails?.playerTrapPosition // Only show trap at position player hit
-                        )}
-                        alt={result.opponentBoard.name}
-                        className={styles.thumbnail}
-                      />
+                      {result.opponentBoard ? (
+                        <img
+                          src={generateOpponentThumbnail(
+                            result.opponentBoard,
+                            result.simulationDetails?.opponentLastStep,
+                            result.simulationDetails?.playerTrapPosition // Only show trap at position player hit
+                          )}
+                          alt={result.opponentBoard.name}
+                          className={styles.thumbnail}
+                        />
+                      ) : (
+                        <div className={styles.thumbnailPlaceholder}>
+                          ?
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -425,8 +523,31 @@ export function AllRoundsResults({
         </div>
       )}
 
+      {/* Board Selection Section - shown when player needs to select */}
+      {isReview && showBoardSelection && boards && onBoardSelected && nextRound && (
+        <div className={styles.boardSelectionSection}>
+          <h3 className={styles.boardSelectionTitle}>Select a Board for Round {nextRound}</h3>
+          <SavedBoards
+            boards={boards}
+            onBoardSelected={onBoardSelected}
+            onBoardSaved={onBoardSaved!}
+            onBoardDeleted={onBoardDeleted!}
+            currentRound={nextRound}
+            userName={playerName}
+            opponentName={opponentName}
+            user={user}
+            initialBoardSize={null}
+            onInitialBoardSizeHandled={() => {}}
+            roundHistory={[]} // Don't show round history here (already shown above)
+            showBoardSelection={true}
+            playerSelectedBoard={playerSelectedBoard}
+            opponentSelectedBoard={opponentSelectedBoard}
+          />
+        </div>
+      )}
+
       {/* Actions */}
-      {!waitingForOpponentBoard && (
+      {!waitingForOpponentBoard && !showBoardSelection && (
         <div className={styles.actions}>
           <button onClick={onPlayAgain} className={styles.playAgainButton}>
             {continueButtonText || 'Play Again'}

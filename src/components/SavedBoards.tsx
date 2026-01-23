@@ -461,6 +461,11 @@ export function SavedBoards({
 
               <div className={styles.roundHistoryGrid}>
                 {roundHistory.map((result) => {
+                  // Skip rounds with incomplete board data
+                  if (!result.playerBoard || !result.opponentBoard) {
+                    return null;
+                  }
+
                   const roundWinner = result.winner;
                   const roundWinnerClass =
                     roundWinner === 'player'

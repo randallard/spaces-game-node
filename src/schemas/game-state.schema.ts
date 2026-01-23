@@ -71,21 +71,16 @@ export const GamePhaseSchema = z.discriminatedUnion('type', [
 ]);
 
 export const GameStateSchema = z.object({
-  phase: GamePhaseSchema,
   user: UserProfileSchema,
   opponent: OpponentSchema.nullable(),
   gameId: z.string().nullable(),
   gameCreatorId: z.string().nullable(),
   gameMode: GameModeSchema.nullable(),
   boardSize: z.union([z.literal(2), z.literal(3)]).nullable(),
-  currentRound: z.number().int().min(0).max(10), // Support 10 rounds for deck mode
-  playerScore: z.number().int().min(0),
-  opponentScore: z.number().int().min(0),
-  playerSelectedBoard: BoardSchema.nullable(),
-  opponentSelectedBoard: BoardSchema.nullable(),
   playerSelectedDeck: DeckSchema.nullable(),
   opponentSelectedDeck: DeckSchema.nullable(),
   roundHistory: z.array(RoundResultSchema),
+  phaseOverride: GamePhaseSchema.nullable(), // UI-only phase override (for phases that can't be derived)
   lastDiscordNotificationTime: z.string().nullable(),
   checksum: z.string(),
 });

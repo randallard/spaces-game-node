@@ -9,6 +9,7 @@ import { getAllCreatures } from '@/types/creature';
 import { downloadBackup, loadBackupFromFile, importBackup } from '@/utils/backup';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
 import { getApiEndpoint } from '@/config/api';
+import { FEATURES, isStaticMode } from '@/config/features';
 import styles from './ProfileModal.module.css';
 
 export interface ProfileModalProps {
@@ -363,12 +364,12 @@ export function ProfileModal({
           {/* Discord Integration */}
           <div className={styles.discord}>
             <h3 className={styles.discordTitle}>
-              Discord Notifications
+              Discord Connection
               <button
                 type="button"
                 onClick={() => setShowDiscordModal(true)}
                 className={styles.helpButton}
-                aria-label="Learn more about Discord notifications"
+                aria-label="Learn more about Discord connection"
               >
                 ?
               </button>
@@ -378,15 +379,27 @@ export function ProfileModal({
                 <p className={styles.discordStatus}>
                   ✅ Connected as <strong>{user.discordUsername}</strong>
                 </p>
-                <p className={styles.discordDescription}>
-                  You'll receive Discord notifications for turn updates and game completions
-                </p>
+                {FEATURES.DISCORD_NOTIFICATIONS ? (
+                  <p className={styles.discordDescription}>
+                    You'll receive Discord notifications for turn updates and game completions
+                  </p>
+                ) : (
+                  <p className={styles.discordDescription}>
+                    ℹ️ Discord notifications are disabled on this platform. Your connection is saved for profile backup and will work when you play on platforms with notifications enabled.
+                  </p>
+                )}
               </div>
             ) : (
               <div className={styles.discordNotConnected}>
-                <p className={styles.discordDescription}>
-                  Get notified on Discord when opponents play their turns
-                </p>
+                {FEATURES.DISCORD_NOTIFICATIONS ? (
+                  <p className={styles.discordDescription}>
+                    Get notified on Discord when opponents play their turns
+                  </p>
+                ) : (
+                  <p className={styles.discordDescription}>
+                    Connect Discord to sync your profile across devices. Notifications are disabled on this platform, but your connection will work when you play on platforms that support them.
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={handleConnectDiscord}

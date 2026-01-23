@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getOpponentIcon, createEmptyUser, createInitialState } from './app-helpers';
+import { derivePhase, deriveCurrentRound, derivePlayerScore, deriveOpponentScore, derivePlayerSelectedBoard, deriveOpponentSelectedBoard } from './derive-state';
 import type { Opponent, UserProfile } from '@/types';
 import {
   CPU_OPPONENT_ID,
@@ -198,7 +199,7 @@ describe('createInitialState', () => {
   describe('with null user', () => {
     it('should start in tutorial-intro phase', () => {
       const state = createInitialState(null);
-      expect(state.phase.type).toBe('tutorial-intro');
+      expect(derivePhase(state).type).toBe('tutorial-intro');
     });
 
     it('should create empty user', () => {
@@ -219,16 +220,16 @@ describe('createInitialState', () => {
 
       expect(state.gameMode).toBeNull();
       expect(state.boardSize).toBeNull();
-      expect(state.currentRound).toBe(1);
-      expect(state.playerScore).toBe(0);
-      expect(state.opponentScore).toBe(0);
+      expect(deriveCurrentRound(state)).toBe(1);
+      expect(derivePlayerScore(state.roundHistory)).toBe(0);
+      expect(deriveOpponentScore(state.roundHistory)).toBe(0);
     });
 
     it('should have null board selections', () => {
       const state = createInitialState(null);
 
-      expect(state.playerSelectedBoard).toBeNull();
-      expect(state.opponentSelectedBoard).toBeNull();
+      expect(derivePlayerSelectedBoard(state)).toBeNull();
+      expect(deriveOpponentSelectedBoard(state)).toBeNull();
       expect(state.playerSelectedDeck).toBeNull();
       expect(state.opponentSelectedDeck).toBeNull();
     });
@@ -254,7 +255,7 @@ describe('createInitialState', () => {
       };
 
       const state = createInitialState(user);
-      expect(state.phase.type).toBe('tutorial-intro');
+      expect(derivePhase(state).type).toBe('tutorial-intro');
     });
 
     it('should use provided user', () => {
@@ -282,7 +283,7 @@ describe('createInitialState', () => {
       };
 
       const state = createInitialState(user);
-      expect(state.phase.type).toBe('board-management');
+      expect(derivePhase(state).type).toBe('board-management');
     });
 
     it('should use provided user', () => {
@@ -324,7 +325,7 @@ describe('createInitialState', () => {
 
       const state = createInitialState(user);
       // Whitespace-only name is truthy in JavaScript, so goes to board-management
-      expect(state.phase.type).toBe('board-management');
+      expect(derivePhase(state).type).toBe('board-management');
     });
   });
 
@@ -332,20 +333,17 @@ describe('createInitialState', () => {
     it('should have all required GameState fields', () => {
       const state = createInitialState(null);
 
-      expect(state).toHaveProperty('phase');
+      expect(state).toHaveProperty('phaseOverride');
       expect(state).toHaveProperty('user');
       expect(state).toHaveProperty('opponent');
       expect(state).toHaveProperty('gameMode');
       expect(state).toHaveProperty('boardSize');
-      expect(state).toHaveProperty('currentRound');
-      expect(state).toHaveProperty('playerScore');
-      expect(state).toHaveProperty('opponentScore');
-      expect(state).toHaveProperty('playerSelectedBoard');
-      expect(state).toHaveProperty('opponentSelectedBoard');
       expect(state).toHaveProperty('playerSelectedDeck');
       expect(state).toHaveProperty('opponentSelectedDeck');
       expect(state).toHaveProperty('roundHistory');
       expect(state).toHaveProperty('checksum');
+      // These fields are now derived, not stored:
+      // phase, currentRound, playerScore, opponentScore, playerSelectedBoard, opponentSelectedBoard
     });
 
     it('should create clean state with no game in progress', () => {
@@ -359,9 +357,9 @@ describe('createInitialState', () => {
       const state = createInitialState(user);
 
       // Even with experienced user, state should be clean
-      expect(state.currentRound).toBe(1);
-      expect(state.playerScore).toBe(0);
-      expect(state.opponentScore).toBe(0);
+      expect(deriveCurrentRound(state)).toBe(1);
+      expect(derivePlayerScore(state.roundHistory)).toBe(0);
+      expect(deriveOpponentScore(state.roundHistory)).toBe(0);
       expect(state.roundHistory).toEqual([]);
     });
   });

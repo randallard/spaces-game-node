@@ -5,6 +5,8 @@
 
 import { useState, useCallback, useMemo, type ReactElement } from 'react';
 import { parseChallengeUrl, type ChallengeData } from '@/utils/challenge-url';
+import { encodeMinimalBoard } from '@/utils/board-encoding';
+import { FEATURES } from '@/config/features';
 import styles from './ShareChallenge.module.css';
 
 export interface ShareChallengeProps {
@@ -32,6 +34,8 @@ export interface ShareChallengeProps {
   isConnectingDiscord?: boolean;
   /** Timestamp of last Discord notification sent (ISO string) */
   lastDiscordNotificationTime?: string | null;
+  /** Whether URL is currently being generated */
+  isGeneratingUrl?: boolean;
 }
 
 /**
@@ -56,6 +60,7 @@ export function ShareChallenge({
   onConnectDiscord,
   isConnectingDiscord = false,
   lastDiscordNotificationTime,
+  isGeneratingUrl = false,
 }: ShareChallengeProps): ReactElement {
   const [copySuccess, setCopySuccess] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
@@ -151,6 +156,21 @@ export function ShareChallenge({
   const formatChallengeData = useCallback((data: ChallengeData | null): string => {
     if (!data) return 'Unable to parse challenge data';
 
+    // Format previous round results for display
+    const formatPreviousRounds = (rounds: typeof data.previousRoundResults) => {
+      if (!rounds || rounds.length === 0) return undefined;
+
+      return rounds.map(r => ({
+        round: r.round,
+        winner: r.winner,
+        playerPoints: r.playerPoints,
+        opponentPoints: r.opponentPoints,
+        // Show encoded board strings (like "2|2p3t0pG0f")
+        playerBoard: r.playerBoard ? encodeMinimalBoard(r.playerBoard) : 'N/A',
+        opponentBoard: r.opponentBoard ? encodeMinimalBoard(r.opponentBoard) : 'N/A',
+      }));
+    };
+
     return JSON.stringify({
       gameId: data.gameId,
       round: data.round,
@@ -166,14 +186,22 @@ export function ShareChallenge({
       ...(data.playerDiscordId && { playerDiscordId: data.playerDiscordId }),
       ...(data.playerDiscordUsername && { playerDiscordUsername: data.playerDiscordUsername }),
       ...(data.playerDiscordAvatar && { playerDiscordAvatar: data.playerDiscordAvatar }),
-      ...(data.previousRoundResult && { previousRoundResult: 'RoundResult data included' }),
-      ...(data.previousRoundResults && { previousRoundResults: `${data.previousRoundResults.length} rounds included` }),
+      ...(data.previousRoundResult && {
+        previousRoundResult: {
+          round: data.previousRoundResult.round,
+          winner: data.previousRoundResult.winner,
+          playerPoints: data.previousRoundResult.playerPoints,
+          opponentPoints: data.previousRoundResult.opponentPoints,
+        }
+      }),
+      ...(data.previousRoundResults && { previousRoundResults: formatPreviousRounds(data.previousRoundResults) }),
       playerBoard: data.playerBoard || 'N/A',
     }, null, 2);
   }, []);
 
-  // If opponent has Discord, show notification status with manual sharing option
-  if (opponentHasDiscord) {
+  // If opponent has Discord AND notifications are enabled, show notification status with manual sharing option
+  // If opponent has Discord but notifications are disabled, show manual sharing UI
+  if (opponentHasDiscord && FEATURES.DISCORD_NOTIFICATIONS) {
     return (
       <div className={styles.container}>
         <div className={styles.content}>
@@ -235,18 +263,20 @@ export function ShareChallenge({
             {typeof navigator !== 'undefined' && 'share' in navigator && (
               <button
                 onClick={handleNativeShare}
+                disabled={isGeneratingUrl}
                 className={styles.primaryButton}
               >
-                📤 Share Challenge
+                {isGeneratingUrl ? '⏳ Generating Link...' : '📤 Share Challenge'}
               </button>
             )}
 
             {/* Clipboard copy button */}
             <button
               onClick={handleCopyToClipboard}
+              disabled={isGeneratingUrl}
               className={(typeof navigator !== 'undefined' && 'share' in navigator) ? styles.secondaryButton : styles.primaryButton}
             >
-              📋 Copy Link
+              {isGeneratingUrl ? '⏳ Generating Link...' : '📋 Copy Link'}
             </button>
           </div>
 
@@ -352,18 +382,20 @@ export function ShareChallenge({
           {typeof navigator !== 'undefined' && 'share' in navigator && (
             <button
               onClick={handleNativeShare}
+              disabled={isGeneratingUrl}
               className={styles.primaryButton}
             >
-              📤 Share Challenge
+              {isGeneratingUrl ? '⏳ Generating Link...' : '📤 Share Challenge'}
             </button>
           )}
 
           {/* Clipboard copy button */}
           <button
             onClick={handleCopyToClipboard}
+            disabled={isGeneratingUrl}
             className={(typeof navigator !== 'undefined' && 'share' in navigator) ? styles.secondaryButton : styles.primaryButton}
           >
-            📋 Copy Link
+            {isGeneratingUrl ? '⏳ Generating Link...' : '📋 Copy Link'}
           </button>
         </div>
 

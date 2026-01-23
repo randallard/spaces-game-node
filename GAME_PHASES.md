@@ -765,7 +765,11 @@ useEffect(() => {
 **Info Displayed:**
 - "Round {round} of 5"
 - Current score after previous round
-- Previous rounds history (clickable list)
+- **Previous rounds section** (ONLY if there are completed rounds to show):
+  - "Previous Rounds" title
+  - Clickable round cards with thumbnails
+  - Shows when: `roundHistory.length > 0` (at least one completed round exists)
+  - Hidden when: No completed rounds yet (e.g., Player 2 responding to Round 1 challenge before selecting their board)
 - "Select a Board for Round {round}" section below
 - **Discord connection section** (ONLY for human opponents):
   - Opponent's Discord connection status (if connected)
@@ -773,16 +777,31 @@ useEffect(() => {
   - User's connection status (if connected)
 
 **Buttons:**
-- ✅ "View Round X" (per previous round)
+- ✅ "View Round X" (per previous round - ONLY shown if previous rounds section is visible)
 - ✅ Board selection UI (for current round)
 - ⚠️ "Connect to Discord" (ONLY if opponent.type === 'human' && !userHasDiscord)
 - ✅ "Back to Home"
 
 **Navigation:**
-- After selecting board for current round → share-challenge or round-results (depending on opponent type)
+- After selecting board for current round → share-challenge or round-results (depending on opponent type and turn order)
+
+**Special Cases:**
+1. **Player 2 responding to Round 1 challenge (before selecting):**
+   - No previous rounds section shown (roundHistory.length === 0)
+   - Only shows: Game info header + Board selection UI
+   - After selecting → round-results (round completes)
+
+2. **Player 2 at Round 2 (after completing Round 1):**
+   - Previous rounds section shown with Round 1 card
+   - Shows: Game info header + Previous Rounds + Board selection UI
+   - After selecting → share-challenge (initiating Round 2 challenge to Player 1)
 
 **Implementation Notes:**
 - `AllRoundsResults` component with `isReview={true}`
+- Game info header (Round X of Y, Score, Board Size, Re-send link) shown at top
+- Previous rounds grid ONLY rendered when `results.length > 0`
+- When player needs to select board: `SavedBoards` component embedded below round history
+- When waiting for opponent: Show waiting message (built into AllRoundsResults)
 - Discord section hidden when `isCpuOpponent={true}`
 - Discord section only shown when `isReview && !isCpuOpponent && (opponentHasDiscord || onConnectDiscord)`
 

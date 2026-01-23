@@ -17,7 +17,7 @@ import type { GameState, UrlPayload } from '@/types';
 
 describe('compressGameState', () => {
   const validState: GameState = {
-    phase: { type: 'user-setup' },
+    phaseOverride: { type: 'user-setup' },
     user: {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test User',
@@ -32,11 +32,6 @@ describe('compressGameState', () => {
     opponent: null,
   gameId: null,
       gameCreatorId: null,
-    currentRound: 0,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
     roundHistory: [],
       lastDiscordNotificationTime: null,
   gameMode: null,
@@ -104,7 +99,7 @@ describe('compressGameState', () => {
 
 describe('decompressGameState', () => {
   const validState: GameState = {
-    phase: { type: 'user-setup' },
+    phaseOverride: { type: 'user-setup' },
     user: {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test User',
@@ -114,11 +109,6 @@ describe('decompressGameState', () => {
     opponent: null,
   gameId: null,
       gameCreatorId: null,
-    currentRound: 0,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
     roundHistory: [],
       lastDiscordNotificationTime: null,
   gameMode: null,
@@ -151,7 +141,7 @@ describe('decompressGameState', () => {
 
   it('should validate decompressed data with schema', () => {
     // Create invalid state (missing required fields)
-    const invalidState = { phase: { type: 'user-setup' } };
+    const invalidState = { phaseOverride: { type: 'user-setup' } };
     // Manually compress invalid state
     const compressed = compressGameState(invalidState as GameState);
 
@@ -229,7 +219,7 @@ describe('compressPayload and decompressPayload', () => {
   it('should compress and decompress delta payload', () => {
     const payload: UrlPayload = {
       type: 'delta',
-      changes: { currentRound: 1 },
+      changes: { boardSize: 2 },
     };
 
     const compressed = compressPayload(payload);
@@ -240,7 +230,7 @@ describe('compressPayload and decompressPayload', () => {
 
   it('should compress and decompress full_state payload', () => {
     const state: GameState = {
-      phase: { type: 'user-setup' },
+      phaseOverride: { type: 'user-setup' },
       user: {
         id: '123e4567-e89b-12d3-a456-426614174000',
         name: 'Test',
@@ -250,11 +240,6 @@ describe('compressPayload and decompressPayload', () => {
       opponent: null,
   gameId: null,
       gameCreatorId: null,
-      currentRound: 0,
-      playerScore: 0,
-      opponentScore: 0,
-      playerSelectedBoard: null,
-      opponentSelectedBoard: null,
       roundHistory: [],
       lastDiscordNotificationTime: null,
   gameMode: null,
@@ -300,7 +285,7 @@ describe('compressPayload and decompressPayload', () => {
 
 describe('getGameStateFromHash', () => {
   const validState: GameState = {
-    phase: { type: 'user-setup' },
+    phaseOverride: { type: 'user-setup' },
     user: {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
@@ -310,11 +295,6 @@ describe('getGameStateFromHash', () => {
     opponent: null,
   gameId: null,
       gameCreatorId: null,
-    currentRound: 0,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
     roundHistory: [],
       lastDiscordNotificationTime: null,
   gameMode: null,
@@ -357,7 +337,7 @@ describe('getGameStateFromHash', () => {
 
 describe('setGameStateToHash', () => {
   const validState: GameState = {
-    phase: { type: 'user-setup' },
+    phaseOverride: { type: 'user-setup' },
     user: {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
@@ -367,11 +347,6 @@ describe('setGameStateToHash', () => {
     opponent: null,
   gameId: null,
       gameCreatorId: null,
-    currentRound: 0,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
     roundHistory: [],
       lastDiscordNotificationTime: null,
   gameMode: null,
@@ -412,7 +387,7 @@ describe('clearHash', () => {
 
 describe('getCompressionRatio', () => {
   const validState: GameState = {
-    phase: { type: 'user-setup' },
+    phaseOverride: { type: 'user-setup' },
     user: {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test User',
@@ -422,11 +397,6 @@ describe('getCompressionRatio', () => {
     opponent: null,
   gameId: null,
       gameCreatorId: null,
-    currentRound: 0,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
     roundHistory: [],
       lastDiscordNotificationTime: null,
   gameMode: null,

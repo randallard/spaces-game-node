@@ -163,6 +163,13 @@ export async function generateChallengeUrlShortened(
   gameCreatorId?: string,
   previousRoundResults?: RoundResult[]
 ): Promise<string | null> {
+  // Check if URL shortening is enabled
+  const { FEATURES } = await import('@/config/features');
+  if (!FEATURES.URL_SHORTENING) {
+    console.log('[generateChallengeUrlShortened] URL shortening disabled, returning null');
+    return null;
+  }
+
   try {
     // Encode the board using minimal encoding
     const encodedBoard = encodeMinimalBoard(board);

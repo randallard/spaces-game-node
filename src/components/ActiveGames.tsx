@@ -74,6 +74,7 @@ export function ActiveGames({ games, onResumeGame, onArchiveGame, onDeleteGame }
                     Score: {game.playerScore}-{game.opponentScore}
                     {game.boardSize && ` • ${game.boardSize}×${game.boardSize}`}
                   </div>
+                  <div className={styles.gameId}>Game ID: {game.gameId}</div>
                   <button
                     onClick={() => setGameToRemove(game)}
                     className={styles.removeLink}

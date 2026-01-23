@@ -7,7 +7,7 @@ import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsFo
 import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
 import { updateOpponentStats, createHumanOpponent } from '@/utils/opponent-helpers';
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
-import { generateChallengeUrl, generateChallengeUrlShortened, generateFinalResultsUrl, getChallengeFromUrl, getChallengeFromUrlAsync, clearChallengeFromUrl, hasChallengeInUrl } from '@/utils/challenge-url';
+import { generateChallengeUrl, generateChallengeUrlShortened, generateFinalResultsUrl, getChallengeFromUrl, getChallengeFromUrlAsync, clearChallengeFromUrl } from '@/utils/challenge-url';
 import { decodeMinimalBoard } from '@/utils/board-encoding';
 import { fetchRemoteCpuBoards, fetchRemoteCpuDeck } from '@/utils/remote-cpu-boards';
 import { getApiEndpoint } from '@/config/api';
@@ -38,12 +38,9 @@ import {
   ActiveGames,
   RemoveOpponentModal,
 } from '@/components';
-import { LoadingChallenge } from '@/components/LoadingChallenge';
-import type { UserProfile as UserProfileType, Board, Opponent, GameState, GamePhase, Deck, GameMode, CreatureId, RoundResult } from '@/types';
+import type { UserProfile as UserProfileType, Board, Opponent, GameState, Deck, GameMode, CreatureId, RoundResult } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
 import { CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID, CPU_OPPONENT_NAME } from '@/constants/game-rules';
-import { deriveCurrentRound, deriveWhoMovesFirst, isRoundComplete } from '@/utils/derive-state';
-import { FEATURES } from '@/config/features';
 import { z } from 'zod';
 
 // Type for storing round results with metadata for retrieval
@@ -125,7 +122,7 @@ function App(): React.ReactElement {
         loadState({
           ...state,
           user: updatedUser, // Update user with new Discord info
-          phaseOverride: { type: 'add-opponent' },
+          phase: { type: 'add-opponent' },
         });
         console.log('[APP] Returned to opponent creation after Discord OAuth');
       }
@@ -183,7 +180,6 @@ function App(): React.ReactElement {
   // State for shortened challenge URL and fallback compressed URL (for ActiveGameView)
   const [shortenedChallengeUrl, setShortenedChallengeUrl] = useState<string | null>(null);
   const [fallbackCompressedUrl, setFallbackCompressedUrl] = useState<string | null>(null);
-  const [isGeneratingUrl, setIsGeneratingUrl] = useState(false);
 
   // Initialize default CPU data on first load
   useEffect(() => {
@@ -302,7 +298,6 @@ function App(): React.ReactElement {
     opponentSelectedBoard,
     // Actions
     setPhase,
-    // clearPhaseOverride, // Unused
     setGameMode,
     setBoardSize,
     selectPlayerBoard: selectPlayerBoardAction,
@@ -311,7 +306,7 @@ function App(): React.ReactElement {
     selectOpponentDeck,
     completeRound,
     completeAllRounds,
-    endGame,
+    advanceToNextRound,
     resetGame,
     loadState,
   } = useGameState(initialState);
@@ -319,25 +314,9 @@ function App(): React.ReactElement {
   // Generate shortened challenge URL and fallback compressed URL when player selects board
   useEffect(() => {
     const generateShortenedUrl = async () => {
-      // Skip if URLs are already being generated or already set
-      if (playerSelectedBoard && state.gameId && state.opponent?.type === 'human' && !isGeneratingUrl && !shortenedChallengeUrl) {
-        setIsGeneratingUrl(true);
-
-        // Filter to only include COMPLETE rounds for previousRoundResults
-        // A round is complete if it has both boards AND a winner (not undefined or null)
-        const completeRounds = state.roundHistory.filter(r => {
-          const hasBoards = r.playerBoard && r.opponentBoard;
-          const hasWinner = r.winner !== undefined && r.winner !== null;
-          const isComplete = hasBoards && hasWinner;
-          console.log(`[generateUrl] Round ${r.round}: hasBoards=${hasBoards}, hasWinner=${hasWinner}, winner=${r.winner}, isComplete=${isComplete}`);
-          return isComplete;
-        });
-
-        console.log('[generateUrl] Total rounds in history:', state.roundHistory.length);
-        console.log('[generateUrl] Complete rounds:', completeRounds.length, completeRounds.map(r => `R${r.round}:${r.winner}`));
-
-        const previousRoundResult = completeRounds.length > 0
-          ? completeRounds[completeRounds.length - 1]
+      if (playerSelectedBoard && state.gameId && state.opponent?.type === 'human') {
+        const previousRoundResult = state.roundHistory.length > 0
+          ? state.roundHistory[state.roundHistory.length - 1]
           : undefined;
 
         // Always generate the compressed URL as fallback
@@ -356,7 +335,7 @@ function App(): React.ReactElement {
           previousRoundResult,
           undefined,
           state.gameCreatorId || undefined,
-          completeRounds // Only include complete rounds
+          state.roundHistory
         );
 
         setFallbackCompressedUrl(compressedUrl);
@@ -369,30 +348,25 @@ function App(): React.ReactElement {
           state.gameId,
           state.user.id,
           state.user.name,
-          playerScore,
-          opponentScore,
+          state.playerScore,
+          state.opponentScore,
           savedUser?.discordId,
           savedUser?.discordUsername,
           savedUser?.discordAvatar,
           previousRoundResult,
           undefined,
           state.gameCreatorId || undefined,
-          completeRounds // Only include complete rounds
+          state.roundHistory
         );
 
         // Use shortened if available, otherwise use compressed
         setShortenedChallengeUrl(shortenedUrl || compressedUrl);
-        setIsGeneratingUrl(false);
-      } else if (!playerSelectedBoard || !state.gameId || state.opponent?.type !== 'human') {
-        // Reset URLs when conditions aren't met
-        setShortenedChallengeUrl(null);
-        setFallbackCompressedUrl(null);
-        setIsGeneratingUrl(false);
       }
+      // Don't clear URLs when conditions aren't met - preserve them for the share modal
     };
 
     generateShortenedUrl();
-  }, [playerSelectedBoard, state.gameId, state.opponent?.type]);
+  }, [state.playerSelectedBoard, state.gameId, state.currentRound, state.opponent?.type, state.roundHistory, state.gameMode, state.user.id, state.user.name, state.playerScore, state.opponentScore, state.gameCreatorId, savedUser?.discordId, savedUser?.discordUsername, savedUser?.discordAvatar]);
 
   // Profile modal state
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -424,9 +398,6 @@ function App(): React.ReactElement {
 
   // Show challenge received modal
   const [showChallengeModal, setShowChallengeModal] = useState(false);
-
-  // Share challenge modal state (for round-review re-send link)
-  const [showShareModal, setShowShareModal] = useState(false);
 
   // Active games state
   const [activeGames, setActiveGames] = useState<ActiveGameInfo[]>(() => getActiveGames());
@@ -465,7 +436,7 @@ function App(): React.ReactElement {
     setActiveGames(getActiveGames());
 
     // Clean up active game if game is over
-    if (phase.type === 'game-over' && state.gameId) {
+    if (state.phase.type === 'game-over' && state.gameId) {
       removeActiveGame(state.gameId);
       setActiveGames(getActiveGames());
     }
@@ -477,7 +448,7 @@ function App(): React.ReactElement {
 
     // Only check for unlocks if we're in game-over or all-rounds-results phase
     // This ensures we show the modal right after a game completes
-    if (currentGames === 0 || (phase.type !== 'game-over' && phase.type !== 'all-rounds-results')) {
+    if (currentGames === 0 || (state.phase.type !== 'game-over' && state.phase.type !== 'all-rounds-results')) {
       return;
     }
 
@@ -508,7 +479,7 @@ function App(): React.ReactElement {
       // Mark this game count as shown
       shownUnlocksRef.current.add(currentGames);
     }
-  }, [state.user.stats.totalGames, state.user, phase.type]);
+  }, [state.user.stats.totalGames, state.user, state.phase.type]);
 
   // Helper function to save a round result to localStorage
   const saveRoundResult = (result: RoundResult, gameId: string | null, opponent: Opponent | null, boardSize: number) => {
@@ -528,10 +499,8 @@ function App(): React.ReactElement {
 
     console.log('[saveRoundResult] Saving round', result.round, 'for gameId:', gameId);
 
-    // Remove any existing result for this game and round, then add the new one
-    const existingResults = savedRoundResults || [];
-    const filteredResults = existingResults.filter(r => !(r.gameId === gameId && r.round === result.round));
-    const updatedResults = [storedResult, ...filteredResults].slice(0, 100);
+    // Add to saved results and keep only last 100
+    const updatedResults = [storedResult, ...(savedRoundResults || [])].slice(0, 100);
     setSavedRoundResults(updatedResults);
 
     console.log('[saveRoundResult] Total saved results now:', updatedResults.filter(r => r.gameId === gameId).length, 'for this game');
@@ -647,12 +616,6 @@ function App(): React.ReactElement {
       opponentScore?: number;
     }
   ): Promise<string | null> => {
-    // Check if Discord notifications are enabled
-    if (!FEATURES.DISCORD_NOTIFICATIONS) {
-      console.log('[Discord] Notifications disabled in config, skipping');
-      return null;
-    }
-
     // Only send if opponent has Discord connected
     if (!opponent.discordId) {
       console.log('[Discord] Opponent has no Discord ID, skipping notification');
@@ -798,15 +761,17 @@ function App(): React.ReactElement {
         return;
       }
 
-      // Decode the board (kept for potential future validation)
-      void decodeMinimalBoard(incomingChallenge.playerBoard);
+      // Decode the board
+      const opponentBoard = decodeMinimalBoard(incomingChallenge.playerBoard);
 
       // Check if ongoing game
       const isOngoingGame = state.gameId === incomingChallenge.gameId;
 
-      // Scores are now derived from roundHistory, not explicitly set
-      void (isOngoingGame ? playerScore : 0); // placeholder for future use
-      void (isOngoingGame ? opponentScore : 0); // placeholder for future use
+      // Get scores
+      const playerScore = incomingChallenge.opponentScore !== undefined ? incomingChallenge.opponentScore :
+                         (isOngoingGame ? state.playerScore : 0);
+      const opponentScore = incomingChallenge.playerScore !== undefined ? incomingChallenge.playerScore :
+                           (isOngoingGame ? state.opponentScore : 0);
 
       // If this is an ongoing game with history, show round review screen
       if (roundHistory.length > 0) {
@@ -817,8 +782,13 @@ function App(): React.ReactElement {
           gameCreatorId: incomingChallenge.gameCreatorId || null,
           boardSize: incomingChallenge.boardSize,
           gameMode: incomingChallenge.gameMode,
+          currentRound: incomingChallenge.round,
+          opponentSelectedBoard: opponentBoard,
+          playerSelectedBoard: null,
+          playerScore,
+          opponentScore,
           roundHistory,
-          phaseOverride: { type: 'round-review', round: incomingChallenge.round },
+          phase: { type: 'round-review', round: incomingChallenge.round },
         });
       } else {
         // First round - go directly to board selection
@@ -829,8 +799,13 @@ function App(): React.ReactElement {
           gameCreatorId: incomingChallenge.gameCreatorId || null,
           boardSize: incomingChallenge.boardSize,
           gameMode: incomingChallenge.gameMode,
+          currentRound: incomingChallenge.round,
+          opponentSelectedBoard: opponentBoard,
+          playerSelectedBoard: null,
+          playerScore,
+          opponentScore,
           roundHistory,
-          phaseOverride: { type: 'board-selection', round: incomingChallenge.round },
+          phase: { type: 'board-selection', round: incomingChallenge.round },
         });
       }
 
@@ -930,8 +905,10 @@ function App(): React.ReactElement {
           loadState({
             ...state,
             opponent: currentOpponent || null,
+            playerScore: playerFinalScore,
+            opponentScore: opponentFinalScore,
             roundHistory,
-            phaseOverride: { type: 'game-over', winner },
+            phase: { type: 'game-over', winner },
           });
 
           setIncomingChallenge(null);
@@ -939,7 +916,7 @@ function App(): React.ReactElement {
         }
 
         // Decode the opponent's board
-        const decodedOpponentBoard = decodeMinimalBoard(challengeData.playerBoard);
+        const opponentBoard = decodeMinimalBoard(challengeData.playerBoard);
 
         // Find or create opponent
         // First, try to find by playerId (their canonical ID)
@@ -1009,9 +986,11 @@ function App(): React.ReactElement {
         // Check if we're continuing an ongoing game (same gameId)
         const isOngoingGame = state.gameId === challengeData.gameId;
 
-        // Scores are now derived from roundHistory, not explicitly set
-        void (isOngoingGame ? playerScore : 0); // placeholder for future use
-        void (isOngoingGame ? opponentScore : 0); // placeholder for future use
+        // Get scores from URL or use current scores
+        const playerScore = challengeData.opponentScore !== undefined ? challengeData.opponentScore :
+                           (isOngoingGame ? state.playerScore : 0);
+        const opponentScore = challengeData.playerScore !== undefined ? challengeData.playerScore :
+                             (isOngoingGame ? state.opponentScore : 0);
 
         console.log('[handleIncomingChallenge] Ongoing game?', isOngoingGame);
         console.log('[handleIncomingChallenge] Current roundHistory length:', state.roundHistory.length);
@@ -1052,11 +1031,9 @@ function App(): React.ReactElement {
 
           if (missingRounds.length > 0) {
             console.log('[handleIncomingChallenge] Syncing', missingRounds.length, 'missing rounds from challenge:', missingRounds.map(r => r.round));
-            const swappedResults: RoundResult[] = [];
             missingRounds.forEach(result => {
               // Swap perspective since results are from opponent's point of view
               const swappedResult = swapRoundResultPerspective(result);
-              swappedResults.push(swappedResult);
               saveRoundResult(
                 swappedResult,
                 challengeData.gameId,
@@ -1064,8 +1041,8 @@ function App(): React.ReactElement {
                 challengeData.boardSize
               );
             });
-            // Add swapped results to roundHistory (state update is async, so we can't rely on loadRoundResults here)
-            roundHistory = [...roundHistory, ...swappedResults].sort((a, b) => a.round - b.round);
+            // Reload round history after syncing all missing rounds
+            roundHistory = loadRoundResults(challengeData.gameId);
             console.log('[handleIncomingChallenge] After syncing all rounds, roundHistory now has:', roundHistory.length, 'rounds');
           }
         }
@@ -1091,69 +1068,15 @@ function App(): React.ReactElement {
         }
 
         // Determine the correct phase based on context
-        // Check if the current round (the one in the challenge) is complete
-        const currentRoundComplete = roundHistory.some(r => r.round === challengeData.round && r.playerBoard && r.opponentBoard);
-
-        // Check if there are any newly completed rounds that player hasn't seen yet
-        // Find the most recent completed round that's BEFORE the challenge round
-        const completedRoundsBeforeCurrent = roundHistory
-          .filter(r => r.round < challengeData.round && r.playerBoard && r.opponentBoard)
-          .sort((a, b) => b.round - a.round);
-        const mostRecentCompletedRound = completedRoundsBeforeCurrent[0];
-
         // If isRoundComplete is true, the opponent has already played this round - go to review
-        // If this specific round is already COMPLETE in the history, go to review
-        // If there's a completed round before current and player hasn't selected for next round, show those results
-        const shouldReview = challengeData.isRoundComplete || currentRoundComplete || !!mostRecentCompletedRound;
-
-        // IMPORTANT: Add opponent's board to round entry (always, even when showing review)
-        // This ensures opponent's board is available when player finishes viewing results
-        const roundIndex = challengeData.round - 1;
-        const existingRound = roundHistory[roundIndex];
-
-        if (existingRound && !isRoundComplete(existingRound)) {
-          // Update existing partial round with opponent's board
-          roundHistory[roundIndex] = {
-            ...existingRound,
-            opponentBoard: decodedOpponentBoard, // Opponent's decoded board from challenge
-          };
-        } else if (!existingRound) {
-          // Create new partial round entry with opponent's board
-          roundHistory[roundIndex] = {
-            round: challengeData.round,
-            winner: undefined as any,
-            playerBoard: null as any,
-            opponentBoard: decodedOpponentBoard, // Opponent's decoded board from challenge
-            playerFinalPosition: { row: 0, col: 0 },
-            opponentFinalPosition: { row: 0, col: 0 },
-          };
-        }
-        // If round is already complete, don't overwrite it
+        // If this specific round is already in the history, go to review
+        // Otherwise go to board selection
+        const currentRoundComplete = roundHistory.some(r => r.round === challengeData.round);
+        const shouldReview = challengeData.isRoundComplete || currentRoundComplete;
 
         if (shouldReview) {
-          // Determine which round's results to show
-          let roundToShow: number;
-          let phaseToUse: GamePhase;
-
-          if (currentRoundComplete) {
-            // Current round is complete - show review and advance to next round
-            const nextRound = challengeData.round + 1;
-            phaseToUse = { type: 'round-review', round: nextRound };
-          } else if (mostRecentCompletedRound) {
-            // There's a completed round before current - show its results
-            const completedRoundResult = roundHistory.find(r => r.round === mostRecentCompletedRound.round);
-            if (completedRoundResult) {
-              phaseToUse = { type: 'round-results', round: mostRecentCompletedRound.round, result: completedRoundResult };
-            } else {
-              // Fallback to board selection if we can't find the result
-              phaseToUse = { type: 'board-selection', round: challengeData.round };
-            }
-          } else {
-            // Fallback (shouldn't reach here, but just in case)
-            const nextRound = challengeData.round + 1;
-            phaseToUse = { type: 'round-review', round: nextRound };
-          }
-
+          // Both players have completed this round - show review and advance to next round
+          const nextRound = challengeData.round + 1;
           loadState({
             ...state,
             opponent,
@@ -1161,8 +1084,13 @@ function App(): React.ReactElement {
             gameCreatorId: challengeData.gameCreatorId || null,
             boardSize: challengeData.boardSize,
             gameMode: challengeData.gameMode,
+            currentRound: nextRound, // Advance to next round
+            opponentSelectedBoard: null, // Clear opponent board for next round
+            playerSelectedBoard: null,
+            playerScore,
+            opponentScore,
             roundHistory,
-            phaseOverride: phaseToUse,
+            phase: { type: 'round-review', round: nextRound }, // Show review before next round
           });
         } else {
           // First round, initial challenge - go directly to board selection
@@ -1173,8 +1101,13 @@ function App(): React.ReactElement {
             gameCreatorId: challengeData.gameCreatorId || null,
             boardSize: challengeData.boardSize,
             gameMode: challengeData.gameMode,
+            currentRound: challengeData.round,
+            opponentSelectedBoard: opponentBoard,
+            playerSelectedBoard: null,
+            playerScore,
+            opponentScore,
             roundHistory,
-            phaseOverride: { type: 'board-selection', round: challengeData.round },
+            phase: { type: 'board-selection', round: challengeData.round },
           });
         }
 
@@ -1193,20 +1126,10 @@ function App(): React.ReactElement {
   // Check for incoming challenge in URL on mount and when hash changes
   useEffect(() => {
     const handleHashChange = async () => {
-      // Check if there's a challenge in the URL
-      if (hasChallengeInUrl()) {
-        // Show loading state immediately before fetching
-        setPhase({ type: 'loading-challenge' });
-
-        // Use async version to support shortened URLs
-        const challengeData = await getChallengeFromUrlAsync();
-        if (challengeData) {
-          handleIncomingChallenge(challengeData);
-        } else {
-          // Failed to load challenge - go back to board management
-          console.error('[APP] Failed to load challenge data');
-          setPhase({ type: 'board-management' });
-        }
+      // Use async version to support shortened URLs
+      const challengeData = await getChallengeFromUrlAsync();
+      if (challengeData) {
+        handleIncomingChallenge(challengeData);
       }
     };
 
@@ -1227,10 +1150,10 @@ function App(): React.ReactElement {
     if (!state.opponent) return;
 
     // Check if we're in an end-game phase
-    if (phase.type === 'game-over' || phase.type === 'all-rounds-results') {
+    if (state.phase.type === 'game-over' || state.phase.type === 'all-rounds-results') {
       // Determine if opponent won (ties don't count as wins or losses)
-      const opponentWon = opponentScore > playerScore;
-      const isTie = opponentScore === playerScore;
+      const opponentWon = state.opponentScore > state.playerScore;
+      const isTie = state.opponentScore === state.playerScore;
 
       // Only update opponent stats if there was a winner (not a tie)
       if (isTie) {
@@ -1259,7 +1182,7 @@ function App(): React.ReactElement {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase.type, state.opponent?.id, playerScore, opponentScore]);
+  }, [state.phase.type, state.opponent?.id, state.playerScore, state.opponentScore]);
 
   // Send Discord notification when game ends (for human opponents)
   useEffect(() => {
@@ -1267,12 +1190,12 @@ function App(): React.ReactElement {
     if (!savedUser?.name || !state.gameId || !state.boardSize) return;
 
     // Only send notification when game is over
-    if (phase.type === 'game-over' || phase.type === 'all-rounds-results') {
+    if (state.phase.type === 'game-over' || state.phase.type === 'all-rounds-results') {
       // Determine opponent's result (from their perspective)
       let opponentResult: 'win' | 'loss' | 'tie';
-      if (opponentScore > playerScore) {
+      if (state.opponentScore > state.playerScore) {
         opponentResult = 'win';
-      } else if (playerScore > opponentScore) {
+      } else if (state.playerScore > state.opponentScore) {
         opponentResult = 'loss';
       } else {
         opponentResult = 'tie';
@@ -1281,8 +1204,8 @@ function App(): React.ReactElement {
       // Generate game URL with final results
       const gameUrl = generateFinalResultsUrl(
         state.boardSize,
-        playerScore,
-        opponentScore,
+        state.playerScore,
+        state.opponentScore,
         state.gameMode || 'round-by-round',
         state.gameId,
         savedUser.id,
@@ -1294,10 +1217,12 @@ function App(): React.ReactElement {
         playerName: savedUser.name,
         gameUrl,
         result: opponentResult,
+        playerScore: state.opponentScore, // From opponent's perspective
+        opponentScore: state.playerScore, // From opponent's perspective
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase.type, state.gameId]); // Only run when phase or gameId changes
+  }, [state.phase.type, state.gameId]); // Only run when phase or gameId changes
 
   // Sync round results from game state to localStorage (fixes missing rounds)
   useEffect(() => {
@@ -1343,7 +1268,7 @@ function App(): React.ReactElement {
         ...state,
         user: newUser,
         opponent,
-        phaseOverride: { type: 'board-management' }, // Temporarily set to board-management
+        phase: { type: 'board-management' }, // Temporarily set to board-management
       });
 
       // Show the challenge received modal
@@ -1355,7 +1280,7 @@ function App(): React.ReactElement {
     loadState({
       ...state,
       user: newUser,
-      phaseOverride: { type: 'board-management' },
+      phase: { type: 'board-management' },
     });
   };
 
@@ -1386,8 +1311,8 @@ function App(): React.ReactElement {
   const handleBoardSizeSelect = async (size: number) => {
     setBoardSize(size);
     // After selecting board size, check if opponent is already selected
-    if (phase.type === 'board-size-selection') {
-      const gameMode = phase.gameMode;
+    if (state.phase.type === 'board-size-selection') {
+      const gameMode = state.phase.gameMode;
 
       // If opponent already selected, check if we need to generate CPU boards
       if (state.opponent && state.opponent.type === 'cpu') {
@@ -1531,8 +1456,13 @@ function App(): React.ReactElement {
       gameCreatorId: opponent.type === 'human' ? state.user.id : null, // Track who created the game
       gameMode,
       // boardSize should already be set at this point
-      phaseOverride: null, // Phase will be derived from state
+      phase: gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 },
+      currentRound: 1,
+      playerScore: 0,
+      opponentScore: 0,
       roundHistory: [],
+      playerSelectedBoard: null,
+      opponentSelectedBoard: null,
       playerSelectedDeck: null,
       opponentSelectedDeck: null,
     });
@@ -1543,35 +1473,33 @@ function App(): React.ReactElement {
     console.log('[APP] Resuming game:', game.gameId, 'Phase:', game.phase.type);
 
     // Restore the full game state from the saved game
-    // Note: Old saved games might have 'phase' and 'currentRound' fields
-    // These will be ignored in the new state model
     const restoredState = game.fullState;
 
-    // Determine the correct phase override to resume to
-    // When resuming from home, we want to show round-review instead of share-challenge
-    // so user can see their partial board and choose to re-share or continue
-    let resumePhaseOverride: GamePhase | null = null;
+    // Determine the correct phase to resume to
+    // We want to skip "share" and "waiting" phases and jump to action
+    let resumePhase = restoredState.phase;
 
-    if (game.phase.type === 'share-challenge' || game.phase.type === 'waiting-for-opponent') {
-      // Show round-review with the partial round displayed
-      const currentRoundDerived = deriveCurrentRound(restoredState);
-      resumePhaseOverride = { type: 'round-review', round: currentRoundDerived };
-    } else if (game.phase.type === 'round-results') {
-      // Let phase derive naturally - will show round-results
-      resumePhaseOverride = null;
-    } else if (game.phase.type === 'board-selection') {
-      // Let phase derive naturally - will show board-selection or round-review
-      resumePhaseOverride = null;
-    } else if (game.phase.type === 'share-final-results') {
+    if (restoredState.phase.type === 'share-challenge' || restoredState.phase.type === 'waiting-for-opponent') {
+      // Skip to the round review if we have history for this round, otherwise wait
+      const currentRoundResult = restoredState.roundHistory.find(r => r.round === restoredState.currentRound);
+
+      if (currentRoundResult) {
+        // We have results for this round, go to review
+        resumePhase = { type: 'round-review', round: restoredState.currentRound };
+      } else {
+        // No results yet, stay in waiting
+        resumePhase = { type: 'waiting-for-opponent', round: restoredState.phase.type === 'share-challenge' ? restoredState.phase.round : restoredState.currentRound };
+      }
+    } else if (restoredState.phase.type === 'share-final-results') {
       // If we were sharing final results, show the game over screen
       const playerWins = restoredState.roundHistory.filter(r => r.winner === 'player').length;
       const opponentWins = restoredState.roundHistory.filter(r => r.winner === 'opponent').length;
       const winner = playerWins > opponentWins ? 'player' : opponentWins > playerWins ? 'opponent' : 'tie';
-      resumePhaseOverride = { type: 'game-over', winner };
+      resumePhase = { type: 'game-over', winner };
     } else {
-      // For UI-only phases (round-review, deck-selection, etc.)
-      // Keep the phase as-is - these are valid places to resume
-      resumePhaseOverride = game.phase;
+      // For all other phases (board-selection, round-results, round-review, deck-selection, etc.)
+      // Keep the phase as-is - these are all valid places to resume
+      resumePhase = restoredState.phase;
     }
 
     // Sync round results from state to localStorage (fixes missing rounds)
@@ -1586,7 +1514,7 @@ function App(): React.ReactElement {
 
     loadState({
       ...restoredState,
-      phaseOverride: resumePhaseOverride,
+      phase: resumePhase,
     });
   };
 
@@ -1635,7 +1563,7 @@ function App(): React.ReactElement {
       setIsCreatingBoardMidGame(false);
       setBoardSizeToCreate(null);
       // Return to board-selection with the current round
-      setPhase({ type: 'board-selection', round: currentRound });
+      setPhase({ type: 'board-selection', round: state.currentRound });
     }
   };
 
@@ -1689,7 +1617,7 @@ function App(): React.ReactElement {
         opponent,
         gameMode: 'deck',
         boardSize: deck.boards.length > 0 ? deck.boards[0]?.boardSize ?? 2 : 2,
-        phaseOverride: { type: 'all-rounds-results', results: [] }, // Will be overwritten below
+        phase: { type: 'all-rounds-results', results: [] }, // Will be overwritten below
       });
     }
 
@@ -1815,134 +1743,113 @@ function App(): React.ReactElement {
       return;
     }
 
-    selectPlayerBoardAction(board);
+    selectPlayerBoard(board);
 
     // Mark this round as pending for human opponents (selected but not yet shared)
     if (state.opponent?.type === 'human' && state.gameId) {
-      markRoundPending(state.gameId, currentRound, state.opponent.id, state.opponent.name);
+      markRoundPending(state.gameId, state.currentRound, state.opponent.id, state.opponent.name);
     }
 
     // Check if we're responding to a challenge (opponent board already selected)
-    if (opponentSelectedBoard) {
+    if (state.opponentSelectedBoard) {
       // Responding to challenge - simulate immediately with the received board
       setIsSimulatingRound(true);
 
-      // Capture opponent board in closure before setTimeout
-      const opponentBoardForSimulation = opponentSelectedBoard;
-
       setTimeout(async () => {
-        try {
-          console.log('[handleBoardSelect] Starting simulation for round', currentRound);
-          console.log('[handleBoardSelect] Player board:', board?.name, 'Opponent board:', opponentBoardForSimulation?.name);
-          const result = simulateRound(currentRound, board, opponentBoardForSimulation);
-          console.log('[handleBoardSelect] Simulation complete, result:', result);
+        const result = simulateRound(state.currentRound, board, state.opponentSelectedBoard!);
 
-          // Add creature data to result if available
-          if (savedUser?.playerCreature) {
-            result.playerCreature = savedUser.playerCreature;
-          }
-          if (savedUser?.opponentCreature) {
-            result.opponentCreature = savedUser.opponentCreature;
-          }
-
-          console.log('[handleBoardSelect] Calling completeRound with result');
-          completeRound(result);
-          console.log('[handleBoardSelect] Saving round result');
-          saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
-          console.log('[handleBoardSelect] Setting isSimulatingRound to false');
-          setIsSimulatingRound(false);
-          console.log('[handleBoardSelect] Round completion flow finished');
-
-          // NOTE: Discord "round-complete" notification should be sent from handleContinue
-          // after player views the results, not immediately after simulation
-          // See ROUND_FLOW_IMPLEMENTATION.md lines 518-617
-        } catch (error) {
-          console.error('[handleBoardSelect] Error during simulation:', error);
-          setIsSimulatingRound(false);
+        // Add creature data to result if available
+        if (savedUser?.playerCreature) {
+          result.playerCreature = savedUser.playerCreature;
+        }
+        if (savedUser?.opponentCreature) {
+          result.opponentCreature = savedUser.opponentCreature;
         }
 
-        // REMOVED: Discord notification moved to handleContinue per ROUND_FLOW_IMPLEMENTATION.md
-        // The notification should be sent AFTER the player views the round results
-        // and clicks Continue, not immediately after the simulation completes
+        completeRound(result);
+        saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
+        setIsSimulatingRound(false);
 
-        // Phase will automatically derive to 'round-results' to show the results
-        // When user clicks Continue, handleContinue will send the Discord notification
-        // and then check turn order to either show board-selection or round-review
+        // Send Discord notification to opponent that round is complete
+        if (state.opponent?.type === 'human' && savedUser?.name && state.gameId) {
+          // Include the just-completed round result so opponent can see what happened
+          // Try shortened URL first, fallback to compressed if shortening fails
+          const roundResultUrl = await generateChallengeUrlShortened(
+            board, // Player's board for this round
+            state.currentRound,
+            state.gameMode || 'round-by-round',
+            state.gameId,
+            savedUser.id,
+            savedUser.name,
+            state.opponentScore, // From opponent's perspective (our score becomes their opponent score)
+            state.playerScore + (result.winner === 'player' ? (result.playerPoints ?? 0) : 0), // Updated player score from opponent's perspective
+            savedUser.discordId,
+            savedUser.discordUsername,
+            savedUser.discordAvatar,
+            result, // Include the round result
+            true, // isRoundComplete - this is a round complete notification
+            state.gameCreatorId || undefined, // Pass the original game creator ID
+            state.roundHistory // Include ALL previous rounds for complete history sync
+          ) || generateChallengeUrl(
+            board,
+            state.currentRound,
+            state.gameMode || 'round-by-round',
+            state.gameId,
+            savedUser.id,
+            savedUser.name,
+            state.opponentScore,
+            state.playerScore + (result.winner === 'player' ? (result.playerPoints ?? 0) : 0),
+            savedUser.discordId,
+            savedUser.discordUsername,
+            savedUser.discordAvatar,
+            result,
+            true,
+            state.gameCreatorId || undefined,
+            state.roundHistory
+          );
+
+          // Determine result from opponent's perspective
+          const opponentResult: 'win' | 'loss' | 'tie' =
+            result.winner === 'opponent' ? 'win' :
+            result.winner === 'player' ? 'loss' : 'tie';
+
+          sendDiscordNotification(state.opponent, 'round-complete', {
+            playerName: savedUser.name,
+            round: state.currentRound,
+            gameUrl: roundResultUrl,
+            result: opponentResult,
+            playerScore: state.opponentScore + (result.opponentPoints ?? 0), // From opponent's perspective
+            opponentScore: state.playerScore + (result.playerPoints ?? 0), // From opponent's perspective
+            ...(state.boardSize !== null && { boardSize: state.boardSize }),
+          });
+        }
       }, 500);
       return;
     }
 
     // Check if opponent is human OR if we don't have an opponent (challenge response round 2+)
+    // In both cases, go to share screen
     if (state.opponent?.type === 'human' || !state.opponent) {
-      // Determine if we should show share modal based on:
-      // 1. If opponent hasn't selected yet for THIS round → Always show share modal (waiting for their response)
-      // 2. If opponent already selected THIS round (we're responding) → Check turn order for NEXT round
+      // For human opponents or challenge responses, go to share-challenge phase
+      setPhase({ type: 'share-challenge', round: state.currentRound });
 
-      let shouldShowShareModal = false;
-
-      // Check if opponent has already selected a board for the current round
-      const opponentAlreadySelected = opponentSelectedBoard !== null;
-
-      if (!opponentAlreadySelected) {
-        // Opponent hasn't selected yet for this round - we selected first
-        // Always show share modal to send them the challenge
-        shouldShowShareModal = true;
-      } else {
-        // We're responding to opponent's selection
-        // Only show share modal if opponent goes first in the NEXT round
-        const nextRound = currentRound + 1;
-        shouldShowShareModal = nextRound > 5 ||
-          deriveWhoMovesFirst(nextRound, savedUser?.id || '', state.gameCreatorId) === 'opponent';
-      }
-
-      // Don't manually set phase - let it derive naturally from state
-      // Phase will derive to:
-      // - 'share-challenge' if shouldShowShareModal (player selected, opponent hasn't, opponent goes first in next round)
-      // - 'board-selection' if player goes first in next round (after empty round entry created by handleContinue)
-      //
-      // The share modal visibility is controlled by the `showShareModal` state in ActiveGameView,
-      // which auto-opens when gameState === 'waiting-for-opponent-to-start'
-
-      // Send Discord notification to opponent that it's their turn (only if showing share modal)
-      if (shouldShowShareModal && state.opponent?.type === 'human' && savedUser?.name && state.gameId) {
-        setIsGeneratingUrl(true);
-
+      // Send Discord notification to opponent that it's their turn
+      if (state.opponent?.type === 'human' && savedUser?.name && state.gameId) {
         // Include the most recent round result (if any) to help opponent catch up
         const previousRoundResult = state.roundHistory.length > 0
           ? state.roundHistory[state.roundHistory.length - 1]
           : undefined;
 
-        // Generate compressed URL as fallback
-        const compressedUrl = generateChallengeUrl(
-          board,
-          currentRound,
-          state.gameMode || 'round-by-round',
-          state.gameId,
-          savedUser.id,
-          savedUser.name,
-          playerScore,
-          opponentScore,
-          savedUser.discordId,
-          savedUser.discordUsername,
-          savedUser.discordAvatar,
-          previousRoundResult,
-          undefined,
-          state.gameCreatorId || undefined,
-          state.roundHistory
-        );
-
-        setFallbackCompressedUrl(compressedUrl);
-
         // Use shortened URL for Discord notifications (to stay under 512 char button limit)
         const gameUrl = await generateChallengeUrlShortened(
           board,
-          currentRound,
+          state.currentRound,
           state.gameMode || 'round-by-round',
           state.gameId,
           savedUser.id,
           savedUser.name,
-          playerScore,
-          opponentScore,
+          state.playerScore,
+          state.opponentScore,
           savedUser.discordId,
           savedUser.discordUsername,
           savedUser.discordAvatar,
@@ -1952,16 +1859,28 @@ function App(): React.ReactElement {
           state.roundHistory // Include ALL previous rounds for complete history sync
         );
 
-        // Use shortened if available, otherwise use compressed
-        const finalGameUrl = gameUrl || compressedUrl;
-
-        // Store URLs for share modal (so useEffect doesn't regenerate them)
-        setShortenedChallengeUrl(finalGameUrl);
-        setIsGeneratingUrl(false);
+        // Fallback to regular URL if shortening fails
+        const finalGameUrl = gameUrl || generateChallengeUrl(
+          board,
+          state.currentRound,
+          state.gameMode || 'round-by-round',
+          state.gameId,
+          savedUser.id,
+          savedUser.name,
+          state.playerScore,
+          state.opponentScore,
+          savedUser.discordId,
+          savedUser.discordUsername,
+          savedUser.discordAvatar,
+          previousRoundResult,
+          undefined,
+          state.gameCreatorId || undefined,
+          state.roundHistory
+        );
 
         const notificationTimestamp = await sendDiscordNotification(state.opponent, 'turn-ready', {
           playerName: savedUser.name,
-          round: currentRound,
+          round: state.currentRound,
           gameUrl: finalGameUrl,
           ...(state.boardSize !== null && { boardSize: state.boardSize }),
         });
@@ -1974,6 +1893,7 @@ function App(): React.ReactElement {
           });
         }
       }
+
       return;
     }
 
@@ -2017,11 +1937,11 @@ function App(): React.ReactElement {
       opponentBoard = playableBoard || board;
     }
 
-    selectOpponentBoardAction(opponentBoard);
+    selectOpponentBoard(opponentBoard);
 
     // Run actual game simulation
     setTimeout(() => {
-      const result = simulateRound(currentRound, board, opponentBoard);
+      const result = simulateRound(state.currentRound, board, opponentBoard);
 
       // Add creature data to result if available
       if (savedUser?.playerCreature) {
@@ -2038,134 +1958,47 @@ function App(): React.ReactElement {
   };
 
   // Handle continuing to next round
-  const handleContinue = async () => {
-    console.log('[handleContinue] Phase:', phase);
-    console.log('[handleContinue] Current round (derived):', currentRound);
+  const handleContinue = () => {
+    console.log('[handleContinue] Current round:', state.currentRound);
     console.log('[handleContinue] Round history length:', state.roundHistory.length);
     console.log('[handleContinue] Round history:', state.roundHistory.map(r => `R${r.round}: ${r.winner}`));
-
-    // Determine which round we just completed by checking the phase
-    // If phase is round-results, use that round number
-    // Otherwise find the last complete round
-    let justCompletedRound: number;
-    if (phase.type === 'round-results' && phase.result) {
-      justCompletedRound = phase.result.round;
-    } else {
-      // Find the last completed round in history
-      const lastComplete = state.roundHistory.filter(r => r.winner !== undefined).sort((a, b) => b.round - a.round)[0];
-      justCompletedRound = lastComplete?.round || 1;
-    }
-
-    console.log('[handleContinue] Just completed round:', justCompletedRound);
 
     // Check if we're responding to a challenge and need to add opponent
     // Note: With the new ID system, opponent should already be created when accepting challenge
     // This is just a fallback for edge cases
-    if (!state.opponent && justCompletedRound === 1) {
+    if (!state.opponent && state.currentRound === 1) {
       console.warn('[APP] Missing opponent after round 1 - this should not happen with ID system');
-      // Phase will auto-advance to next round for board selection
+
+      // Advance to next round for board selection (to send back)
+      advanceToNextRound();
       return;
-    }
-
-    // Send Discord "round-complete" notification if we just completed a round as the responder
-    // (opponent went first, we responded, and now we're viewing the results)
-    const completedRoundResult = state.roundHistory.find(r => r.round === justCompletedRound);
-
-    if (completedRoundResult && state.opponent?.type === 'human' && savedUser?.name && state.gameId) {
-      // Check if opponent went first in this round (we responded)
-      const opponentWentFirst = deriveWhoMovesFirst(justCompletedRound, savedUser.id, state.gameCreatorId) === 'opponent';
-
-      if (opponentWentFirst) {
-        // We responded to opponent's challenge - send them notification that round is complete
-        console.log('[handleContinue] Sending round-complete notification to opponent');
-
-        // Generate URL with the completed round result
-        const roundResultUrl = await generateChallengeUrlShortened(
-          completedRoundResult.playerBoard!, // Our board
-          justCompletedRound,
-          state.gameMode || 'round-by-round',
-          state.gameId,
-          savedUser.id,
-          savedUser.name,
-          opponentScore, // From opponent's perspective
-          playerScore, // From opponent's perspective
-          savedUser.discordId,
-          savedUser.discordUsername,
-          savedUser.discordAvatar,
-          completedRoundResult, // Include the completed round result
-          true, // isRoundComplete
-          state.gameCreatorId || undefined,
-          state.roundHistory
-        ) || generateChallengeUrl(
-          completedRoundResult.playerBoard!,
-          justCompletedRound,
-          state.gameMode || 'round-by-round',
-          state.gameId,
-          savedUser.id,
-          savedUser.name,
-          opponentScore,
-          playerScore,
-          savedUser.discordId,
-          savedUser.discordUsername,
-          savedUser.discordAvatar,
-          completedRoundResult,
-          true,
-          state.gameCreatorId || undefined,
-          state.roundHistory
-        );
-
-        // Determine result from opponent's perspective
-        const opponentResult: 'win' | 'loss' | 'tie' =
-          completedRoundResult.winner === 'opponent' ? 'win' :
-          completedRoundResult.winner === 'player' ? 'loss' : 'tie';
-
-        await sendDiscordNotification(state.opponent, 'round-complete', {
-          playerName: savedUser.name,
-          round: justCompletedRound,
-          gameUrl: roundResultUrl,
-          result: opponentResult,
-          ...(state.boardSize !== null && { boardSize: state.boardSize }),
-        });
-      }
     }
 
     // Check if this was the final round (round 5)
-    if (justCompletedRound === 5) {
-      // Game is over - update stats
-      // Phase will automatically be derived as 'game-over'
-      const winner = playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie';
-      endGame(winner);
+    if (state.currentRound === 5) {
+      // If opponent is human:
+      if (state.opponent?.type === 'human') {
+        // Check if we INITIATED the game (no opponentSelectedBoard means we went first)
+        // In that case, wait for their response - don't share yet, just advance to game-over
+        if (!state.opponentSelectedBoard) {
+          // Player 1 (initiator) - advance to game-over and wait for player 2's final URL
+          advanceToNextRound();
+          return;
+        }
+
+        // Player 2 (responder) - advance to game-over to show all results
+        // They should NOT see the share screen - player 1 is waiting for the full results URL
+        advanceToNextRound();
+        return;
+      }
+
+      // CPU opponent - just advance to game-over
+      advanceToNextRound();
       return;
     }
 
-    // Not final round yet - need to transition to next round
-    // Create a minimal round entry for the next round so phase derivation knows we've moved on
-    // The derivePhase logic checks if nextResult exists to determine if user has viewed results
-    const nextRound = justCompletedRound + 1;
-    console.log('[handleContinue] Creating empty entry for next round:', nextRound);
-
-    // Check if next round entry already exists
-    const nextRoundExists = state.roundHistory.some(r => r.round === nextRound);
-
-    if (!nextRoundExists) {
-      const emptyRoundEntry = {
-        round: nextRound,
-      } as RoundResult; // Type assertion - runtime handles partial objects
-
-      // Add the empty round to history to signal we've moved past round results
-      loadState({
-        ...state,
-        roundHistory: [...state.roundHistory, emptyRoundEntry],
-        phaseOverride: null, // Clear override to let phase derive
-      });
-    } else {
-      console.log('[handleContinue] Next round entry already exists, just clearing phase override');
-      // Just clear phase override to let it derive naturally
-      loadState({
-        ...state,
-        phaseOverride: null,
-      });
-    }
+    // Not final round yet - advance to next round to select board
+    advanceToNextRound();
   };
 
   // Handle play again
@@ -2177,12 +2010,12 @@ function App(): React.ReactElement {
   // Handle home navigation - resets game if coming from game-over
   const handleGoHome = () => {
     // If leaving share-challenge, mark round as completed
-    if (phase.type === 'share-challenge' && state.gameId && state.opponent) {
-      markRoundCompleted(state.gameId, phase.round, state.opponent.id, state.opponent.name);
+    if (state.phase.type === 'share-challenge' && state.gameId && state.opponent) {
+      markRoundCompleted(state.gameId, state.phase.round, state.opponent.id, state.opponent.name);
     }
 
     // If in game-over or all-rounds-results, reset the game
-    if (phase.type === 'game-over' || phase.type === 'all-rounds-results') {
+    if (state.phase.type === 'game-over' || state.phase.type === 'all-rounds-results') {
       resetGame();
     }
     setPhase({ type: 'board-management' });
@@ -2306,7 +2139,7 @@ function App(): React.ReactElement {
     }
 
     // Get creatures from current phase
-    const phaseData = phase.type === 'tutorial-board-creation' ? phase : null;
+    const phaseData = state.phase.type === 'tutorial-board-creation' ? state.phase : null;
     if (!phaseData) return;
 
     const playerCreature = phaseData.playerCreature;
@@ -2330,7 +2163,7 @@ function App(): React.ReactElement {
 
   // Handle tutorial results continue
   const handleTutorialResultsContinue = () => {
-    const phaseData = phase.type === 'tutorial-results' ? phase : null;
+    const phaseData = state.phase.type === 'tutorial-results' ? state.phase : null;
     if (!phaseData) return;
 
     // Get creature data from the result
@@ -2372,14 +2205,14 @@ function App(): React.ReactElement {
     loadState({
       ...state,
       user: userWithPreferences,
-      phaseOverride: { type: 'board-management' },
+      phase: { type: 'board-management' },
     });
 
     // Check if there was an incoming challenge
     if (incomingChallenge) {
       try {
-        // Decode the opponent's board (kept for potential future validation)
-        void decodeMinimalBoard(incomingChallenge.playerBoard);
+        // Decode the opponent's board
+        const opponentBoard = decodeMinimalBoard(incomingChallenge.playerBoard);
 
         console.log('[APP] Processing challenge after tutorial:', incomingChallenge);
 
@@ -2411,8 +2244,12 @@ function App(): React.ReactElement {
             gameCreatorId: incomingChallenge.gameCreatorId || null,
             boardSize: incomingChallenge.boardSize,
             gameMode: incomingChallenge.gameMode,
+            currentRound: incomingChallenge.round,
+            opponentSelectedBoard: opponentBoard,
+            playerScore: incomingChallenge.opponentScore || 0,
+            opponentScore: incomingChallenge.playerScore || 0,
             roundHistory: [],
-            phaseOverride: { type: 'board-selection', round: incomingChallenge.round },
+            phase: { type: 'board-selection', round: incomingChallenge.round },
           });
         } else {
           // User declined, show welcome modal
@@ -2435,7 +2272,7 @@ function App(): React.ReactElement {
 
   // Render phase-specific content
   const renderPhase = () => {
-    switch (phase.type) {
+    switch (state.phase.type) {
       case 'tutorial-intro':
         return (
           <TutorialIntro
@@ -2448,21 +2285,21 @@ function App(): React.ReactElement {
       case 'tutorial-board-creation':
         return (
           <TutorialBoardCreator
-            cpuSamData={phase.cpuSamData}
+            cpuSamData={state.phase.cpuSamData}
             onBoardComplete={handleTutorialBoardComplete}
             onSkip={handleTutorialSkip}
           />
         );
 
       case 'tutorial-results':
-        if (!phase.result) return null;
+        if (!state.phase.result) return null;
         return (
           <RoundResults
-            result={phase.result}
+            result={state.phase.result}
             playerName="You"
-            opponentName={phase.result.opponentBoard?.name.split(' ')[0] + ' ' + phase.result.opponentBoard?.name.split(' ')[1] || 'CPU Sam'}
-            playerScore={phase.result.playerPoints || 0}
-            opponentScore={phase.result.opponentPoints || 0}
+            opponentName={state.phase.result.opponentBoard?.name.split(' ')[0] + ' ' + state.phase.result.opponentBoard?.name.split(' ')[1] || 'CPU Sam'}
+            playerScore={state.phase.result.playerPoints || 0}
+            opponentScore={state.phase.result.opponentPoints || 0}
             onContinue={handleTutorialResultsContinue}
             continueButtonText="Continue"
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
@@ -2476,11 +2313,11 @@ function App(): React.ReactElement {
       case 'tutorial-name-entry':
         return (
           <TutorialNameEntry
-            playerCreature={phase.playerCreature}
-            opponentCreature={phase.opponentCreature}
-            firstBoard={phase.firstBoard}
-            playerWon={phase.playerWon}
-            cpuSamName={phase.cpuSamName}
+            playerCreature={state.phase.playerCreature}
+            opponentCreature={state.phase.opponentCreature}
+            firstBoard={state.phase.firstBoard}
+            playerWon={state.phase.playerWon}
+            cpuSamName={state.phase.cpuSamName}
             onContinue={handleTutorialNameContinue}
             onSkip={handleTutorialSkip}
           />
@@ -2493,9 +2330,6 @@ function App(): React.ReactElement {
             existingUser={savedUser}
           />
         );
-
-      case 'loading-challenge':
-        return <LoadingChallenge userName={state.user.name || 'Player'} />;
 
       case 'board-management':
         if (showDeckCreator) {
@@ -2575,8 +2409,13 @@ function App(): React.ReactElement {
                               ...state,
                               opponent,
                               gameId,
-                              phaseOverride: { type: 'game-mode-selection' },
+                              phase: { type: 'game-mode-selection' },
+                              currentRound: 1,
+                              playerScore: 0,
+                              opponentScore: 0,
                               roundHistory: [],
+                              playerSelectedBoard: null,
+                              opponentSelectedBoard: null,
                               playerSelectedDeck: null,
                               opponentSelectedDeck: null,
                             });
@@ -2595,7 +2434,7 @@ function App(): React.ReactElement {
                           // Go to add-opponent phase to add a new opponent to the list
                           loadState({
                             ...state,
-                            phaseOverride: { type: 'add-opponent' },
+                            phase: { type: 'add-opponent' },
                           });
                         }}
                         className={styles.addOpponentButton}
@@ -2610,7 +2449,7 @@ function App(): React.ReactElement {
                         // Go to add-opponent phase to add a new opponent to the list
                         loadState({
                           ...state,
-                          phaseOverride: { type: 'add-opponent' },
+                          phase: { type: 'add-opponent' },
                         });
                       }}
                       className={styles.addOpponentButton}
@@ -2664,7 +2503,7 @@ function App(): React.ReactElement {
               // Return to board management screen
               loadState({
                 ...state,
-                phaseOverride: { type: 'board-management' },
+                phase: { type: 'board-management' },
               });
             }}
           />
@@ -2743,7 +2582,7 @@ function App(): React.ReactElement {
             opponent={state.opponent}
             onGenerateCpuBoards={handleGenerateCpuBoards}
             user={savedUser}
-            gameMode={phase.type === 'board-size-selection' ? phase.gameMode : state.gameMode}
+            gameMode={state.phase.type === 'board-size-selection' ? state.phase.gameMode : state.gameMode}
             onCreateBoards={(size) => {
               // Set the board size in game state
               setBoardSize(size);
@@ -2764,7 +2603,7 @@ function App(): React.ReactElement {
             discordId={state.user.discordId}
             discordUsername={state.user.discordUsername}
             onOpponentSelected={(opponent) =>
-              handleOpponentSelect(opponent, phase.type === 'opponent-selection' ? phase.gameMode : 'round-by-round')
+              handleOpponentSelect(opponent, state.phase.type === 'opponent-selection' ? state.phase.gameMode : 'round-by-round')
             }
           />
         );
@@ -2851,16 +2690,16 @@ function App(): React.ReactElement {
         // Determine game state for ActiveGameView
         let gameState: 'waiting-for-player' | 'waiting-for-opponent-to-start' | 'waiting-for-opponent-to-continue';
 
-        if (phase.type === 'board-selection') {
+        if (state.phase.type === 'board-selection') {
           // Check if player has already selected their board
-          if (playerSelectedBoard) {
+          if (state.playerSelectedBoard) {
             // Player already selected, now waiting for opponent
             gameState = 'waiting-for-opponent-to-continue';
           } else {
             // Player still needs to select a board
             gameState = 'waiting-for-player';
           }
-        } else if (phase.type === 'share-challenge') {
+        } else if (state.phase.type === 'share-challenge') {
           // Just selected board, waiting for opponent to start
           gameState = 'waiting-for-opponent-to-start';
         } else {
@@ -2871,20 +2710,13 @@ function App(): React.ReactElement {
         // Use shortened challenge URL (generated in useEffect above)
         const challengeUrl = shortenedChallengeUrl || '#';
 
-        // Determine if player is responding to a challenge (opponent selected board but player hasn't)
-        const isRespondingToChallenge = !playerSelectedBoard && !!opponentSelectedBoard;
-
-        // Filter round history to only show rounds where player has participated (selected a board)
-        // This prevents showing partial rounds where only opponent has selected
-        const roundsWithPlayerParticipation = state.roundHistory.filter(r => r.playerBoard !== null);
-
         return (
           <div style={{ position: 'relative' }}>
             <ActiveGameView
-              currentRound={currentRound}
+              currentRound={state.currentRound}
               totalRounds={5}
-              playerScore={playerScore}
-              opponentScore={opponentScore}
+              playerScore={state.playerScore}
+              opponentScore={state.opponentScore}
               playerName={state.user.name}
               opponentName={state.opponent?.name || 'Opponent'}
               boardSize={state.boardSize}
@@ -2893,7 +2725,7 @@ function App(): React.ReactElement {
               gameState={gameState}
               playerBoards={savedBoards || []}
               user={savedUser!}
-              roundHistory={roundsWithPlayerParticipation}
+              roundHistory={state.roundHistory}
               onBoardSelected={handleBoardSelect}
               onBoardSaved={handleBoardSave}
               onBoardDeleted={handleBoardDelete}
@@ -2905,15 +2737,14 @@ function App(): React.ReactElement {
               isCpuOpponent={state.opponent?.type === 'cpu' || state.opponent?.type === 'remote-cpu'}
               onGoHome={handleGoHome}
               onShareModalClosed={() => {
-                // When share modal closes, phase stays as 'share-challenge' (derived from state)
-                // The modal visibility is controlled by showShareModal state in ActiveGameView
-                // No need to manually transition phase - it derives from playerBoard/opponentBoard state
+                // When share modal closes, transition from share-challenge to waiting-for-opponent
+                if (state.phase.type === 'share-challenge') {
+                  setPhase({ type: 'waiting-for-opponent', round: state.currentRound });
+                }
               }}
-              playerSelectedBoard={playerSelectedBoard}
-              opponentSelectedBoard={opponentSelectedBoard}
+              playerSelectedBoard={state.playerSelectedBoard}
+              opponentSelectedBoard={state.opponentSelectedBoard}
               lastDiscordNotificationTime={state.lastDiscordNotificationTime}
-              isGeneratingUrl={isGeneratingUrl}
-              isRespondingToChallenge={isRespondingToChallenge}
             />
 
             {/* Loading overlay */}
@@ -2968,8 +2799,8 @@ function App(): React.ReactElement {
 
         const finalResultsUrl = generateFinalResultsUrl(
           state.boardSize,
-          playerScore,
-          opponentScore,
+          state.playerScore,
+          state.opponentScore,
           state.gameMode || 'round-by-round',
           state.gameId,
           state.user.id,
@@ -2983,9 +2814,8 @@ function App(): React.ReactElement {
             boardSize={state.boardSize}
             round={5}
             onCancel={() => {
-              // After sharing final results, update stats - phase will be derived as 'game-over'
-              const winner = playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie';
-              endGame(winner);
+              // After sharing final results, go to game-over
+              advanceToNextRound();
             }}
           />
         );
@@ -2995,7 +2825,7 @@ function App(): React.ReactElement {
         // Show previous rounds before selecting board for current round
         if (state.roundHistory.length === 0) {
           // No history, go directly to board selection
-          setPhase({ type: 'board-selection', round: phase.round });
+          setPhase({ type: 'board-selection', round: state.phase.round });
           return null;
         }
 
@@ -3009,76 +2839,75 @@ function App(): React.ReactElement {
         const playerWentFirstRound1 = state.gameCreatorId === state.user.id;
 
         // Calculate if it's player's turn to go first this round
-        const isOddRound = currentRound % 2 === 1;
+        const isOddRound = state.currentRound % 2 === 1;
         const isPlayerTurnToGoFirst = isOddRound === playerWentFirstRound1;
 
         // If it's opponent's turn to go first and they haven't selected their board yet, show waiting message
-        const waitingForOpponent = state.opponent?.type === 'human' && !isPlayerTurnToGoFirst && !opponentSelectedBoard;
+        const waitingForOpponent = state.opponent?.type === 'human' && !isPlayerTurnToGoFirst && !state.opponentSelectedBoard;
 
         console.log('[ROUND-REVIEW] Waiting check:', {
+          currentRound: state.currentRound,
           gameCreatorId: state.gameCreatorId,
           userId: state.user.id,
           playerWentFirstRound1,
           isOddRound,
           isPlayerTurnToGoFirst,
           opponentType: state.opponent?.type,
+          opponentSelectedBoard: state.opponentSelectedBoard,
           waitingForOpponent,
         });
 
-        // Use AllRoundsResults in review mode with board selection capability
-        // Shows game info header, round history, and conditionally embeds SavedBoards for board selection
-
-        // Filter round history to only show rounds where player has participated (selected a board)
-        // This prevents showing partial rounds where only opponent has selected
-        const roundsWithPlayerParticipation = state.roundHistory.filter(r => r.playerBoard !== null);
-
         return (
           <AllRoundsResults
-            results={roundsWithPlayerParticipation}
+            results={state.roundHistory}
             playerName={state.user.name}
             opponentName={state.opponent?.name || 'Opponent'}
-            playerScore={playerScore}
-            opponentScore={opponentScore}
-            isCpuOpponent={state.opponent?.type === 'cpu'}
-            onContinue={handleContinue}
-            isReview={true}
-            currentRound={currentRound}
-            nextRound={currentRound}
-            totalRounds={5}
-            boardSize={state.boardSize ?? 0}
-            onResendLink={() => setShowShareModal(true)}
-            boards={savedBoards || []}
-            onBoardSelected={handleBoardSelect}
-            onBoardSaved={handleBoardSave}
-            onBoardDeleted={handleBoardDelete}
-            showBoardSelection={!waitingForOpponent}
-            playerSelectedBoard={playerSelectedBoard ?? null}
-            opponentSelectedBoard={opponentSelectedBoard ?? null}
-            user={savedUser}
-            waitingForOpponentBoard={waitingForOpponent}
+            playerScore={state.playerScore}
+            opponentScore={state.opponentScore}
+            winner={state.playerScore > state.opponentScore ? 'player' : state.opponentScore > state.playerScore ? 'opponent' : 'tie'}
+            onPlayAgain={() => {
+              // Continue to board selection for current round
+              setPhase({ type: 'board-selection', round: state.currentRound });
+            }}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
+            {...(!waitingForOpponent && { continueButtonText: "Continue to Next Round" })}
+            isReview={true}
+            isCpuOpponent={state.opponent?.type === 'cpu' || state.opponent?.type === 'remote-cpu'}
+            opponentHasDiscord={!!(state.opponent?.discordId)}
+            {...(state.opponent?.discordUsername && { opponentDiscordUsername: state.opponent.discordUsername })}
+            userHasDiscord={!!(savedUser?.discordId && savedUser?.discordUsername)}
+            onConnectDiscord={() => {
+              // Set loading state
+              setIsConnectingDiscord(true);
+              // Save that we're in round-review flow
+              sessionStorage.setItem('discord-oauth-return', 'round-review');
+              // Save complete game state to restore after OAuth
+              sessionStorage.setItem('discord-oauth-saved-state', JSON.stringify(state));
+              // Redirect to Discord OAuth
+              window.location.href = getApiEndpoint('/api/auth/discord/authorize');
+            }}
+            isConnectingDiscord={isConnectingDiscord}
+            waitingForOpponentBoard={waitingForOpponent}
+            nextRound={state.currentRound}
           />
         );
       }
 
       case 'round-results':
-        if (!phase.result) return null;
-        // Check if we initiated this round (we selected board first)
-        // If we selected first for THIS COMPLETED round, opponent needs to respond before we continue
-        // We can tell by checking who went first in this round
-        const completedRound = phase.result.round;
-        const playerWentFirst = deriveWhoMovesFirst(completedRound, savedUser?.id || '', state.gameCreatorId) === 'player';
-        const waitingForOpponent = state.opponent?.type === 'human' && playerWentFirst;
+        if (!state.phase.result) return null;
+        // Check if we initiated this round (we selected board first, no opponentSelectedBoard when we started)
+        // This means opponent needs to respond before we continue
+        const waitingForOpponent = state.opponent?.type === 'human' && !state.opponentSelectedBoard;
         return (
           <RoundResults
-            result={phase.result}
+            result={state.phase.result}
             playerName={state.user.name}
             opponentName={state.opponent?.name || 'Opponent'}
-            playerScore={playerScore}
-            opponentScore={opponentScore}
+            playerScore={state.playerScore}
+            opponentScore={state.opponentScore}
             onContinue={handleContinue}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
@@ -3091,13 +2920,13 @@ function App(): React.ReactElement {
         );
 
       case 'all-rounds-results':
-        if (!phase.results || phase.results.length === 0) return null;
+        if (!state.phase.results || state.phase.results.length === 0) return null;
 
         // Calculate winner
         let winner: 'player' | 'opponent' | 'tie';
-        if (playerScore > opponentScore) {
+        if (state.playerScore > state.opponentScore) {
           winner = 'player';
-        } else if (opponentScore > playerScore) {
+        } else if (state.opponentScore > state.playerScore) {
           winner = 'opponent';
         } else {
           winner = 'tie';
@@ -3105,11 +2934,11 @@ function App(): React.ReactElement {
 
         return (
           <AllRoundsResults
-            results={phase.results}
+            results={state.phase.results}
             playerName={state.user.name}
             opponentName={state.opponent?.name || 'Opponent'}
-            playerScore={playerScore}
-            opponentScore={opponentScore}
+            playerScore={state.playerScore}
+            opponentScore={state.opponentScore}
             winner={winner}
             onPlayAgain={handlePlayAgain}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
@@ -3123,15 +2952,15 @@ function App(): React.ReactElement {
       case 'game-over': {
         // Check if player should share final results with opponent
         // Player 2 (responder) should share results after game ends
-        const shouldShareResults = state.opponent?.type === 'human' && opponentSelectedBoard && state.gameId && state.boardSize;
+        const shouldShareResults = state.opponent?.type === 'human' && state.opponentSelectedBoard && state.gameId && state.boardSize;
 
         return (
           <GameOver
-            winner={phase.winner}
+            winner={state.phase.winner}
             playerName={state.user.name}
             opponentName={state.opponent?.name || 'Opponent'}
-            playerScore={playerScore}
-            opponentScore={opponentScore}
+            playerScore={state.playerScore}
+            opponentScore={state.opponentScore}
             roundHistory={state.roundHistory}
             playerStats={state.user.stats}
             onNewGame={handlePlayAgain}
@@ -3159,9 +2988,9 @@ function App(): React.ReactElement {
         {state.user.name && (
           <div className={styles.headerActions}>
             {/* Home button - show when not on board-management or tutorial */}
-            {phase.type !== 'board-management' &&
-              phase.type !== 'user-setup' &&
-              !phase.type.startsWith('tutorial') && (
+            {state.phase.type !== 'board-management' &&
+              state.phase.type !== 'user-setup' &&
+              !state.phase.type.startsWith('tutorial') && (
                 <button
                   className={styles.homeButton}
                   onClick={handleGoHome}
@@ -3240,29 +3069,6 @@ function App(): React.ReactElement {
           playerName={state.user.name}
           onClose={() => setShowWelcomeModal(false)}
         />
-      )}
-
-      {/* Share Challenge Modal (for round-review re-send link) */}
-      {showShareModal && phase.type === 'round-review' && state.boardSize && state.opponent && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 1000,
-          }}
-        >
-          <ShareChallenge
-            challengeUrl={shortenedChallengeUrl || '#'}
-            {...(fallbackCompressedUrl && { fallbackUrl: fallbackCompressedUrl })}
-            opponentName={state.opponent.name}
-            boardSize={state.boardSize}
-            round={currentRound}
-            onCancel={() => setShowShareModal(false)}
-          />
-        </div>
       )}
 
       {/* Generating Modal (CPU boards/decks generation) */}
