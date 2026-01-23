@@ -986,7 +986,7 @@ describe('Integration Tests', () => {
 
   it('should handle complete game state with all fields', () => {
     const complexGameState = {
-      phase: { type: 'board-selection', round: 1 },
+      phaseOverride: { type: 'board-selection', round: 1 },
       user: {
         id: 'user-123',
         name: 'Player',
@@ -1031,17 +1031,13 @@ describe('Integration Tests', () => {
           ],
         },
       ],
-      currentRound: 1,
-      playerScore: 0,
-      opponentScore: 0,
     };
 
     const migrated = migrateGameState(complexGameState);
 
-    expect(migrated.phase).toEqual(complexGameState.phase);
+    expect(migrated.phaseOverride).toEqual(complexGameState.phaseOverride);
     expect(migrated.user).toEqual(complexGameState.user);
     expect(migrated.playerDecks[0].boards[0].boardSize).toBe(2);
     expect(migrated.opponentDecks[0].boards[0].boardSize).toBe(3);
-    expect(migrated.currentRound).toBe(1);
   });
 });

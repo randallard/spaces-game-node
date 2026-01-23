@@ -16,7 +16,7 @@ vi.mock('@/utils/url-compression', () => ({
 
 // Test fixture
 const mockGameState: GameState = {
-  phase: { type: 'board-selection', round: 1 },
+  phaseOverride: { type: 'board-selection', round: 1 },
   user: {
     id: 'user-1',
     name: 'Alice',
@@ -39,11 +39,6 @@ const mockGameState: GameState = {
       gameCreatorId: null,
   gameMode: 'round-by-round',
   boardSize: 3,
-  currentRound: 1,
-  playerScore: 0,
-  opponentScore: 0,
-  playerSelectedBoard: null,
-  opponentSelectedBoard: null,
   playerSelectedDeck: null,
   opponentSelectedDeck: null,
   roundHistory: [],

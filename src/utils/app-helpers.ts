@@ -92,25 +92,21 @@ export function createEmptyUser(): UserProfile {
 export function createInitialState(user: UserProfile | null): GameState {
   // If we have a saved user with a name, go to board management
   // Otherwise start with tutorial
-  const phase: GameState['phase'] =
+  // These are UI-only phases that need phaseOverride (can't be derived)
+  const phaseOverride: GameState['phaseOverride'] =
     user && user.name ? { type: 'board-management' } : { type: 'tutorial-intro' };
 
   return {
-    phase,
     user: user || createEmptyUser(),
     opponent: null,
     gameId: null,
     gameCreatorId: null,
     gameMode: null,
     boardSize: null,
-    currentRound: 1,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
     playerSelectedDeck: null,
     opponentSelectedDeck: null,
     roundHistory: [],
+    phaseOverride,
     lastDiscordNotificationTime: null,
     checksum: '',
   };

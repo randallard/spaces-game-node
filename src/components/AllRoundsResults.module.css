@@ -17,6 +17,72 @@
   color: white;
 }
 
+/* Game Info Header - matches ActiveGameView style */
+.gameInfoHeader {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.roundInfo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.scoreInfo {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.boardSizeInfo {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.95;
+}
+
+.matchupInfo {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  opacity: 0.95;
+}
+
+.reSendLink {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+
+.reSendLink:hover {
+  opacity: 0.8;
+}
+
+/* Review Section Header */
+.reviewSection {
+  text-align: center;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.reviewTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  color: #1f2937;
+}
+
 .emoji {
   font-size: 4rem;
   margin-bottom: 0.5rem;
@@ -208,6 +274,20 @@
   border-color: #d97706;
 }
 
+.roundIncomplete {
+  border-color: #9ca3af;
+  border-style: dashed;
+  background-color: #f9fafb;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.roundIncomplete:hover {
+  border-color: #6b7280;
+  transform: none; /* Disable hover transform */
+  box-shadow: none; /* Disable hover shadow */
+}
+
 .roundHeader {
   display: flex;
   justify-content: space-between;
@@ -251,6 +331,20 @@
   border-radius: 6px;
   border: 1px solid #e5e7eb;
   background-color: #f9fafb;
+}
+
+.thumbnailPlaceholder {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 2px dashed #d1d5db;
+  background-color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: #9ca3af;
+  font-weight: 300;
 }
 
 .creatureGraphics {
@@ -585,5 +679,33 @@
 
   .waitingText {
     font-size: 0.9375rem;
+  }
+}
+
+/* Board Selection Section */
+.boardSelectionSection {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+}
+
+.boardSelectionTitle {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .boardSelectionSection {
+    margin: 1.5rem 0;
+    padding: 1rem;
+  }
+
+  .boardSelectionTitle {
+    font-size: 1.125rem;
   }
 }

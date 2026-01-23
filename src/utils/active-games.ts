@@ -5,6 +5,7 @@
 
 import type { GameState, GamePhase } from '@/types/game-state';
 import type { Opponent } from '@/types/opponent';
+import { derivePhase, deriveCurrentRound, derivePlayerScore, deriveOpponentScore } from './derive-state';
 
 /**
  * Simplified game info for display in the active games list
@@ -93,19 +94,25 @@ export function saveActiveGame(state: GameState): void {
     return;
   }
 
+  // Derive phase, round, and scores from state
+  const phase = derivePhase(state);
+  const currentRound = deriveCurrentRound(state);
+  const playerScore = derivePlayerScore(state.roundHistory);
+  const opponentScore = deriveOpponentScore(state.roundHistory);
+
   // Don't save if game is over
-  if (state.phase.type === 'game-over') {
+  if (phase.type === 'game-over') {
     removeActiveGame(gameId);
     return;
   }
 
   // Don't save tutorial, setup, or home phases
-  if (state.phase.type === 'user-setup' ||
-      state.phase.type === 'tutorial-intro' ||
-      state.phase.type === 'tutorial-board-creation' ||
-      state.phase.type === 'tutorial-results' ||
-      state.phase.type === 'tutorial-name-entry' ||
-      state.phase.type === 'board-management') {
+  if (phase.type === 'user-setup' ||
+      phase.type === 'tutorial-intro' ||
+      phase.type === 'tutorial-board-creation' ||
+      phase.type === 'tutorial-results' ||
+      phase.type === 'tutorial-name-entry' ||
+      phase.type === 'board-management') {
     return;
   }
 
@@ -115,11 +122,11 @@ export function saveActiveGame(state: GameState): void {
     const activeGame: ActiveGameInfo = {
       gameId,
       opponent: state.opponent,
-      currentRound: state.currentRound,
+      currentRound,
       totalRounds: state.gameMode === 'deck' ? 10 : 5,
-      playerScore: state.playerScore,
-      opponentScore: state.opponentScore,
-      phase: state.phase,
+      playerScore,
+      opponentScore,
+      phase,
       boardSize: state.boardSize,
       gameMode: state.gameMode,
       lastUpdated: Date.now(),
@@ -218,15 +225,21 @@ export function isWaitingForOpponentBoard(game: ActiveGameInfo): boolean {
     return false;
   }
 
+  // Derive current round and board selection from state
+  const currentRound = deriveCurrentRound(fullState);
+
   // Determine who went first in round 1 (game creator)
   const playerWentFirstRound1 = fullState.gameCreatorId === fullState.user.id;
 
   // Calculate if it's player's turn to go first this round
-  const isOddRound = fullState.currentRound % 2 === 1;
+  const isOddRound = currentRound % 2 === 1;
   const isPlayerTurnToGoFirst = isOddRound === playerWentFirstRound1;
 
+  // Check if opponent has selected board for current round
+  const opponentBoard = fullState.roundHistory[currentRound - 1]?.opponentBoard ?? null;
+
   // If it's opponent's turn to go first and they haven't selected their board yet
-  return !isPlayerTurnToGoFirst && !fullState.opponentSelectedBoard;
+  return !isPlayerTurnToGoFirst && !opponentBoard;
 }
 
 /**

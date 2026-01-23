@@ -4,6 +4,7 @@
  */
 
 import type { ReactElement } from 'react';
+import { FEATURES } from '@/config/features';
 import styles from './DiscordConnectionModal.module.css';
 
 export interface DiscordConnectionModalProps {
@@ -66,55 +67,111 @@ export function DiscordConnectionModal({
               <p className={styles.connectedMessage}>
                 You're connected as <strong>{discordUsername}</strong>
               </p>
-              <div className={styles.benefitsList}>
-                <p className={styles.benefit}>
-                  ✅ Get notified on Discord when your opponent plays their turn
-                </p>
-                <p className={styles.benefit}>
-                  ✅ Receive game completion notifications
-                </p>
-                <p className={styles.benefit}>
-                  ✅ Never miss a move in your correspondence games
-                </p>
-              </div>
+              {FEATURES.DISCORD_NOTIFICATIONS ? (
+                <div className={styles.benefitsList}>
+                  <p className={styles.benefit}>
+                    ✅ Get notified on Discord when your opponent plays their turn
+                  </p>
+                  <p className={styles.benefit}>
+                    ✅ Receive game completion notifications
+                  </p>
+                  <p className={styles.benefit}>
+                    ✅ Never miss a move in your correspondence games
+                  </p>
+                </div>
+              ) : (
+                <div className={styles.benefitsList}>
+                  <p className={styles.benefit}>
+                    ✅ Your profile is synced across devices via Discord
+                  </p>
+                  <p className={styles.benefit}>
+                    ℹ️ Discord notifications are disabled on this platform
+                  </p>
+                  <p className={styles.benefit}>
+                    ✅ Notifications will work when you play on platforms that support them
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <>
-              <p className={styles.description}>
-                Connect your Discord account to receive notifications when:
-              </p>
+              {FEATURES.DISCORD_NOTIFICATIONS ? (
+                <>
+                  <p className={styles.description}>
+                    Connect your Discord account to receive notifications when:
+                  </p>
 
-              <div className={styles.benefitsList}>
-                <div className={styles.benefit}>
-                  <span className={styles.benefitIcon}>🔔</span>
-                  <div>
-                    <strong>Your opponent plays their turn</strong>
-                    <p className={styles.benefitDetail}>
-                      Get a DM on Discord so you know when it's your move
-                    </p>
-                  </div>
-                </div>
+                  <div className={styles.benefitsList}>
+                    <div className={styles.benefit}>
+                      <span className={styles.benefitIcon}>🔔</span>
+                      <div>
+                        <strong>Your opponent plays their turn</strong>
+                        <p className={styles.benefitDetail}>
+                          Get a DM on Discord so you know when it's your move
+                        </p>
+                      </div>
+                    </div>
 
-                <div className={styles.benefit}>
-                  <span className={styles.benefitIcon}>🎮</span>
-                  <div>
-                    <strong>A game completes</strong>
-                    <p className={styles.benefitDetail}>
-                      See final results and stats right in Discord
-                    </p>
-                  </div>
-                </div>
+                    <div className={styles.benefit}>
+                      <span className={styles.benefitIcon}>🎮</span>
+                      <div>
+                        <strong>A game completes</strong>
+                        <p className={styles.benefitDetail}>
+                          See final results and stats right in Discord
+                        </p>
+                      </div>
+                    </div>
 
-                <div className={styles.benefit}>
-                  <span className={styles.benefitIcon}>⚡</span>
-                  <div>
-                    <strong>Challenges are sent</strong>
-                    <p className={styles.benefitDetail}>
-                      Know immediately when someone wants to play
-                    </p>
+                    <div className={styles.benefit}>
+                      <span className={styles.benefitIcon}>⚡</span>
+                      <div>
+                        <strong>Challenges are sent</strong>
+                        <p className={styles.benefitDetail}>
+                          Know immediately when someone wants to play
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </>
+              ) : (
+                <>
+                  <p className={styles.description}>
+                    Connect your Discord account to sync your profile across devices:
+                  </p>
+
+                  <div className={styles.benefitsList}>
+                    <div className={styles.benefit}>
+                      <span className={styles.benefitIcon}>💾</span>
+                      <div>
+                        <strong>Profile Backup & Sync</strong>
+                        <p className={styles.benefitDetail}>
+                          Your Discord connection links your profile across all platforms
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={styles.benefit}>
+                      <span className={styles.benefitIcon}>🌐</span>
+                      <div>
+                        <strong>Platform Independence</strong>
+                        <p className={styles.benefitDetail}>
+                          Play on GitHub Pages, then switch to the full version seamlessly
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={styles.benefit}>
+                      <span className={styles.benefitIcon}>🔔</span>
+                      <div>
+                        <strong>Ready for Notifications</strong>
+                        <p className={styles.benefitDetail}>
+                          Notifications are disabled on this platform, but will work when you play elsewhere
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className={styles.note}>
                 <p>

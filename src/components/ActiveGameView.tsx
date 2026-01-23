@@ -65,6 +65,10 @@ export interface ActiveGameViewProps {
   playerSelectedBoard?: Board | null;
   /** Opponent's selected board for current round (if any) */
   opponentSelectedBoard?: Board | null;
+  /** Whether URL is currently being generated */
+  isGeneratingUrl?: boolean;
+  /** Whether this is a response to an incoming challenge */
+  isRespondingToChallenge?: boolean;
 }
 
 /**
@@ -99,6 +103,8 @@ export function ActiveGameView({
   playerSelectedBoard,
   opponentSelectedBoard,
   lastDiscordNotificationTime,
+  isGeneratingUrl = false,
+  isRespondingToChallenge = false,
 }: ActiveGameViewProps): ReactElement {
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -118,6 +124,10 @@ export function ActiveGameView({
   const getStatusMessage = (): string => {
     switch (gameState) {
       case 'waiting-for-player':
+        // If responding to a challenge (opponent already selected their board)
+        if (isRespondingToChallenge && opponentSelectedBoard) {
+          return `${opponentName} sent you a challenge! Select your board for Round ${currentRound}`;
+        }
         return `Select your board for Round ${currentRound}`;
       case 'waiting-for-opponent-to-start':
         return `Waiting for ${opponentName} to complete Round ${currentRound}`;
@@ -224,6 +234,7 @@ export function ActiveGameView({
             userHasDiscord={false}
             isConnectingDiscord={false}
             lastDiscordNotificationTime={lastDiscordNotificationTime ?? null}
+            isGeneratingUrl={isGeneratingUrl}
           />
         </div>
       )}

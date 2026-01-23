@@ -145,7 +145,7 @@ describe('RoundResultSchema', () => {
 
 describe('GameStateSchema', () => {
   const validGameState: GameState = {
-    phase: { type: 'user-setup' },
+    phaseOverride: { type: 'user-setup' },
     user: {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test User',
@@ -155,11 +155,6 @@ describe('GameStateSchema', () => {
     opponent: null,
   gameId: null,
       gameCreatorId: null,
-    currentRound: 0,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
     roundHistory: [],
       lastDiscordNotificationTime: null,
   gameMode: null,
@@ -214,7 +209,7 @@ describe('GameStateSchema', () => {
 
 describe('UrlPayloadSchema', () => {
   const validGameState: GameState = {
-    phase: { type: 'user-setup' },
+    phaseOverride: { type: 'user-setup' },
     user: {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test User',
@@ -224,11 +219,6 @@ describe('UrlPayloadSchema', () => {
     opponent: null,
   gameId: null,
       gameCreatorId: null,
-    currentRound: 0,
-    playerScore: 0,
-    opponentScore: 0,
-    playerSelectedBoard: null,
-    opponentSelectedBoard: null,
     roundHistory: [],
       lastDiscordNotificationTime: null,
   gameMode: null,

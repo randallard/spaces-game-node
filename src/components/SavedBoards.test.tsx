@@ -34,9 +34,9 @@ describe('SavedBoards', () => {
     onBoardSelected: mockOnBoardSelected,
     onBoardSaved: mockOnBoardSaved,
     onBoardDeleted: mockOnBoardDeleted,
-    currentRound: 1,
     userName: 'Alice',
-    opponentName: 'Bob',
+    currentRound: 1,
+        opponentName: 'Bob',
   };
 
   beforeEach(() => {

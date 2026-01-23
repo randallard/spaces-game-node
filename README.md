@@ -91,6 +91,38 @@ pnpm check            # Type check
 pnpm validate         # Run all checks (type, lint, test)
 ```
 
+### Configuration
+
+The game can be configured via environment variables to enable/disable remote services:
+
+```bash
+# Copy example config
+cp .env.example .env
+
+# Edit .env to configure features
+```
+
+**Available Feature Flags:**
+- `VITE_ENABLE_DISCORD_NOTIFICATIONS` - Enable/disable Discord notifications (default: true)
+- `VITE_ENABLE_URL_SHORTENING` - Enable/disable URL shortening API (default: true)
+- `VITE_ENABLE_REMOTE_CPU` - Enable/disable remote CPU boards (default: true)
+
+**GitHub Pages Mode:**
+For static deployment without backend services:
+```bash
+cp .env.github .env
+pnpm build
+```
+
+This disables all remote services and creates a fully client-side build that works on GitHub Pages.
+
+**Discord Connection in Static Mode:**
+Even with notifications disabled, you can still connect Discord in your profile. This:
+- Links your profile across all platforms (GitHub Pages, Vercel, local dev)
+- Backs up your profile data to your Discord account
+- Enables notifications automatically when you play on platforms that support them
+- Allows seamless switching between static and full-featured deployments
+
 ## Game Rules
 
 ### Board Creation

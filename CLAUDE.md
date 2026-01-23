@@ -17,3 +17,4 @@
 **Pattern**: Odd rounds (1, 3, 5) → game creator goes first. Even rounds (2, 4) → opponent goes first.
 
 **Challenge URLs**: Only contain the sender's board for the current round (not future rounds).
+- always look for existing functionality to accomplish goals before building new

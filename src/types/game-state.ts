@@ -56,6 +56,7 @@ export type GamePhase =
   | { type: 'opponent-selection'; gameMode: GameMode } // Pass game mode
   | { type: 'deck-management' } // Create/manage decks
   | { type: 'deck-selection' } // Select deck to play
+  | { type: 'loading-challenge' } // Loading challenge data from URL
   | { type: 'board-selection'; round: number } // Round-by-round mode
   | { type: 'share-challenge'; round: number } // Share challenge URL with human opponent
   | { type: 'share-final-results' } // Share final results URL after round 5
@@ -68,47 +69,39 @@ export type GamePhase =
 /**
  * Complete game state - NEVER use partial updates
  * Always return the entire state object
+ *
+ * IMPORTANT: This state contains only the SOURCE OF TRUTH.
+ * Derived values (phase, currentRound, scores, board selections) are computed
+ * from roundHistory by the useGameState hook to prevent synchronization bugs.
  */
 export type GameState = {
-  // Current phase
-  phase: GamePhase;
-
   // User and opponent
   user: UserProfile;
   opponent: Opponent | null;
 
-  // Game session ID (generated when starting a game with human opponent)
+  // Game session
   gameId: string | null; // null until game starts
+  gameCreatorId: string | null; // determines who goes first in odd rounds
 
-  // Game creator ID (user ID of whoever sent round 1 challenge)
-  gameCreatorId: string | null; // null until game starts, determines who goes first in odd rounds
-
-  // Game mode
+  // Game configuration
   gameMode: GameMode | null; // null until selected
+  boardSize: number | null; // null until selected (2-99)
 
-  // Board size for this game (2-99)
-  boardSize: number | null; // null until selected
-
-  // Game progress
-  currentRound: number; // 1-5 for round-by-round, 1-10 for deck mode
-  playerScore: number;
-  opponentScore: number;
-
-  // Board selections for current round (round-by-round mode)
-  playerSelectedBoard: Board | null;
-  opponentSelectedBoard: Board | null;
-
-  // Deck selections (deck mode)
+  // Deck mode selections (only used in deck mode)
   playerSelectedDeck: Deck | null;
   opponentSelectedDeck: Deck | null;
 
-  // Round history
+  // SOURCE OF TRUTH - All game progress derived from this
+  // Contains complete/partial round results with both boards
   roundHistory: RoundResult[];
 
-  // Discord notification tracking
-  lastDiscordNotificationTime: string | null; // ISO timestamp of last successful notification
+  // UI-only phase override (for phases that can't be derived)
+  // When null, phase is derived from state. When set, overrides derived phase.
+  // Used for: board-management, add-opponent, deck-management, tutorial-*, share-final-results
+  phaseOverride: GamePhase | null;
 
-  // Validation
+  // Metadata
+  lastDiscordNotificationTime: string | null; // ISO timestamp of last successful notification
   checksum: string; // For state integrity validation
 };
 
