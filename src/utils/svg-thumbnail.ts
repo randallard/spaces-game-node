@@ -57,9 +57,9 @@ function createBoardSvg(
     }
   }
 
-  // Build map of position -> last move (so traps override pieces)
+  // Build map of position -> moves at that position (to handle piece + trap at same location)
   // NOTE: Skip 'final' moves - they're goal markers, not rendered on grid
-  const positionMap = new Map<string, { move: typeof board.sequence[0]; order: number }>();
+  const positionMap = new Map<string, Array<{ move: typeof board.sequence[0]; order: number }>>();
 
   board.sequence.forEach((move, index) => {
     // Skip moves beyond maxStep if specified
@@ -86,31 +86,39 @@ function createBoardSvg(
     }
 
     const key = `${move.position.row},${move.position.col}`;
-    positionMap.set(key, { move, order: move.order });
+    const existing = positionMap.get(key) || [];
+    existing.push({ move, order: move.order });
+    positionMap.set(key, existing);
   });
 
-  // Draw pieces and traps (only the last entry for each position)
-  positionMap.forEach(({ move, order }) => {
-    let row = move.position.row;
-    let col = move.position.col;
+  // Draw pieces and traps (render all moves at each position - trap first, then piece on top)
+  positionMap.forEach((moves) => {
+    // Sort: traps first, then pieces (so pieces render on top)
+    const sortedMoves = moves.sort((a, b) => {
+      if (a.move.type === 'trap' && b.move.type === 'piece') return -1;
+      if (a.move.type === 'piece' && b.move.type === 'trap') return 1;
+      return 0;
+    });
 
-    // Rotate 180 degrees if opponent view
-    if (rotated) {
-      row = size - 1 - row;
-      col = size - 1 - col;
-    }
+    sortedMoves.forEach(({ move, order }) => {
+      let row = move.position.row;
+      let col = move.position.col;
 
-    const x = col * cellSize;
-    const y = row * cellSize;
+      // Rotate 180 degrees if opponent view
+      if (rotated) {
+        row = size - 1 - row;
+        col = size - 1 - col;
+      }
 
-    const content = board.grid[move.position.row]?.[move.position.col];
-    if (!content) return;
+      const x = col * cellSize;
+      const y = row * cellSize;
 
-    if (content === 'piece') {
-      svg += drawPiece(x, y, order, rotated);
-    } else if (content === 'trap') {
-      svg += drawTrap(x, y, order, rotated);
-    }
+      if (move.type === 'piece') {
+        svg += drawPiece(x, y, order, rotated);
+      } else if (move.type === 'trap') {
+        svg += drawTrap(x, y, order, rotated);
+      }
+    });
   });
 
   svg += '</g></svg>';
