@@ -250,7 +250,7 @@ export function BoardCreator({
   }, [piecePosition, grid, sequence]);
 
   /**
-   * Handle placing trap on adjacent square
+   * Handle placing trap on adjacent square OR at current position (supermove)
    * Trap replaces whatever is at that position (could be piece or empty)
    */
   const handleTrap = useCallback((row: number, col: number): void => {
@@ -278,6 +278,9 @@ export function BoardCreator({
     };
     setSequence([...sequence, move]);
     setErrors([]);
+
+    // If trap placed at current position, piece stays there (supermove - wait action)
+    // piecePosition doesn't change, so next move will be from same spot
   }, [piecePosition, grid, sequence]);
 
   // Check if there's a trap blocking the path upward to finish
@@ -602,6 +605,13 @@ export function BoardCreator({
         return;
       }
 
+      // Handle Shift+X for "Trap Here" at current position
+      if (key === 'x' && event.shiftKey && piecePosition) {
+        event.preventDefault();
+        handleTrap(piecePosition.row, piecePosition.col);
+        return;
+      }
+
       const isTrap = event.shiftKey;
       let targetPosition: Position | null = null;
 
@@ -634,7 +644,7 @@ export function BoardCreator({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [phase, directionalMoves, handleMove, handleTrap, canFinish, handleFinalMove]);
+  }, [phase, directionalMoves, handleMove, handleTrap, canFinish, handleFinalMove, piecePosition]);
 
   // Get instruction text
   const getInstruction = (): string => {
@@ -799,8 +809,20 @@ export function BoardCreator({
                   cursor: isEmpty && isStartChoice && useLargeBoard ? 'pointer' : undefined,
                 }}
               >
-                {/* Show piece with number (only if no trap at this position) */}
-                {cell === 'piece' && pieceAtPosition && !trapAtPosition && (
+                {/* Show trap with number (if present) - rendered UNDER piece */}
+                {trapAtPosition && (
+                  <div className={styles.cellTrap}>
+                    <svg viewBox="0 0 40 40" className={styles.trapIcon}>
+                      <path d="M5 5 l30 30 m0 -30 l-30 30" stroke="#f5222d" strokeWidth="4" opacity="0.7" />
+                      <text x="35" y="20" fontSize="14" fill="#f5222d" textAnchor="middle" dy=".3em" fontWeight="bold">
+                        {trapAtPosition.order}
+                      </text>
+                    </svg>
+                  </div>
+                )}
+
+                {/* Show piece with number (rendered ON TOP of trap if both present) */}
+                {pieceAtPosition && (
                   <div className={`${styles.cellPiece} ${isCurrentPiece ? styles.cellPieceCurrent : ''}`}>
                     <svg viewBox="0 0 40 40" className={styles.pieceIcon}>
                       <circle cx="20" cy="20" r="15" fill="#4a90e2" />
@@ -811,16 +833,27 @@ export function BoardCreator({
                   </div>
                 )}
 
-                {/* Show trap with number (trap always shows if present) */}
-                {cell === 'trap' && trapAtPosition && (
-                  <div className={styles.cellTrap}>
-                    <svg viewBox="0 0 40 40" className={styles.trapIcon}>
-                      <path d="M5 5 l30 30 m0 -30 l-30 30" stroke="#f5222d" strokeWidth="4" opacity="0.7" />
-                      <text x="35" y="20" fontSize="14" fill="#f5222d" textAnchor="middle" dy=".3em" fontWeight="bold">
-                        {trapAtPosition.order}
-                      </text>
-                    </svg>
-                  </div>
+                {/* Show Trap Here button on current piece (supermove - small boards only) */}
+                {isCurrentPiece && phase === 'building' && !useLargeBoard && !trapAtPosition && (
+                  <button
+                    onClick={() => handleTrap(rowIdx, colIdx)}
+                    className={styles.trapHereButton}
+                    title="Place trap at current position (Shift+X)"
+                  >
+                    Trap Here
+                  </button>
+                )}
+
+                {/* Show clickable overlay for trap on current piece (large boards only) */}
+                {isCurrentPiece && phase === 'building' && useLargeBoard && !trapAtPosition && (
+                  <div
+                    className={styles.trapHereOverlay}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTrap(rowIdx, colIdx);
+                    }}
+                    title="Click to place trap at current position (Shift+X)"
+                  />
                 )}
 
                 {/* Show Start button (bottom row, choosing phase, small boards only) */}
