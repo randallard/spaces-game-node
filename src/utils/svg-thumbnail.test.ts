@@ -197,3 +197,64 @@ describe('getCellContentColor', () => {
     expect(getCellContentColor('empty')).toBe('#e8e8e8');
   });
 });
+
+describe('Supermove (piece and trap at same position)', () => {
+  it('should render both piece and trap when at same position', () => {
+    const boardWithSupermove: Board = {
+      id: 'supermove-test',
+      name: 'Supermove Board',
+      boardSize: 2,
+      grid: [
+        ['piece', 'empty'],
+        ['trap', 'empty'], // Grid shows trap (piece was there, then trap placed)
+      ],
+      sequence: [
+        { position: { row: 1, col: 0 }, type: 'piece', order: 1 }, // Piece at (1,0)
+        { position: { row: 1, col: 0 }, type: 'trap', order: 2 },  // Trap at same position (supermove)
+        { position: { row: 0, col: 0 }, type: 'piece', order: 3 }, // Piece moved away
+      ],
+      thumbnail: '',
+      createdAt: Date.now(),
+    };
+
+    const thumbnail = generateBoardThumbnail(boardWithSupermove);
+    const decoded = decodeURIComponent(thumbnail.replace('data:image/svg+xml,', ''));
+
+    // Should contain both trap (X path) and piece (circle) at position (1,0)
+    expect(decoded).toContain('<path'); // Trap X
+    expect(decoded).toContain('<circle'); // Piece circle
+
+    // Should show order numbers for both
+    expect(decoded).toContain('>1<'); // Piece order 1
+    expect(decoded).toContain('>2<'); // Trap order 2
+    expect(decoded).toContain('>3<'); // Piece order 3 at new position
+  });
+
+  it('should render trap before piece (so piece appears on top)', () => {
+    const boardWithSupermove: Board = {
+      id: 'supermove-test-2',
+      name: 'Supermove Board 2',
+      boardSize: 2,
+      grid: [
+        ['empty', 'empty'],
+        ['trap', 'empty'],
+      ],
+      sequence: [
+        { position: { row: 1, col: 0 }, type: 'piece', order: 1 },
+        { position: { row: 1, col: 0 }, type: 'trap', order: 2 },
+      ],
+      thumbnail: '',
+      createdAt: Date.now(),
+    };
+
+    const thumbnail = generateBoardThumbnail(boardWithSupermove);
+    const decoded = decodeURIComponent(thumbnail.replace('data:image/svg+xml,', ''));
+
+    // Find positions of trap and piece in SVG string
+    const trapIndex = decoded.indexOf('<path');
+    const pieceIndex = decoded.indexOf('<circle');
+
+    // Trap should come before piece in the SVG (rendered first, so piece is on top)
+    expect(trapIndex).toBeLessThan(pieceIndex);
+  });
+});
