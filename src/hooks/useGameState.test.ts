@@ -154,7 +154,15 @@ describe('useGameState', () => {
 
   describe('completeRound', () => {
     it('should add result to history and update player score on player win', () => {
-      const { result } = renderHook(() => useGameState(initialState));
+      // Set up game state with opponent and game mode
+      const stateWithGame: GameState = {
+        ...initialState,
+        phaseOverride: null, // Allow phase to be derived
+        opponent: mockCpuOpponent,
+        gameMode: 'round-by-round',
+        boardSize: 2,
+      };
+      const { result } = renderHook(() => useGameState(stateWithGame));
 
       const roundResult: RoundResult = {
         round: 1,
@@ -375,43 +383,140 @@ describe('useGameState', () => {
 //   });
 
   describe('endGame', () => {
-    it('should end game with player win', () => {
-      const { result } = renderHook(() => useGameState(initialState));
+    it('should update stats when player wins', () => {
+      // Set up game state with 5 complete rounds (game is over)
+      const completedRounds: RoundResult[] = Array.from({ length: 5 }, (_, i) => ({
+        round: i + 1,
+        winner: 'player' as const,
+        playerBoard: mockBoard,
+        opponentBoard: mockBoard,
+        playerFinalPosition: { row: 0, col: 0 },
+        opponentFinalPosition: { row: 1, col: 1 },
+        playerPoints: 2,
+        opponentPoints: 1,
+      }));
+
+      const stateWithGame: GameState = {
+        ...initialState,
+        phaseOverride: null, // Allow phase to be derived
+        opponent: mockCpuOpponent,
+        gameMode: 'round-by-round',
+        boardSize: 2,
+        roundHistory: completedRounds,
+      };
+      const { result } = renderHook(() => useGameState(stateWithGame));
+
+      // Verify game-over phase is derived
+      expect(result.current.phase.type).toBe('game-over');
+      expect(result.current.phase).toEqual({
+        type: 'game-over',
+        winner: 'player',
+      });
 
       act(() => {
         result.current.endGame('player');
       });
 
-      expect(result.current.phase).toEqual({
-        type: 'game-over',
-        winner: 'player',
-      });
+      // Verify stats were updated
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(1);
+      expect(result.current.state.user.stats.losses).toBe(0);
     });
 
-    it('should end game with opponent win', () => {
-      const { result } = renderHook(() => useGameState(initialState));
+    it('should update stats when opponent wins', () => {
+      // Set up game state with 5 complete rounds (game is over)
+      const completedRounds: RoundResult[] = Array.from({ length: 5 }, (_, i) => ({
+        round: i + 1,
+        winner: 'opponent' as const,
+        playerBoard: mockBoard,
+        opponentBoard: mockBoard,
+        playerFinalPosition: { row: 1, col: 1 },
+        opponentFinalPosition: { row: 0, col: 0 },
+        playerPoints: 1,
+        opponentPoints: 2,
+      }));
 
-      act(() => {
-        result.current.endGame('opponent');
-      });
+      const stateWithGame: GameState = {
+        ...initialState,
+        phaseOverride: null,
+        opponent: mockCpuOpponent,
+        gameMode: 'round-by-round',
+        boardSize: 2,
+        roundHistory: completedRounds,
+      };
+      const { result } = renderHook(() => useGameState(stateWithGame));
 
       expect(result.current.phase).toEqual({
         type: 'game-over',
         winner: 'opponent',
       });
-    });
-
-    it('should end game with tie', () => {
-      const { result } = renderHook(() => useGameState(initialState));
 
       act(() => {
-        result.current.endGame('tie');
+        result.current.endGame('opponent');
       });
+
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(0);
+      expect(result.current.state.user.stats.losses).toBe(1);
+    });
+
+    it('should update stats when game ends in tie', () => {
+      // Set up game state with 5 complete rounds (2-2-1 tie)
+      const completedRounds: RoundResult[] = [
+        ...Array.from({ length: 2 }, (_, i) => ({
+          round: i + 1,
+          winner: 'player' as const,
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 0, col: 0 },
+          opponentFinalPosition: { row: 1, col: 1 },
+          playerPoints: 2,
+          opponentPoints: 1,
+        })),
+        ...Array.from({ length: 2 }, (_, i) => ({
+          round: i + 3,
+          winner: 'opponent' as const,
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 1, col: 1 },
+          opponentFinalPosition: { row: 0, col: 0 },
+          playerPoints: 1,
+          opponentPoints: 2,
+        })),
+        {
+          round: 5,
+          winner: 'tie' as const,
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 0, col: 0 },
+          opponentFinalPosition: { row: 0, col: 0 },
+          playerPoints: 1,
+          opponentPoints: 1,
+        },
+      ];
+
+      const stateWithGame: GameState = {
+        ...initialState,
+        phaseOverride: null,
+        opponent: mockCpuOpponent,
+        gameMode: 'round-by-round',
+        boardSize: 2,
+        roundHistory: completedRounds,
+      };
+      const { result } = renderHook(() => useGameState(stateWithGame));
 
       expect(result.current.phase).toEqual({
         type: 'game-over',
         winner: 'tie',
       });
+
+      act(() => {
+        result.current.endGame('tie');
+      });
+
+      expect(result.current.state.user.stats.totalGames).toBe(1);
+      expect(result.current.state.user.stats.wins).toBe(0);
+      expect(result.current.state.user.stats.ties).toBe(1);
     });
   });
 
@@ -419,7 +524,10 @@ describe('useGameState', () => {
     it('should reset game to initial state', () => {
       const modifiedState: GameState = {
         ...initialState,
+        phaseOverride: null, // Start with null so phase is derived
         opponent: mockCpuOpponent,
+        gameMode: 'round-by-round',
+        boardSize: 2,
         roundHistory: [
           {
             round: 1,
@@ -438,7 +546,8 @@ describe('useGameState', () => {
         result.current.resetGame();
       });
 
-      expect(result.current.phase).toEqual({ type: 'user-setup' });
+      // After reset, with no opponent/gameMode, phase derives to game-mode-selection
+      expect(result.current.phase.type).toBe('game-mode-selection');
       expect(result.current.state.opponent).toBeNull();
       expect(result.current.currentRound).toBe(1);
       expect(result.current.playerScore).toBe(0);
@@ -663,7 +772,26 @@ describe('useGameState', () => {
         },
       ];
 
-      const { result } = renderHook(() => useGameState(initialState));
+      // Set up game state with opponent and deck mode (for all-rounds-results)
+      // Need decks selected for all-rounds-results phase to be derived
+      const mockDeck = {
+        id: 'deck-1',
+        name: 'Test Deck',
+        boards: [mockBoard],
+        createdAt: Date.now(),
+      };
+
+      const stateWithDeckMode: GameState = {
+        ...initialState,
+        phaseOverride: null, // Allow phase to be derived
+        opponent: mockCpuOpponent,
+        gameMode: 'deck',
+        boardSize: 2,
+        playerSelectedDeck: mockDeck,
+        opponentSelectedDeck: mockDeck,
+      };
+
+      const { result } = renderHook(() => useGameState(stateWithDeckMode));
 
       act(() => {
         result.current.completeAllRounds(results);
