@@ -117,7 +117,10 @@ export function generateChallengeUrl(
           opponentPoints: r.opponentPoints ?? 0,
           playerBoard: encodeMinimalBoard(r.playerBoard!),
           opponentBoard: encodeMinimalBoard(r.opponentBoard!),
-        })),
+          // Final positions not needed for URL serialization
+          playerFinalPosition: r.playerFinalPosition,
+          opponentFinalPosition: r.opponentFinalPosition,
+        })) as unknown as RoundResult[],
     }),
     ...(isRoundComplete && { isRoundComplete }),
   };
@@ -216,7 +219,10 @@ export async function generateChallengeUrlShortened(
             opponentPoints: r.opponentPoints ?? 0,
             playerBoard: encodeMinimalBoard(r.playerBoard!),
             opponentBoard: encodeMinimalBoard(r.opponentBoard!),
-          })),
+            // Final positions not needed for URL serialization
+            playerFinalPosition: r.playerFinalPosition,
+            opponentFinalPosition: r.opponentFinalPosition,
+          })) as unknown as RoundResult[],
       }),
       ...(isRoundComplete && { isRoundComplete }),
     };
@@ -304,7 +310,10 @@ export function generateFinalResultsUrl(
         opponentPoints: r.opponentPoints ?? 0,
         playerBoard: r.playerBoard ? encodeMinimalBoard(r.playerBoard) : '',
         opponentBoard: r.opponentBoard ? encodeMinimalBoard(r.opponentBoard) : '',
-      })),
+        // Final positions not needed for URL serialization
+        playerFinalPosition: { row: 0, col: 0 },
+        opponentFinalPosition: { row: 0, col: 0 },
+      })) as unknown as RoundResult[],
     }),
   };
 
