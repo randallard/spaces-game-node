@@ -25,11 +25,11 @@ const mockBoard: Board = {
   boardSize: 2,
   grid: [
     ['piece', 'empty'],
-    ['empty', 'goal'],
+    ['empty', 'empty'],
   ],
   sequence: [
     { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
-    { position: { row: 1, col: 1 }, type: 'goal', order: 2 },
+    { position: { row: -1, col: 0 }, type: 'final', order: 2 },
   ],
   thumbnail: 'data:image/svg+xml,...',
   createdAt: Date.now(),
