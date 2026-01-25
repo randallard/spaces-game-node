@@ -7,6 +7,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ShareChallenge } from './ShareChallenge';
 
+// Mock the features config to ensure DISCORD_NOTIFICATIONS is enabled for tests
+vi.mock('@/config/features', () => ({
+  FEATURES: {
+    DISCORD_NOTIFICATIONS: true,
+    URL_SHORTENING: true,
+    REMOTE_CPU: true,
+  },
+  isStaticMode: () => false,
+  getModeDescription: () => 'Full Mode - Discord notifications and URL shortening enabled',
+}));
+
 describe('ShareChallenge', () => {
   const mockOnCancel = vi.fn();
   const defaultProps = {
@@ -70,7 +81,8 @@ describe('ShareChallenge', () => {
     it('should render view link summary', () => {
       render(<ShareChallenge {...defaultProps} />);
 
-      expect(screen.getByText('View link')).toBeInTheDocument();
+      // Text changed from "View link" to "View link data"
+      expect(screen.getByText('View link data')).toBeInTheDocument();
     });
   });
 
