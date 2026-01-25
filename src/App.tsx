@@ -1106,22 +1106,23 @@ function App(): React.ReactElement {
         const roundIndex = challengeData.round - 1;
         const existingRound = roundHistory[roundIndex];
 
-        if (existingRound && !isRoundComplete(existingRound)) {
+        if (existingRound && !isRoundComplete(existingRound) && decodedOpponentBoard) {
           // Update existing partial round with opponent's board
           roundHistory[roundIndex] = {
             ...existingRound,
             opponentBoard: decodedOpponentBoard, // Opponent's decoded board from challenge
           };
-        } else if (!existingRound) {
+        } else if (!existingRound && decodedOpponentBoard) {
           // Create new partial round entry with opponent's board
+          // Using 'as unknown as RoundResult' because this is a partial round that will be completed later
           roundHistory[roundIndex] = {
             round: challengeData.round,
-            winner: undefined as any,
-            playerBoard: null as any,
+            winner: undefined,
+            playerBoard: null,
             opponentBoard: decodedOpponentBoard, // Opponent's decoded board from challenge
             playerFinalPosition: { row: 0, col: 0 },
             opponentFinalPosition: { row: 0, col: 0 },
-          };
+          } as unknown as RoundResult;
         }
         // If round is already complete, don't overwrite it
 
