@@ -1127,7 +1127,6 @@ function App(): React.ReactElement {
 
         if (shouldReview) {
           // Determine which round's results to show
-          let roundToShow: number;
           let phaseToUse: GamePhase;
 
           if (currentRoundComplete) {
