@@ -5,7 +5,6 @@
 
 import { useState, useCallback, useMemo, type ReactElement } from 'react';
 import { parseChallengeUrl, type ChallengeData } from '@/utils/challenge-url';
-import { encodeMinimalBoard } from '@/utils/board-encoding';
 import { FEATURES } from '@/config/features';
 import styles from './ShareChallenge.module.css';
 

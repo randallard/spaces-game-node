@@ -9,6 +9,7 @@ import { getAllCreatures } from '@/types/creature';
 import { downloadBackup, loadBackupFromFile, importBackup } from '@/utils/backup';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
 import { getApiEndpoint } from '@/config/api';
+// @ts-expect-error - isStaticMode will be used for GitHub Pages static mode configuration
 import { FEATURES, isStaticMode } from '@/config/features';
 import styles from './ProfileModal.module.css';
 
