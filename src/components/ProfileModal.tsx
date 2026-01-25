@@ -9,8 +9,7 @@ import { getAllCreatures } from '@/types/creature';
 import { downloadBackup, loadBackupFromFile, importBackup } from '@/utils/backup';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
 import { getApiEndpoint } from '@/config/api';
-// @ts-expect-error - isStaticMode will be used for GitHub Pages static mode configuration
-import { FEATURES, isStaticMode } from '@/config/features';
+import { FEATURES, isStaticMode, getModeDescription } from '@/config/features';
 import styles from './ProfileModal.module.css';
 
 export interface ProfileModalProps {
@@ -267,7 +266,14 @@ export function ProfileModal({
     <div className={styles.backdrop} onClick={handleBackdropClick}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Profile</h2>
+          <div className={styles.titleSection}>
+            <h2 className={styles.title}>Profile</h2>
+            {isStaticMode() && (
+              <p className={styles.modeIndicator}>
+                {getModeDescription()}
+              </p>
+            )}
+          </div>
           <button
             className={styles.closeButton}
             onClick={onClose}
