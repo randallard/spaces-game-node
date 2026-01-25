@@ -674,7 +674,8 @@ describe('SavedBoards', () => {
       );
 
       expect(screen.getByText('Previous Rounds (2)')).toBeInTheDocument();
-      expect(screen.getByText('Show Previous Rounds')).toBeInTheDocument();
+      // Button text changed from "Show Previous Rounds" to "Show Round History"
+      expect(screen.getByText(/Show Round History/)).toBeInTheDocument();
     });
 
     it('should toggle round history display when button is clicked', () => {
@@ -692,18 +693,19 @@ describe('SavedBoards', () => {
         />
       );
 
-      const toggleButton = screen.getByText('Show Previous Rounds');
+      // Button text changed from "Show Previous Rounds" to "Show Round History"
+      const toggleButton = screen.getByText(/Show Round History/);
       fireEvent.click(toggleButton);
 
       // Should show round cards
       expect(screen.getByText('Round 1')).toBeInTheDocument();
       expect(screen.getByText('Alice Won')).toBeInTheDocument();
 
-      // Button text should change
-      expect(screen.getByText('Hide Previous Rounds')).toBeInTheDocument();
+      // Button text should change to "Hide Round History"
+      expect(screen.getByText(/Hide Round History/)).toBeInTheDocument();
 
       // Click again to hide
-      fireEvent.click(screen.getByText('Hide Previous Rounds'));
+      fireEvent.click(screen.getByText(/Hide Round History/));
       expect(screen.queryByText('Round 1')).not.toBeInTheDocument();
     });
 
@@ -726,7 +728,7 @@ describe('SavedBoards', () => {
       );
 
       // Show the round history
-      fireEvent.click(screen.getByText('Show Previous Rounds'));
+      fireEvent.click(screen.getByText(/Show Round History/));
 
       expect(screen.getByText('Alice: 2')).toBeInTheDocument();
       expect(screen.getByText('Bob: 2')).toBeInTheDocument();
@@ -752,7 +754,7 @@ describe('SavedBoards', () => {
       );
 
       // Show the round history
-      fireEvent.click(screen.getByText('Show Previous Rounds'));
+      fireEvent.click(screen.getByText(/Show Round History/));
 
       expect(screen.getByText('Round 1')).toBeInTheDocument();
       expect(screen.getByText('Round 2')).toBeInTheDocument();
@@ -778,7 +780,7 @@ describe('SavedBoards', () => {
       );
 
       // Show the round history
-      fireEvent.click(screen.getByText('Show Previous Rounds'));
+      fireEvent.click(screen.getByText(/Show Round History/));
 
       // Click on the round card
       const roundCard = screen.getByText('Round 1').closest('button');
@@ -804,7 +806,7 @@ describe('SavedBoards', () => {
       );
 
       // Show the round history
-      fireEvent.click(screen.getByText('Show Previous Rounds'));
+      fireEvent.click(screen.getByText(/Show Round History/));
 
       // Click on the round card to open modal
       const roundCard = screen.getByText('Round 1').closest('button');
@@ -834,7 +836,7 @@ describe('SavedBoards', () => {
       );
 
       // Show the round history
-      fireEvent.click(screen.getByText('Show Previous Rounds'));
+      fireEvent.click(screen.getByText(/Show Round History/));
 
       // Should show points (2 - 0 for player win)
       expect(screen.getByText('2 - 0')).toBeInTheDocument();

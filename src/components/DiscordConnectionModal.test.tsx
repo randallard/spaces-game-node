@@ -6,6 +6,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
 
+// Mock the features config to ensure DISCORD_NOTIFICATIONS is enabled for tests
+vi.mock('@/config/features', () => ({
+  FEATURES: {
+    DISCORD_NOTIFICATIONS: true,
+    URL_SHORTENING: true,
+    REMOTE_CPU: true,
+  },
+  isStaticMode: () => false,
+  getModeDescription: () => 'Full Mode - Discord notifications and URL shortening enabled',
+}));
+
 describe('DiscordConnectionModal', () => {
   const mockOnClose = vi.fn();
   const mockOnConnect = vi.fn();
