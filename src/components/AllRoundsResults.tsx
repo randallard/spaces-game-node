@@ -528,7 +528,7 @@ export function AllRoundsResults({
         <div className={styles.boardSelectionSection}>
           <h3 className={styles.boardSelectionTitle}>Select a Board for Round {nextRound}</h3>
           <SavedBoards
-            boards={boards}
+            boards={boardSize ? boards.filter(board => board.boardSize === boardSize) : boards}
             onBoardSelected={onBoardSelected}
             onBoardSaved={onBoardSaved!}
             onBoardDeleted={onBoardDeleted!}
