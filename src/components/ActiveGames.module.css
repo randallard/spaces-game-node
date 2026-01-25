@@ -7,13 +7,35 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--bg-tertiary);
+}
+
 .panelTitle {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 2px solid var(--bg-tertiary);
+  margin-bottom: 0;
+}
+
+.minimizeButton {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.minimizeButton:hover {
+  color: var(--accent-primary);
 }
 
 .gamesList {

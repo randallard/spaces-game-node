@@ -15,9 +15,11 @@ export type CompletedGamesProps = {
   onViewResults: (game: ActiveGameInfo) => void;
   onArchiveGame: (gameId: string) => void;
   onDeleteGame: (gameId: string) => void;
+  isMinimized?: boolean;
+  onToggleMinimize?: () => void;
 };
 
-export function CompletedGames({ games, onViewResults, onArchiveGame, onDeleteGame }: CompletedGamesProps): React.ReactElement | null {
+export function CompletedGames({ games, onViewResults, onArchiveGame, onDeleteGame, isMinimized = false, onToggleMinimize }: CompletedGamesProps): React.ReactElement | null {
   const [gameToRemove, setGameToRemove] = useState<ActiveGameInfo | null>(null);
 
   if (games.length === 0) {
@@ -41,7 +43,19 @@ export function CompletedGames({ games, onViewResults, onArchiveGame, onDeleteGa
   return (
     <>
       <div className={styles.activeGamesPanel}>
-        <h2 className={styles.panelTitle}>Completed Games</h2>
+        <div className={styles.panelHeader}>
+          <h2 className={styles.panelTitle}>Completed Games</h2>
+          {onToggleMinimize && (
+            <button
+              onClick={onToggleMinimize}
+              className={styles.minimizeButton}
+              aria-label={isMinimized ? 'Expand' : 'Minimize'}
+            >
+              {isMinimized ? '▼' : '▲'}
+            </button>
+          )}
+        </div>
+        {!isMinimized && (
         <div className={styles.gamesList}>
           {games.map((game) => {
             return (
@@ -87,6 +101,7 @@ export function CompletedGames({ games, onViewResults, onArchiveGame, onDeleteGa
           );
           })}
         </div>
+        )}
       </div>
 
       {gameToRemove && (
