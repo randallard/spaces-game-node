@@ -303,7 +303,7 @@ function App(): React.ReactElement {
     opponentSelectedBoard,
     // Actions
     setPhase,
-    // clearPhaseOverride, // Unused
+    clearPhaseOverride,
     setGameMode,
     setBoardSize,
     selectPlayerBoard: selectPlayerBoardAction,
@@ -434,6 +434,11 @@ function App(): React.ReactElement {
   // Completed round modal state
   const [showCompletedRoundModal, setShowCompletedRoundModal] = useState(false);
   const [completedRoundInfo, setCompletedRoundInfo] = useState<{ opponentName: string; round: number } | null>(null);
+
+  // Panel minimize state
+  const [isOpponentsMinimized, setIsOpponentsMinimized] = useState(false);
+  const [isBoardsMinimized, setIsBoardsMinimized] = useState(false);
+  const [isCompletedGamesMinimized, setIsCompletedGamesMinimized] = useState(false);
 
   // Remove opponent modal state
   const [opponentToRemove, setOpponentToRemove] = useState<Opponent | null>(null);
@@ -2530,8 +2535,18 @@ function App(): React.ReactElement {
             <div className={styles.managementGrid}>
               {/* Left Panel - Opponents */}
               <div className={styles.opponentsPanel}>
-                <h2 className={styles.panelTitle}>Opponents</h2>
-                <div className={styles.opponentsList}>
+                <div className={styles.panelHeader}>
+                  <h2 className={styles.panelTitle}>Opponents</h2>
+                  <button
+                    onClick={() => setIsOpponentsMinimized(!isOpponentsMinimized)}
+                    className={styles.minimizeButton}
+                    aria-label={isOpponentsMinimized ? 'Expand' : 'Minimize'}
+                  >
+                    {isOpponentsMinimized ? '▼' : '▲'}
+                  </button>
+                </div>
+                {!isOpponentsMinimized && (
+                  <div className={styles.opponentsList}>
                   {savedOpponents && savedOpponents.filter(o => !o.archived).length > 0 ? (
                     savedOpponents.filter(o => !o.archived).map((opponent) => (
                       <div key={opponent.id} className={styles.opponentItem}>
@@ -2615,12 +2630,23 @@ function App(): React.ReactElement {
                     </button>
                   )}
                 </div>
+                )}
               </div>
 
               {/* Right Panel - Boards */}
               <div className={styles.boardsPanel}>
-                <h2 className={styles.panelTitle}>Boards</h2>
-                <div className={styles.boardsContent}>
+                <div className={styles.panelHeader}>
+                  <h2 className={styles.panelTitle}>Boards</h2>
+                  <button
+                    onClick={() => setIsBoardsMinimized(!isBoardsMinimized)}
+                    className={styles.minimizeButton}
+                    aria-label={isBoardsMinimized ? 'Expand' : 'Minimize'}
+                  >
+                    {isBoardsMinimized ? '▼' : '▲'}
+                  </button>
+                </div>
+                {!isBoardsMinimized && (
+                  <div className={styles.boardsContent}>
                   <SavedBoards
                     boards={savedBoards || []}
                     onBoardSelected={() => { }} // No selection in management mode
@@ -2635,11 +2661,14 @@ function App(): React.ReactElement {
                     onInitialBoardSizeHandled={() => setBoardSizeToCreate(null)}
                   />
                 </div>
+                )}
               </div>
             </div>
 
             {/* Completed Games Panel - Shows below board management */}
             <CompletedGames
+              isMinimized={isCompletedGamesMinimized}
+              onToggleMinimize={() => setIsCompletedGamesMinimized(!isCompletedGamesMinimized)}
               games={activeGames.filter(g => g.currentRound > g.totalRounds)}
               onViewResults={handleResumeGame}
               onArchiveGame={handleArchiveGame}
@@ -2992,7 +3021,7 @@ function App(): React.ReactElement {
             round={5}
             onCancel={() => {
               // Clear phase override to return to derived phase (game-over)
-              setPhase(null);
+              clearPhaseOverride();
             }}
             onGoHome={handleGoHome}
           />

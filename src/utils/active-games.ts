@@ -100,13 +100,8 @@ export function saveActiveGame(state: GameState): void {
   const playerScore = derivePlayerScore(state.roundHistory);
   const opponentScore = deriveOpponentScore(state.roundHistory);
 
-  // Don't save if game is over
-  if (phase.type === 'game-over') {
-    removeActiveGame(gameId);
-    return;
-  }
-
   // Don't save tutorial, setup, or home phases
+  // Note: We DO save game-over phase so completed games appear in Completed Games panel
   if (phase.type === 'user-setup' ||
       phase.type === 'tutorial-intro' ||
       phase.type === 'tutorial-board-creation' ||
