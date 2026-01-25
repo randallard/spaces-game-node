@@ -191,7 +191,7 @@ describe('active-games utilities', () => {
       expect(games).toHaveLength(0);
     });
 
-    it('should remove game when phase is game-over', () => {
+    it('should keep game when phase is game-over (for Completed Games panel)', () => {
       const state = createMockGameState('game-1');
       saveActiveGame(state);
 
@@ -200,7 +200,9 @@ describe('active-games utilities', () => {
       state.phaseOverride = { type: 'game-over', winner: 'player' };
       saveActiveGame(state);
 
-      expect(getActiveGames()).toHaveLength(0);
+      // Game should still be saved (not removed) so it appears in Completed Games panel
+      expect(getActiveGames()).toHaveLength(1);
+      expect(getActiveGames()[0]?.phase.type).toBe('game-over');
     });
 
     it('should save deck mode games with 10 rounds', () => {
