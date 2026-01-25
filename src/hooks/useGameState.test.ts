@@ -253,7 +253,7 @@ describe('useGameState', () => {
       });
 
       expect(result.current.state.roundHistory).toHaveLength(1);
-      expect(result.current.state.roundHistory[0].playerBoard).toBeNull();
+      expect(result.current.state.roundHistory[0]?.playerBoard).toBeNull();
 
       // Now complete the round (should update, not add new)
       const completeResult: RoundResult = {
@@ -274,7 +274,7 @@ describe('useGameState', () => {
       // Should still have only 1 round entry (updated, not duplicated)
       expect(result.current.state.roundHistory).toHaveLength(1);
       expect(result.current.state.roundHistory[0]).toEqual(completeResult);
-      expect(result.current.state.roundHistory[0].playerBoard).toEqual(mockBoard);
+      expect(result.current.state.roundHistory[0]?.playerBoard).toEqual(mockBoard);
       expect(result.current.playerScore).toBe(1);
     });
   });
