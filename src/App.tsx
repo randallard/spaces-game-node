@@ -2911,6 +2911,12 @@ function App(): React.ReactElement {
         // This prevents showing partial rounds where only opponent has selected
         const roundsWithPlayerParticipation = state.roundHistory.filter(r => r.playerBoard !== null);
 
+        // For rounds 2-5, use the board size from Round 1 to enforce consistency
+        // In round-by-round mode, all rounds must use the same board size as Round 1
+        const effectiveBoardSize = currentRound > 1 && state.roundHistory.length > 0 && state.roundHistory[0]?.playerBoard
+          ? state.roundHistory[0].playerBoard.boardSize
+          : state.boardSize;
+
         return (
           <div style={{ position: 'relative' }}>
             <ActiveGameView
@@ -2920,7 +2926,7 @@ function App(): React.ReactElement {
               opponentScore={opponentScore}
               playerName={state.user.name}
               opponentName={state.opponent?.name || 'Opponent'}
-              boardSize={state.boardSize}
+              boardSize={effectiveBoardSize}
               challengeUrl={challengeUrl}
               {...(fallbackCompressedUrl && { fallbackUrl: fallbackCompressedUrl })}
               gameState={gameState}
@@ -3069,6 +3075,12 @@ function App(): React.ReactElement {
         // This prevents showing partial rounds where only opponent has selected
         const roundsWithPlayerParticipation = state.roundHistory.filter(r => r.playerBoard !== null);
 
+        // For rounds 2-5, use the board size from Round 1 to enforce consistency
+        // In round-by-round mode, all rounds must use the same board size as Round 1
+        const effectiveBoardSize = currentRound > 1 && state.roundHistory.length > 0 && state.roundHistory[0]?.playerBoard
+          ? state.roundHistory[0].playerBoard.boardSize
+          : state.boardSize ?? 0;
+
         return (
           <AllRoundsResults
             results={roundsWithPlayerParticipation}
@@ -3082,7 +3094,7 @@ function App(): React.ReactElement {
             currentRound={currentRound}
             nextRound={currentRound}
             totalRounds={5}
-            boardSize={state.boardSize ?? 0}
+            boardSize={effectiveBoardSize}
             onResendLink={() => setShowShareModal(true)}
             boards={savedBoards || []}
             onBoardSelected={handleBoardSelect}
