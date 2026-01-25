@@ -2,7 +2,7 @@
  * Tests for CompletedGames component
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CompletedGames } from './CompletedGames';
 import type { ActiveGameInfo } from '@/utils/active-games';
@@ -21,6 +21,8 @@ const createMockGame = (gameId: string, opponentName: string): ActiveGameInfo =>
   boardSize: 3,
   gameMode: 'round-by-round',
   phase: { type: 'game-over', winner: 'player' },
+  playerScore: 0,
+  opponentScore: 0,
   lastUpdated: Date.now(),
   fullState: {} as any, // Not needed for these tests
 });
