@@ -36,6 +36,10 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          VITE_ENABLE_DISCORD_NOTIFICATIONS: false
+          VITE_ENABLE_URL_SHORTENING: false
+          VITE_ENABLE_REMOTE_CPU: false
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
