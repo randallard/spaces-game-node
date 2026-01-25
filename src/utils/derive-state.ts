@@ -239,8 +239,12 @@ export function derivePhase(state: GameState): GamePhase {
 
       // Show results only if next round entry doesn't exist yet
       // (player just completed this round, hasn't clicked continue)
-      // This applies to ALL rounds including Round 5 - we use Round 6 as a marker
+      // Special case: if this is Round 5 and all rounds are complete, go to game-over
       if (!nextResult) {
+        if (round === GAME_RULES.TOTAL_ROUNDS) {
+          console.log('[derivePhase] ✅ Round 5 complete, all rounds finished, returning game-over');
+          return { type: 'game-over', winner: deriveWinner(state) };
+        }
         console.log(`[derivePhase] ✅ Returning round-results for round ${round} (next round doesn't exist yet)`);
         return { type: 'round-results', round, result: result! };
       }

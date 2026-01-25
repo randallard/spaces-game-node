@@ -330,6 +330,7 @@ describe('derivePhase', () => {
 
   it('should return game-mode-selection when no game mode', () => {
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -346,6 +347,7 @@ describe('derivePhase', () => {
 
   it('should return opponent-selection when game mode set but no opponent', () => {
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -365,6 +367,7 @@ describe('derivePhase', () => {
 
   it('should return board-selection for first round with no selections', () => {
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -385,6 +388,7 @@ describe('derivePhase', () => {
 
   it('should return share-challenge when player selected and opponent is human', () => {
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -405,6 +409,7 @@ describe('derivePhase', () => {
 
   it('should return waiting-for-opponent when player selected and opponent is CPU', () => {
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -426,6 +431,7 @@ describe('derivePhase', () => {
   it('should return round-results when round is complete', () => {
     const completeRound = createCompleteRoundResult(1, playerBoard1, opponentBoard1);
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -450,6 +456,7 @@ describe('derivePhase', () => {
       createCompleteRoundResult(i + 1, playerBoard1, opponentBoard1)
     );
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -468,6 +475,7 @@ describe('derivePhase', () => {
   it('should return round-results when round 1 complete and round 2 not started', () => {
     const history = [createCompleteRoundResult(1, playerBoard1, opponentBoard1)];
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -492,6 +500,7 @@ describe('derivePhase', () => {
       createPartialRoundResult(2, null), // Round 2 entry exists but no boards yet
     ];
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',
@@ -514,6 +523,7 @@ describe('derivePhase', () => {
 
   it('should return deck-selection when in deck mode without decks', () => {
     const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
       user: {
         id: 'user-123',
         name: 'Test User',

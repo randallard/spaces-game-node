@@ -168,29 +168,9 @@ describe('GameStateSchema', () => {
     expect(() => GameStateSchema.parse(validGameState)).not.toThrow();
   });
 
-  it('should reject invalid round number', () => {
-    expect(() =>
-      GameStateSchema.parse({ ...validGameState, currentRound: -1 })
-    ).toThrow();
-    expect(() =>
-      GameStateSchema.parse({ ...validGameState, currentRound: 11 })
-    ).toThrow();
-  });
-
-  it('should accept round 10', () => {
-    expect(() =>
-      GameStateSchema.parse({ ...validGameState, currentRound: 10 })
-    ).not.toThrow();
-  });
-
-  it('should reject negative scores', () => {
-    expect(() =>
-      GameStateSchema.parse({ ...validGameState, playerScore: -1 })
-    ).toThrow();
-    expect(() =>
-      GameStateSchema.parse({ ...validGameState, opponentScore: -1 })
-    ).toThrow();
-  });
+  // Note: currentRound, playerScore, and opponentScore are now derived values
+  // (computed from roundHistory) and not part of the GameState schema.
+  // Validation tests for these fields have been removed.
 
   it('should accept game state with opponent', () => {
     const stateWithOpponent = {
