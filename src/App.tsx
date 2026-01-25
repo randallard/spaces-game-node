@@ -3081,6 +3081,8 @@ function App(): React.ReactElement {
           ? state.roundHistory[0].playerBoard.boardSize
           : state.boardSize ?? 0;
 
+        const winner = playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie';
+
         return (
           <AllRoundsResults
             results={roundsWithPlayerParticipation}
@@ -3088,8 +3090,9 @@ function App(): React.ReactElement {
             opponentName={state.opponent?.name || 'Opponent'}
             playerScore={playerScore}
             opponentScore={opponentScore}
+            winner={winner}
             isCpuOpponent={state.opponent?.type === 'cpu'}
-            onContinue={handleContinue}
+            onPlayAgain={handleContinue}
             isReview={true}
             currentRound={currentRound}
             nextRound={currentRound}
