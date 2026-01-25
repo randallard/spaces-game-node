@@ -38,6 +38,7 @@ import {
   ActiveGames,
   RemoveOpponentModal,
 } from '@/components';
+import { CompletedGames } from '@/components/CompletedGames';
 import { LoadingChallenge } from '@/components/LoadingChallenge';
 import type { UserProfile as UserProfileType, Board, Opponent, GameState, GamePhase, Deck, GameMode, CreatureId, RoundResult } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
@@ -460,11 +461,9 @@ function App(): React.ReactElement {
     saveActiveGame(state);
     setActiveGames(getActiveGames());
 
-    // Clean up active game if game is over
-    if (phase.type === 'game-over' && state.gameId) {
-      removeActiveGame(state.gameId);
-      setActiveGames(getActiveGames());
-    }
+    // Note: We no longer auto-remove games when they reach game-over
+    // Instead, completed games (Round 6 marker) appear in the Completed Games panel
+    // Users can manually archive/delete them from there
   }, [state]);
 
   // Detect feature unlocks when totalGames changes
@@ -902,40 +901,10 @@ function App(): React.ReactElement {
         // Clear URL
         clearChallengeFromUrl();
 
-        // Check if this is final results
-        if (challengeData.isFinalResults) {
-          // This is final results share - go directly to game-over screen
-          const currentOpponent = state.opponent;
-
-          // Determine winner (note: scores are flipped because they're from opponent's perspective)
-          const opponentFinalScore = challengeData.playerScore || 0;
-          const playerFinalScore = challengeData.opponentScore || 0;
-
-          let winner: 'player' | 'opponent' | 'tie';
-          if (playerFinalScore > opponentFinalScore) {
-            winner = 'player';
-          } else if (opponentFinalScore > playerFinalScore) {
-            winner = 'opponent';
-          } else {
-            winner = 'tie';
-          }
-
-          // Load round history from localStorage (optimistically)
-          const roundHistory = loadRoundResults(challengeData.gameId);
-
-          loadState({
-            ...state,
-            opponent: currentOpponent || null,
-            roundHistory,
-            phaseOverride: { type: 'game-over', winner },
-          });
-
-          setIncomingChallenge(null);
-          return;
-        }
-
-        // Decode the opponent's board
-        const decodedOpponentBoard = decodeMinimalBoard(challengeData.playerBoard);
+        // Decode the opponent's board (skip for final results where playerBoard is "N/A")
+        const decodedOpponentBoard = challengeData.isFinalResults
+          ? null
+          : decodeMinimalBoard(challengeData.playerBoard);
 
         // Find or create opponent
         // First, try to find by playerId (their canonical ID)
@@ -1043,13 +1012,21 @@ function App(): React.ReactElement {
         // If challenge includes ALL previous round results, sync them (new format)
         if (challengeData.previousRoundResults && challengeData.previousRoundResults.length > 0) {
           console.log('[handleIncomingChallenge] Challenge includes', challengeData.previousRoundResults.length, 'previous rounds');
-          const existingRoundNumbers = new Set(roundHistory.map(r => r.round));
-          const missingRounds = challengeData.previousRoundResults.filter(r => !existingRoundNumbers.has(r.round));
+          // Find rounds that are either missing OR incomplete (no boards)
+          const missingOrIncompleteRounds = challengeData.previousRoundResults.filter(r => {
+            const existing = roundHistory.find(rh => rh.round === r.round);
+            // Include if: doesn't exist OR exists but incomplete (missing boards)
+            return !existing || !existing.playerBoard || !existing.opponentBoard;
+          });
 
-          if (missingRounds.length > 0) {
-            console.log('[handleIncomingChallenge] Syncing', missingRounds.length, 'missing rounds from challenge:', missingRounds.map(r => r.round));
+          if (missingOrIncompleteRounds.length > 0) {
+            console.log('[handleIncomingChallenge] Syncing', missingOrIncompleteRounds.length, 'missing/incomplete rounds from challenge:', missingOrIncompleteRounds.map(r => r.round));
             const simulatedResults: RoundResult[] = [];
-            missingRounds.forEach(result => {
+            const roundsToRemove = new Set(missingOrIncompleteRounds.map(r => r.round));
+            // Remove incomplete rounds from history before adding simulated ones
+            roundHistory = roundHistory.filter(r => !roundsToRemove.has(r.round));
+
+            missingOrIncompleteRounds.forEach(result => {
               // Decode boards from encoded strings
               const opponentBoard = typeof result.playerBoard === 'string' ? decodeMinimalBoard(result.playerBoard) : result.playerBoard;
               const playerBoard = typeof result.opponentBoard === 'string' ? decodeMinimalBoard(result.opponentBoard) : result.opponentBoard;
@@ -1083,12 +1060,11 @@ function App(): React.ReactElement {
 
         // Check if this is a final results link (game over)
         if (challengeData.isFinalResults) {
-          console.log('[handleIncomingChallenge] Final results link detected - showing game-over screen');
-          // Calculate winner from scores
-          const playerScoreTotal = roundHistory.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0);
-          const opponentScoreTotal = roundHistory.reduce((sum, r) => sum + (r.opponentPoints ?? 0), 0);
-          const winner = playerScoreTotal > opponentScoreTotal ? 'player' : opponentScoreTotal > playerScoreTotal ? 'opponent' : 'tie';
+          console.log('[handleIncomingChallenge] Final results link detected - loading all rounds');
+          console.log('[handleIncomingChallenge] Round history has', roundHistory.length, 'complete rounds');
 
+          // Load state with all rounds - let phase derive naturally
+          // This will show Round 5 results first, then game-over after Continue
           loadState({
             ...state,
             opponent,
@@ -1097,7 +1073,7 @@ function App(): React.ReactElement {
             boardSize: challengeData.boardSize,
             gameMode: challengeData.gameMode,
             roundHistory,
-            phaseOverride: { type: 'game-over', winner },
+            phaseOverride: null, // Clear override - let phase derive from roundHistory
           });
 
           setIncomingChallenge(null);
@@ -2545,7 +2521,7 @@ function App(): React.ReactElement {
 
             {/* Active Games Panel - Shows above opponents if there are any */}
             <ActiveGames
-              games={activeGames}
+              games={activeGames.filter(g => g.currentRound <= g.totalRounds)}
               onResumeGame={handleResumeGame}
               onArchiveGame={handleArchiveGame}
               onDeleteGame={handleDeleteGame}
@@ -2661,6 +2637,14 @@ function App(): React.ReactElement {
                 </div>
               </div>
             </div>
+
+            {/* Completed Games Panel - Shows below board management */}
+            <CompletedGames
+              games={activeGames.filter(g => g.currentRound > g.totalRounds)}
+              onViewResults={handleResumeGame}
+              onArchiveGame={handleArchiveGame}
+              onDeleteGame={handleDeleteGame}
+            />
           </div>
         );
 
@@ -3097,9 +3081,11 @@ function App(): React.ReactElement {
         const playerWentFirst = deriveWhoMovesFirst(completedRound, savedUser?.id || '', state.gameCreatorId) === 'player';
         // Only show waiting message if player went first AND the next round isn't ready yet
         // (meaning opponent hasn't responded to our challenge yet)
+        // BUT: Never show waiting on Round 5 (final round) - game is over
         const nextRoundIndex = completedRound; // Next round is current + 1, but zero-indexed so it's just current
         const nextRoundExists = state.roundHistory[nextRoundIndex] !== undefined;
-        const waitingForOpponent = state.opponent?.type === 'human' && playerWentFirst && !nextRoundExists;
+        const isFinalRound = completedRound === 5;
+        const waitingForOpponent = state.opponent?.type === 'human' && playerWentFirst && !nextRoundExists && !isFinalRound;
         return (
           <RoundResults
             result={phase.result}
