@@ -2991,10 +2991,10 @@ function App(): React.ReactElement {
             boardSize={state.boardSize}
             round={5}
             onCancel={() => {
-              // After sharing final results, update stats - phase will be derived as 'game-over'
-              const winner = playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie';
-              endGame(winner);
+              // Clear phase override to return to derived phase (game-over)
+              setPhase(null);
             }}
+            onGoHome={handleGoHome}
           />
         );
       }
