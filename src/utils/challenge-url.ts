@@ -106,7 +106,19 @@ export function generateChallengeUrl(
     ...(playerDiscordUsername && { playerDiscordUsername }),
     ...(playerDiscordAvatar && { playerDiscordAvatar }),
     ...(previousRoundResult && { previousRoundResult }),
-    ...(previousRoundResults && previousRoundResults.length > 0 && { previousRoundResults }),
+    ...(previousRoundResults && previousRoundResults.length > 0 && {
+      previousRoundResults: previousRoundResults
+        // Filter out any incomplete rounds (must have both boards and a winner)
+        .filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined && r.winner !== null)
+        .map(r => ({
+          round: r.round,
+          winner: r.winner,
+          playerPoints: r.playerPoints ?? 0,
+          opponentPoints: r.opponentPoints ?? 0,
+          playerBoard: encodeMinimalBoard(r.playerBoard!),
+          opponentBoard: encodeMinimalBoard(r.opponentBoard!),
+        })),
+    }),
     ...(isRoundComplete && { isRoundComplete }),
   };
 
@@ -193,7 +205,19 @@ export async function generateChallengeUrlShortened(
       ...(playerDiscordUsername && { playerDiscordUsername }),
       ...(playerDiscordAvatar && { playerDiscordAvatar }),
       ...(previousRoundResult && { previousRoundResult }),
-      ...(previousRoundResults && previousRoundResults.length > 0 && { previousRoundResults }),
+      ...(previousRoundResults && previousRoundResults.length > 0 && {
+        previousRoundResults: previousRoundResults
+          // Filter out any incomplete rounds (must have both boards and a winner)
+          .filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined && r.winner !== null)
+          .map(r => ({
+            round: r.round,
+            winner: r.winner,
+            playerPoints: r.playerPoints ?? 0,
+            opponentPoints: r.opponentPoints ?? 0,
+            playerBoard: encodeMinimalBoard(r.playerBoard!),
+            opponentBoard: encodeMinimalBoard(r.opponentBoard!),
+          })),
+      }),
       ...(isRoundComplete && { isRoundComplete }),
     };
 
@@ -247,6 +271,7 @@ export async function generateChallengeUrlShortened(
  * @param gameId - Game session ID
  * @param playerId - Sender's player ID
  * @param playerName - Sender's player name
+ * @param roundHistory - Complete round history (optional)
  * @returns Full results URL
  */
 export function generateFinalResultsUrl(
@@ -256,7 +281,8 @@ export function generateFinalResultsUrl(
   gameMode: 'round-by-round' | 'deck',
   gameId: string,
   playerId: string,
-  playerName: string
+  playerName: string,
+  roundHistory?: RoundResult[]
 ): string {
   // Create final results data
   const challengeData: ChallengeData = {
@@ -270,6 +296,16 @@ export function generateFinalResultsUrl(
     playerScore,
     opponentScore,
     isFinalResults: true,
+    ...(roundHistory && roundHistory.length > 0 && {
+      previousRoundResults: roundHistory.map(r => ({
+        round: r.round,
+        winner: r.winner,
+        playerPoints: r.playerPoints ?? 0,
+        opponentPoints: r.opponentPoints ?? 0,
+        playerBoard: r.playerBoard ? encodeMinimalBoard(r.playerBoard) : '',
+        opponentBoard: r.opponentBoard ? encodeMinimalBoard(r.opponentBoard) : '',
+      })),
+    }),
   };
 
   // Serialize to compact JSON
