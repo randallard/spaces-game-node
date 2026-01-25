@@ -165,9 +165,9 @@ export function ShareChallenge({
         winner: r.winner,
         playerPoints: r.playerPoints,
         opponentPoints: r.opponentPoints,
-        // Show encoded board strings (like "2|2p3t0pG0f")
-        playerBoard: r.playerBoard ? encodeMinimalBoard(r.playerBoard) : 'N/A',
-        opponentBoard: r.opponentBoard ? encodeMinimalBoard(r.opponentBoard) : 'N/A',
+        // Boards are already encoded strings (like "2|2p3t0pG0f")
+        playerBoard: r.playerBoard || 'N/A',
+        opponentBoard: r.opponentBoard || 'N/A',
       }));
     };
 

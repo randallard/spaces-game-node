@@ -234,25 +234,25 @@ export function derivePhase(state: GameState): GamePhase {
 
     // Round is complete - check if we've already viewed results
     if (isRoundComplete(result)) {
-      // If this is the last completed round and there's a next round available
       const nextRound = round + 1;
+      const nextResult = state.roundHistory[nextRound - 1];
+
+      // Show results only if next round entry doesn't exist yet
+      // (player just completed this round, hasn't clicked continue)
+      // This applies to ALL rounds including Round 5 - we use Round 6 as a marker
+      if (!nextResult) {
+        console.log(`[derivePhase] ✅ Returning round-results for round ${round} (next round doesn't exist yet)`);
+        return { type: 'round-results', round, result: result! };
+      }
+
+      // If next round exists, player has viewed results and moved on
       if (nextRound <= GAME_RULES.TOTAL_ROUNDS) {
-        const nextResult = state.roundHistory[nextRound - 1];
-
-        // Show results only if next round entry doesn't exist yet
-        // (player just completed this round, hasn't clicked continue)
-        if (!nextResult) {
-          console.log(`[derivePhase] ✅ Returning round-results for round ${round} (next round doesn't exist yet)`);
-          return { type: 'round-results', round, result: result! };
-        }
-
-        // If next round exists, player has viewed results and moved on
         // Continue processing the next round
         console.log(`[derivePhase] Round ${round} complete and player has moved on - continuing`);
         continue;
       } else {
-        // This was the last round - game over
-        console.log('[derivePhase] ✅ Returning game-over');
+        // This was the last round and player has viewed results (Round 6 marker exists)
+        console.log('[derivePhase] ✅ Round 5 complete and viewed, returning game-over');
         return { type: 'game-over', winner: deriveWinner(state) };
       }
     }
