@@ -181,28 +181,7 @@ describe('ActiveGames', () => {
     render(<ActiveGames games={[cpuGame, humanGame]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
 
     expect(screen.getByText('CPU Sam')).toBeInTheDocument();
-//     expect(screen.getByText('Alice')).toBeInTheDocument();
-//   });
-// 
-//   it('should show notification badge when waiting for opponent to choose board', () => {
-//     const game = createMockActiveGame('player-id', 'Ted');
-//     game.fullState.user.id = 'player-id';
-//     game.fullState.gameCreatorId = 'player-id'; // Player created game
-//     game.fullState.opponent = { ...game.opponent, type: 'human' };
-//     game.fullState.currentRound = 2; // Even round
-//     game.fullState.opponentSelectedBoard = null;
-//     game.phase = { type: 'waiting-for-opponent', round: 2 };
-//     game.currentRound = 2;
-// 
-//     render(<ActiveGames games={[game]} onResumeGame={mockOnResumeGame} onArchiveGame={mockOnArchiveGame} onDeleteGame={mockOnDeleteGame} />);
-// 
-//     // Should show the warning emoji notification badge
-//     const badge = screen.getByTitle('Waiting for opponent to choose their board');
-//     expect(badge).toBeInTheDocument();
-//     expect(badge.textContent).toBe('⚠️');
-// 
-    // Should show the updated status text
-    expect(screen.getByText(/Waiting for opponent to choose board/)).toBeInTheDocument();
+    expect(screen.getByText('Alice')).toBeInTheDocument();
   });
 
 //   it('should not show notification badge when it is player turn to choose', () => {
