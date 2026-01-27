@@ -1958,13 +1958,17 @@ function App(): React.ReactElement {
               result.winner === 'opponent' ? 'win' :
               result.winner === 'player' ? 'loss' : 'tie';
 
+            // Calculate updated scores from completeRounds (includes fresh result)
+            const updatedPlayerScore = completeRounds.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0);
+            const updatedOpponentScore = completeRounds.reduce((sum, r) => sum + (r.opponentPoints ?? 0), 0);
+
             const notificationSent = await sendDiscordNotification(state.opponent, 'round-complete', {
               playerName: savedUser.name,
               round: currentRound,
               gameUrl: roundResultUrl,
               result: opponentResult,
-              playerScore: opponentScore, // From opponent's perspective (Ted's score)
-              opponentScore: playerScore, // From opponent's perspective (Ryan's score)
+              playerScore: updatedOpponentScore, // From opponent's perspective (Ted's score)
+              opponentScore: updatedPlayerScore, // From opponent's perspective (Ryan's score)
               ...(state.boardSize !== null && { boardSize: state.boardSize }),
             });
 
