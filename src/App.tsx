@@ -307,7 +307,6 @@ function App(): React.ReactElement {
     clearPhaseOverride,
     setGameMode,
     setBoardSize,
-    selectPlayerBoard: selectPlayerBoardAction,
     selectOpponentBoard: selectOpponentBoardAction,
     selectPlayerDeck,
     selectOpponentDeck,
