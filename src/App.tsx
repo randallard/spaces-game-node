@@ -1964,6 +1964,8 @@ function App(): React.ReactElement {
               round: currentRound,
               gameUrl: roundResultUrl,
               result: opponentResult,
+              playerScore: opponentScore, // From opponent's perspective (Ted's score)
+              opponentScore: playerScore, // From opponent's perspective (Ryan's score)
               ...(state.boardSize !== null && { boardSize: state.boardSize }),
             });
 
