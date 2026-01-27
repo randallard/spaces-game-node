@@ -64,6 +64,8 @@ export function ShareChallenge({
   const [copySuccess, setCopySuccess] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const [showData, setShowData] = useState(false);
+  const [hasShared, setHasShared] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Determine which URL to display in the View Link panel
   // Use fallback if provided, otherwise use challengeUrl
@@ -85,6 +87,7 @@ export function ShareChallenge({
       await navigator.clipboard.writeText(challengeUrl);
       setCopySuccess(true);
       setShareError(null);
+      setHasShared(true); // Mark as shared
 
       // Reset success message after 3 seconds
       setTimeout(() => {
@@ -104,6 +107,7 @@ export function ShareChallenge({
 
         setCopySuccess(true);
         setShareError(null);
+        setHasShared(true); // Mark as shared
         setTimeout(() => {
           setCopySuccess(false);
         }, 3000);
@@ -132,6 +136,7 @@ export function ShareChallenge({
 
       setCopySuccess(true);
       setShareError(null);
+      setHasShared(true); // Mark as shared
       setTimeout(() => {
         setCopySuccess(false);
       }, 3000);
@@ -209,9 +214,9 @@ export function ShareChallenge({
           <div className={styles.notificationStatus}>
             <div className={styles.notificationIcon}>🔔</div>
             <p className={styles.notificationText}>
-              Discord notification sent to <strong>{opponentName}</strong>
-              {lastDiscordNotificationTime && (
+              {lastDiscordNotificationTime ? (
                 <>
+                  Discord notification sent to <strong>{opponentName}</strong>
                   {' '}at{' '}
                   <span className={styles.timestamp}>
                     {new Date(lastDiscordNotificationTime).toUTCString()}
@@ -226,6 +231,10 @@ export function ShareChallenge({
                   >
                     ?
                   </a>
+                </>
+              ) : (
+                <>
+                  Discord notification will be sent automatically to <strong>{opponentName}</strong>
                 </>
               )}
             </p>
@@ -445,6 +454,12 @@ export function ShareChallenge({
         {/* Cancel button */}
         <button
           onClick={() => {
+            // For non-Discord opponents, confirm they've shared the link
+            if (!hasShared && !isGeneratingUrl) {
+              setShowConfirmModal(true);
+              return;
+            }
+
             if (onGoHome) {
               onCancel(); // Close modal first
               onGoHome(); // Then go home
@@ -456,6 +471,40 @@ export function ShareChallenge({
         >
           Back to Home
         </button>
+
+        {/* Confirmation modal */}
+        {showConfirmModal && (
+          <div className={styles.confirmOverlay}>
+            <div className={styles.confirmModal}>
+              <h2 className={styles.confirmTitle}>⚠️ Haven't Shared Yet</h2>
+              <p className={styles.confirmMessage}>
+                You haven't copied the link yet! <strong>{opponentName}</strong> won't be able to take their turn without it.
+              </p>
+              <div className={styles.confirmActions}>
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className={styles.confirmPrimaryButton}
+                >
+                  Stay and Copy Link
+                </button>
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    if (onGoHome) {
+                      onCancel();
+                      onGoHome();
+                    } else {
+                      onCancel();
+                    }
+                  }}
+                  className={styles.confirmSecondaryButton}
+                >
+                  Go Home Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

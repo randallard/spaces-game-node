@@ -185,6 +185,7 @@ function App(): React.ReactElement {
   const [shortenedChallengeUrl, setShortenedChallengeUrl] = useState<string | null>(null);
   const [fallbackCompressedUrl, setFallbackCompressedUrl] = useState<string | null>(null);
   const [isGeneratingUrl, setIsGeneratingUrl] = useState(false);
+  const [lastNotificationTimestamp, setLastNotificationTimestamp] = useState<string | null>(null);
 
   // Initialize default CPU data on first load
   useEffect(() => {
@@ -1826,6 +1827,9 @@ function App(): React.ReactElement {
       return;
     }
 
+    // Reset notification timestamp for this new round
+    setLastNotificationTimestamp(null);
+
     // Create/update round entry in roundHistory
     // We do this manually here instead of using selectPlayerBoardAction
     // to ensure the state update is synchronous for URL generation and saving
@@ -2078,12 +2082,10 @@ function App(): React.ReactElement {
         });
 
         // Store notification timestamp if successful
-        // IMPORTANT: Use updatedState (which has the board in roundHistory), not stale closure state
+        // Use separate React state to avoid overwriting phaseOverride if user navigated away
         if (notificationTimestamp) {
-          loadState({
-            ...updatedState,
-            lastDiscordNotificationTime: notificationTimestamp,
-          });
+          setLastNotificationTimestamp(notificationTimestamp);
+          console.log('[Discord] Notification timestamp stored:', notificationTimestamp);
         }
       }
       return;
@@ -3006,7 +3008,7 @@ function App(): React.ReactElement {
               }}
               playerSelectedBoard={playerSelectedBoard}
               opponentSelectedBoard={opponentSelectedBoard}
-              lastDiscordNotificationTime={state.lastDiscordNotificationTime}
+              lastDiscordNotificationTime={lastNotificationTimestamp}
               isGeneratingUrl={isGeneratingUrl}
               isRespondingToChallenge={isRespondingToChallenge}
             />
@@ -3382,7 +3384,7 @@ function App(): React.ReactElement {
             userHasDiscord={!!savedUser?.discordId}
             onConnectDiscord={() => setIsProfileModalOpen(true)}
             isConnectingDiscord={isConnectingDiscord}
-            lastDiscordNotificationTime={state.lastDiscordNotificationTime || null}
+            lastDiscordNotificationTime={lastNotificationTimestamp}
             isGeneratingUrl={isGeneratingUrl}
           />
         </div>

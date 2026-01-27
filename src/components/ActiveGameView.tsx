@@ -107,15 +107,22 @@ export function ActiveGameView({
   isRespondingToChallenge = false,
 }: ActiveGameViewProps): ReactElement {
   const [showShareModal, setShowShareModal] = useState(false);
+  const [userDismissedModal, setUserDismissedModal] = useState(false);
+
+  // Reset dismissal flag when round changes (so modal can appear for new rounds)
+  useEffect(() => {
+    setUserDismissedModal(false);
+  }, [currentRound]);
 
   // Auto-open share modal when in waiting-for-opponent-to-start state
   // (this happens right after selecting a board)
   // ONLY for human opponents - CPU opponents skip the share modal
+  // Don't reopen if user already dismissed it
   useEffect(() => {
-    if (gameState === 'waiting-for-opponent-to-start' && !isCpuOpponent) {
+    if (gameState === 'waiting-for-opponent-to-start' && !isCpuOpponent && !userDismissedModal) {
       setShowShareModal(true);
     }
-  }, [gameState, isCpuOpponent]);
+  }, [gameState, isCpuOpponent, userDismissedModal]);
 
   // Filter boards by size
   const filteredBoards = playerBoards.filter(board => board.boardSize === boardSize);
@@ -144,6 +151,7 @@ export function ActiveGameView({
 
   const handleCloseShareModal = useCallback(() => {
     setShowShareModal(false);
+    setUserDismissedModal(true); // Mark that user dismissed the modal
     // Notify parent that share modal was closed (to transition phases if needed)
     if (onShareModalClosed) {
       onShareModalClosed();
