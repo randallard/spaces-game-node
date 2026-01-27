@@ -86,6 +86,13 @@ interface NotificationRequest {
 function formatNotificationMessage(data: NotificationData): string {
   switch (data.type) {
     case 'turn-ready':
+      // Special message for Round 1 - first challenge
+      if (data.round === 1) {
+        return `⚔️ **${data.playerName} has challenged you to play Spaces Game!**\n\n` +
+          `Board Size: ${data.boardSize || 3}×${data.boardSize || 3}\n` +
+          `Get ready for Round 1!`;
+      }
+      // Subsequent rounds
       return `🎮 **Your turn in Spaces Game!**\n\n` +
         `${data.playerName} has completed Round ${data.round}.\n` +
         `It's your move!`;
@@ -93,30 +100,51 @@ function formatNotificationMessage(data: NotificationData): string {
     case 'game-complete':
       const resultEmoji = data.result === 'win' ? '🎉' : data.result === 'loss' ? '😔' : '🤝';
       const resultText = data.result === 'win' ? 'You won!' : data.result === 'loss' ? 'You lost' : "It's a tie!";
-      return `${resultEmoji} **Game Complete!**\n\n` +
+      return `${resultEmoji} **Spaces Game Complete!**\n\n` +
+        `Your game with ${data.playerName} has finished.\n` +
         `${resultText}\n` +
         `Final Score: ${data.playerScore} - ${data.opponentScore}`;
 
     case 'challenge-sent':
-      return `⚔️ **New Challenge!**\n\n` +
-        `${data.playerName} has challenged you to a ${data.boardSize}×${data.boardSize} game!`;
+      return `⚔️ **${data.playerName} has challenged you to play Spaces Game!**\n\n` +
+        `Board Size: ${data.boardSize}×${data.boardSize}`;
 
     case 'round-complete':
       const roundResultEmoji = data.result === 'win' ? '🎉' : data.result === 'loss' ? '😢' : '🤝';
       const roundResultText = data.result === 'win' ? 'You won!' : data.result === 'loss' ? 'You lost' : "It's a tie!";
-      return `${roundResultEmoji} **Round ${data.round} Complete!**\n\n` +
+      return `${roundResultEmoji} **Spaces Game - Round ${data.round} Complete!**\n\n` +
         `${data.playerName} has finished their turn.\n` +
         `${roundResultText}\n` +
         `Current Score: ${data.playerScore} - ${data.opponentScore}\n\n` +
-        `Review the round and play your next move:`;
+        `Review the round and play your next move in Spaces Game!`;
 
     default:
       return 'You have a new notification from Spaces Game!';
   }
 }
 
+// Get button label based on notification type and round
+function getButtonLabel(eventType: string, round?: number): string {
+  switch (eventType) {
+    case 'challenge-sent':
+      return "Let's Go!";
+    case 'turn-ready':
+      // Round 1 gets exciting "Let's Go!" button
+      if (round === 1) {
+        return "Let's Go!";
+      }
+      return 'Your Turn';
+    case 'round-complete':
+      return 'View Results';
+    case 'game-complete':
+      return 'See Final Results';
+    default:
+      return 'Play Game';
+  }
+}
+
 // Send Discord DM with embed and button (supports long URLs)
-async function sendDiscordDM(discordId: string, message: string, gameUrl?: string): Promise<boolean> {
+async function sendDiscordDM(discordId: string, message: string, eventType: string, round: number | undefined, gameUrl?: string): Promise<boolean> {
   try {
     log(`[BOT] Attempting to send DM to user ${discordId}`);
 
@@ -139,7 +167,7 @@ async function sendDiscordDM(discordId: string, message: string, gameUrl?: strin
           .setColor(0x5865F2); // Discord blurple
 
         const button = new ButtonBuilder()
-          .setLabel('Play Game')
+          .setLabel(getButtonLabel(eventType, round))
           .setStyle(ButtonStyle.Link)
           .setURL(gameUrl);
 
@@ -212,7 +240,8 @@ app.post('/notify', async (req, res) => {
 
   // Format and send message
   const message = formatNotificationMessage(gameData);
-  const success = await sendDiscordDM(discordId, message, gameData.gameUrl);
+  const round = 'round' in gameData ? gameData.round : undefined;
+  const success = await sendDiscordDM(discordId, message, eventType, round, gameData.gameUrl);
 
   if (success) {
     res.json({ success: true, message: 'Notification sent' });
