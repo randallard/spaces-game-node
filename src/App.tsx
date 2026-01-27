@@ -435,6 +435,9 @@ function App(): React.ReactElement {
   const [showCompletedRoundModal, setShowCompletedRoundModal] = useState(false);
   const [completedRoundInfo, setCompletedRoundInfo] = useState<{ opponentName: string; round: number } | null>(null);
 
+  // Toast notification state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   // Panel minimize state
   const [isOpponentsMinimized, setIsOpponentsMinimized] = useState(false);
   const [isBoardsMinimized, setIsBoardsMinimized] = useState(false);
@@ -1518,12 +1521,16 @@ function App(): React.ReactElement {
     // Generate game ID for human opponents (for tracking across challenges)
     const gameId = opponent.type === 'human' ? `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : null;
 
+    // Get user ID for game creator tracking
+    const userId = state.user.id;
+    console.log('[APP] Starting new game - userId:', userId, 'opponent:', opponent.name, 'gameId:', gameId);
+
     // Select opponent with game mode and reset game state for new game
     loadState({
       ...state,
       opponent,
       gameId,
-      gameCreatorId: opponent.type === 'human' ? state.user.id : null, // Track who created the game
+      gameCreatorId: opponent.type === 'human' ? userId : null, // Track who created the game
       gameMode,
       // boardSize should already be set at this point
       phaseOverride: null, // Phase will be derived from state
@@ -1540,7 +1547,16 @@ function App(): React.ReactElement {
     // Restore the full game state from the saved game
     // Note: Old saved games might have 'phase' and 'currentRound' fields
     // These will be ignored in the new state model
-    const restoredState = game.fullState;
+    let restoredState = game.fullState;
+
+    // Migration: Add gameCreatorId if missing (for old games)
+    if (!restoredState.gameCreatorId && restoredState.gameId && restoredState.opponent?.type === 'human') {
+      console.log('[APP] Migrating old game - setting gameCreatorId to current user');
+      restoredState = {
+        ...restoredState,
+        gameCreatorId: restoredState.user.id,
+      };
+    }
 
     // Determine the correct phase override to resume to
     // Most phases should derive naturally from roundHistory
@@ -1810,7 +1826,45 @@ function App(): React.ReactElement {
       return;
     }
 
-    selectPlayerBoardAction(board);
+    // Create/update round entry in roundHistory
+    // We do this manually here instead of using selectPlayerBoardAction
+    // to ensure the state update is synchronous for URL generation and saving
+    const updatedRoundHistory = [...state.roundHistory];
+    const existingRound = updatedRoundHistory[currentRound - 1];
+
+    if (existingRound) {
+      // Update existing round entry
+      updatedRoundHistory[currentRound - 1] = {
+        ...existingRound,
+        playerBoard: board,
+      };
+    } else {
+      // Create new partial round entry
+      updatedRoundHistory[currentRound - 1] = {
+        round: currentRound,
+        winner: undefined as any,
+        playerBoard: board,
+        opponentBoard: null as any,
+        playerFinalPosition: { row: 0, col: 0 },
+        opponentFinalPosition: { row: 0, col: 0 },
+      };
+    }
+
+    // Update state with the new round history
+    // This ensures the board is available for URL generation and active game saving
+    const updatedState = {
+      ...state,
+      roundHistory: updatedRoundHistory,
+      phaseOverride: null, // Clear override to allow natural phase derivation
+      checksum: '',
+    };
+
+    console.log('[handleBoardSelect] Updating state with board - gameId:', state.gameId, 'gameCreatorId:', state.gameCreatorId, 'roundHistory length:', updatedRoundHistory.length);
+
+    loadState(updatedState);
+
+    // Don't manually call saveActiveGame here - let the useEffect handle it
+    // The useEffect will fire after the state update completes
 
     // Mark this round as pending for human opponents (selected but not yet shared)
     if (state.opponent?.type === 'human' && state.gameId) {
@@ -1848,21 +1902,81 @@ function App(): React.ReactElement {
           setIsSimulatingRound(false);
           console.log('[handleBoardSelect] Round completion flow finished');
 
-          // NOTE: Discord "round-complete" notification should be sent from handleContinue
-          // after player views the results, not immediately after simulation
-          // See ROUND_FLOW_IMPLEMENTATION.md lines 518-617
+          // Send Discord "round-complete" notification immediately after round completes
+          if (state.opponent?.type === 'human' && savedUser?.name && state.gameId) {
+            console.log('[handleBoardSelect] Sending round-complete notification to opponent');
+
+            // Filter to only include complete rounds (including the one we just completed)
+            const completeRounds = state.roundHistory
+              .map(r => r.round === currentRound ? result : r) // Use fresh result for current round
+              .filter(r => {
+                const hasBoards = r.playerBoard && r.opponentBoard;
+                const hasWinner = r.winner !== undefined && r.winner !== null;
+                return hasBoards && hasWinner;
+              });
+
+            // Generate URL with the completed round result
+            const roundResultUrl = await generateChallengeUrlShortened(
+              result.playerBoard, // Our board (responder)
+              currentRound,
+              state.gameMode || 'round-by-round',
+              state.gameId,
+              savedUser.id,
+              savedUser.name,
+              opponentScore, // From opponent's perspective
+              playerScore, // From opponent's perspective
+              savedUser.discordId,
+              savedUser.discordUsername,
+              savedUser.discordAvatar,
+              undefined, // previousRoundResult - removed, using only previousRoundResults
+              true, // isRoundComplete
+              state.gameCreatorId || undefined,
+              completeRounds // Only include complete rounds
+            ) || generateChallengeUrl(
+              result.playerBoard,
+              currentRound,
+              state.gameMode || 'round-by-round',
+              state.gameId,
+              savedUser.id,
+              savedUser.name,
+              opponentScore,
+              playerScore,
+              savedUser.discordId,
+              savedUser.discordUsername,
+              savedUser.discordAvatar,
+              undefined, // previousRoundResult - removed, using only previousRoundResults
+              true,
+              state.gameCreatorId || undefined,
+              completeRounds // Only include complete rounds
+            );
+
+            // Determine result from opponent's perspective
+            const opponentResult: 'win' | 'loss' | 'tie' =
+              result.winner === 'opponent' ? 'win' :
+              result.winner === 'player' ? 'loss' : 'tie';
+
+            const notificationSent = await sendDiscordNotification(state.opponent, 'round-complete', {
+              playerName: savedUser.name,
+              round: currentRound,
+              gameUrl: roundResultUrl,
+              result: opponentResult,
+              ...(state.boardSize !== null && { boardSize: state.boardSize }),
+            });
+
+            // Show toast if Discord notification was sent
+            if (notificationSent && state.opponent.discordId) {
+              console.log(`[handleBoardSelect] Round complete notification sent to ${state.opponent.name}`);
+              setToastMessage(`Round complete notification sent to ${state.opponent.name}`);
+              // Clear toast after 3 seconds
+              setTimeout(() => setToastMessage(null), 3000);
+            }
+          }
         } catch (error) {
           console.error('[handleBoardSelect] Error during simulation:', error);
           setIsSimulatingRound(false);
         }
 
-        // REMOVED: Discord notification moved to handleContinue per ROUND_FLOW_IMPLEMENTATION.md
-        // The notification should be sent AFTER the player views the round results
-        // and clicks Continue, not immediately after the simulation completes
-
         // Phase will automatically derive to 'round-results' to show the results
-        // When user clicks Continue, handleContinue will send the Discord notification
-        // and then check turn order to either show board-selection or round-review
       }, 500);
       return;
     }
@@ -1964,9 +2078,10 @@ function App(): React.ReactElement {
         });
 
         // Store notification timestamp if successful
+        // IMPORTANT: Use updatedState (which has the board in roundHistory), not stale closure state
         if (notificationTimestamp) {
           loadState({
-            ...state,
+            ...updatedState,
             lastDiscordNotificationTime: notificationTimestamp,
           });
         }
@@ -2064,74 +2179,8 @@ function App(): React.ReactElement {
       return;
     }
 
-    // Send Discord "round-complete" notification if we just completed a round as the responder
-    // (opponent went first, we responded, and now we're viewing the results)
-    const completedRoundResult = state.roundHistory.find(r => r.round === justCompletedRound);
-
-    if (completedRoundResult && state.opponent?.type === 'human' && savedUser?.name && state.gameId) {
-      // Check if opponent went first in this round (we responded)
-      const opponentWentFirst = deriveWhoMovesFirst(justCompletedRound, savedUser.id, state.gameCreatorId) === 'opponent';
-
-      if (opponentWentFirst) {
-        // We responded to opponent's challenge - send them notification that round is complete
-        console.log('[handleContinue] Sending round-complete notification to opponent');
-
-        // Filter to only include complete rounds
-        const completeRounds = state.roundHistory.filter(r => {
-          const hasBoards = r.playerBoard && r.opponentBoard;
-          const hasWinner = r.winner !== undefined && r.winner !== null;
-          return hasBoards && hasWinner;
-        });
-
-        // Generate URL with the completed round result
-        const roundResultUrl = await generateChallengeUrlShortened(
-          completedRoundResult.playerBoard!, // Our board
-          justCompletedRound,
-          state.gameMode || 'round-by-round',
-          state.gameId,
-          savedUser.id,
-          savedUser.name,
-          opponentScore, // From opponent's perspective
-          playerScore, // From opponent's perspective
-          savedUser.discordId,
-          savedUser.discordUsername,
-          savedUser.discordAvatar,
-          undefined, // previousRoundResult - removed, using only previousRoundResults
-          true, // isRoundComplete
-          state.gameCreatorId || undefined,
-          completeRounds // Only include complete rounds
-        ) || generateChallengeUrl(
-          completedRoundResult.playerBoard!,
-          justCompletedRound,
-          state.gameMode || 'round-by-round',
-          state.gameId,
-          savedUser.id,
-          savedUser.name,
-          opponentScore,
-          playerScore,
-          savedUser.discordId,
-          savedUser.discordUsername,
-          savedUser.discordAvatar,
-          undefined, // previousRoundResult - removed, using only previousRoundResults
-          true,
-          state.gameCreatorId || undefined,
-          completeRounds // Only include complete rounds
-        );
-
-        // Determine result from opponent's perspective
-        const opponentResult: 'win' | 'loss' | 'tie' =
-          completedRoundResult.winner === 'opponent' ? 'win' :
-          completedRoundResult.winner === 'player' ? 'loss' : 'tie';
-
-        await sendDiscordNotification(state.opponent, 'round-complete', {
-          playerName: savedUser.name,
-          round: justCompletedRound,
-          gameUrl: roundResultUrl,
-          result: opponentResult,
-          ...(state.boardSize !== null && { boardSize: state.boardSize }),
-        });
-      }
-    }
+    // NOTE: Discord "round-complete" notification is now sent immediately after round simulation
+    // in handleBoardSelect, not here in handleContinue
 
     // Create a minimal round entry for the next round so phase derivation knows we've moved on
     // The derivePhase logic checks if nextResult exists to determine if user has viewed results
@@ -2177,6 +2226,8 @@ function App(): React.ReactElement {
 
   // Handle home navigation - resets game if coming from game-over
   const handleGoHome = () => {
+    console.log('[handleGoHome] Called from phase:', phase.type, 'gameId:', state.gameId, 'roundHistory length:', state.roundHistory.length);
+
     // If leaving share-challenge, mark round as completed
     if (phase.type === 'share-challenge' && state.gameId && state.opponent) {
       markRoundCompleted(state.gameId, phase.round, state.opponent.id, state.opponent.name);
@@ -2184,6 +2235,7 @@ function App(): React.ReactElement {
 
     // If in game-over or all-rounds-results, reset the game
     if (phase.type === 'game-over' || phase.type === 'all-rounds-results') {
+      console.log('[handleGoHome] Resetting game because phase is:', phase.type);
       resetGame();
     }
     setPhase({ type: 'board-management' });
@@ -2580,12 +2632,16 @@ function App(): React.ReactElement {
                           onClick={() => {
                             // Generate game ID for human opponents (for tracking across challenges)
                             const gameId = opponent.type === 'human' ? `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : null;
+                            const userId = state.user.id;
+
+                            console.log('[APP] Play button clicked - userId:', userId, 'opponent:', opponent.name, 'gameId:', gameId);
 
                             // Reset game state and save the selected opponent
                             loadState({
                               ...state,
                               opponent,
                               gameId,
+                              gameCreatorId: opponent.type === 'human' ? userId : null, // Track who created the game
                               phaseOverride: { type: 'game-mode-selection' },
                               roundHistory: [],
                               playerSelectedDeck: null,
@@ -3322,6 +3378,12 @@ function App(): React.ReactElement {
             boardSize={state.boardSize}
             round={currentRound}
             onCancel={() => setShowShareModal(false)}
+            opponentHasDiscord={!!state.opponent.discordId}
+            userHasDiscord={!!savedUser?.discordId}
+            onConnectDiscord={() => setIsProfileModalOpen(true)}
+            isConnectingDiscord={isConnectingDiscord}
+            lastDiscordNotificationTime={state.lastDiscordNotificationTime || null}
+            isGeneratingUrl={isGeneratingUrl}
           />
         </div>
       )}
@@ -3341,6 +3403,28 @@ function App(): React.ReactElement {
           deckModeUnlocked={deckModeJustUnlocked}
           onContinue={() => setShowFeatureUnlockModal(false)}
         />
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            padding: '16px 24px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            zIndex: 10000,
+            fontSize: '14px',
+            fontWeight: '500',
+            animation: 'slideIn 0.3s ease-out',
+          }}
+        >
+          {toastMessage}
+        </div>
       )}
     </div>
   );
