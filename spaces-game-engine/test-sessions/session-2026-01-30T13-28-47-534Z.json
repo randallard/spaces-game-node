@@ -1,0 +1,2854 @@
+{
+  "id": "session-2026-01-30T13-28-47-534Z",
+  "name": "Auto Session 1/30/2026 5:28:47 AM",
+  "tags": [
+    "auto"
+  ],
+  "startTime": "2026-01-30T13:28:47.534Z",
+  "tests": [
+    {
+      "testNumber": 1,
+      "timestamp": "2026-01-30T13:28:47.541Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 2,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 2,
+      "timestamp": "2026-01-30T13:28:54.059Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 2,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 0
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 3,
+      "timestamp": "2026-01-30T13:31:36.320Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 2,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 4,
+      "timestamp": "2026-01-30T13:32:17.588Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 2,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 0
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 5,
+      "timestamp": "2026-01-30T13:41:14.516Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "result": {
+        "winner": "opponent",
+        "playerScore": 0,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 6,
+      "timestamp": "2026-01-30T13:41:44.901Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 2,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 0
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 7,
+      "timestamp": "2026-01-30T13:41:49.273Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 2,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 8,
+      "timestamp": "2026-01-30T13:42:08.470Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 2,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 9,
+      "timestamp": "2026-01-30T13:42:10.778Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 2,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 0
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 10,
+      "timestamp": "2026-01-30T13:53:28.527Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "trap",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "collision": true
+      }
+    },
+    {
+      "testNumber": 11,
+      "timestamp": "2026-01-30T14:39:27.707Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ],
+        "index": 0,
+        "createdAt": "2026-01-30T14:39:27.032Z"
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "piece",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 4
+          }
+        ],
+        "index": 1,
+        "createdAt": "2026-01-30T14:39:27.032Z"
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "collision": true
+      }
+    },
+    {
+      "testNumber": 12,
+      "timestamp": "2026-01-30T23:41:12.323Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 5
+          }
+        ]
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 2,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 0,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 13,
+      "timestamp": "2026-01-30T23:44:26.110Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 3
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 0
+        },
+        "collision": true
+      }
+    },
+    {
+      "testNumber": 14,
+      "timestamp": "2026-01-30T23:46:59.739Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 2,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 15,
+      "timestamp": "2026-01-30T23:47:03.474Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 6
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 16,
+      "timestamp": "2026-01-30T23:47:09.036Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 6
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "collision": true
+      }
+    },
+    {
+      "testNumber": 17,
+      "timestamp": "2026-01-30T23:47:33.190Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 2,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 18,
+      "timestamp": "2026-01-30T23:48:00.963Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 5
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "collision": true
+      }
+    },
+    {
+      "testNumber": 19,
+      "timestamp": "2026-01-30T23:50:09.830Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "trap",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 5
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "collision": true
+      }
+    },
+    {
+      "testNumber": 20,
+      "timestamp": "2026-01-30T23:50:21.196Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 5
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 21,
+      "timestamp": "2026-01-30T23:51:47.348Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "result": {
+        "winner": "opponent",
+        "playerScore": 0,
+        "opponentScore": 2,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 0
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 22,
+      "timestamp": "2026-01-30T23:51:55.191Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "empty",
+            "piece"
+          ],
+          [
+            "trap",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 5
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "collision": true
+      }
+    },
+    {
+      "testNumber": 23,
+      "timestamp": "2026-01-30T23:52:04.415Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 5
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 24,
+      "timestamp": "2026-01-30T23:52:17.229Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 6
+          }
+        ]
+      },
+      "result": {
+        "winner": "tie",
+        "playerScore": 0,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 25,
+      "timestamp": "2026-01-30T23:52:25.813Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 2,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 26,
+      "timestamp": "2026-01-31T00:02:55.095Z",
+      "playerBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "piece",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 2,
+        "grid": [
+          [
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 0
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 0
+            },
+            "type": "final",
+            "order": 4
+          }
+        ]
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 2,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 0
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
+    }
+  ]
+}

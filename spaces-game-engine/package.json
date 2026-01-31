@@ -1,0 +1,42 @@
+{
+  "name": "spaces-game-engine",
+  "version": "1.0.0",
+  "description": "Standalone game simulation engine for Spaces Game - optimized for RL/ML training",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --coverage",
+    "cli": "tsx cli/index.ts"
+  },
+  "bin": {
+    "spaces-cli": "dist/cli/index.js"
+  },
+  "keywords": [
+    "game-engine",
+    "reinforcement-learning",
+    "machine-learning",
+    "simulation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "inquirer": "^8.2.5"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8.2.6",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}

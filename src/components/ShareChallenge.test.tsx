@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ShareChallenge } from './ShareChallenge';
 
 // Mock the features config to ensure DISCORD_NOTIFICATIONS is enabled for tests
@@ -87,23 +87,49 @@ describe('ShareChallenge', () => {
   });
 
   describe('Back to Home button', () => {
-    it('should call onCancel when clicked', () => {
+    it('should call onCancel when clicked after sharing', async () => {
       render(<ShareChallenge {...defaultProps} />);
 
+      // First, copy the link to mark as shared
+      const copyButton = screen.getByText(/Copy Link/);
+      fireEvent.click(copyButton);
+
+      // Wait for the clipboard operation to complete
+      await waitFor(() => {
+        expect(screen.queryByText(/Link copied/)).toBeInTheDocument();
+      });
+
+      // Now click Back to Home
       const cancelButton = screen.getByText('Back to Home');
       fireEvent.click(cancelButton);
 
       expect(mockOnCancel).toHaveBeenCalledTimes(1);
     });
 
-    it('should only call onCancel once per click', () => {
+    it('should show confirmation modal when not shared yet', () => {
       render(<ShareChallenge {...defaultProps} />);
 
       const cancelButton = screen.getByText('Back to Home');
       fireEvent.click(cancelButton);
+
+      // Should show confirmation modal instead of calling onCancel
+      expect(mockOnCancel).not.toHaveBeenCalled();
+      expect(screen.getByText(/Haven't Shared Yet/)).toBeInTheDocument();
+      expect(screen.getByText('Go Home Anyway')).toBeInTheDocument();
+    });
+
+    it('should call onCancel when confirming to go home anyway', () => {
+      render(<ShareChallenge {...defaultProps} />);
+
+      // Click Back to Home (shows modal)
+      const cancelButton = screen.getByText('Back to Home');
       fireEvent.click(cancelButton);
 
-      expect(mockOnCancel).toHaveBeenCalledTimes(2);
+      // Click "Go Home Anyway" in the modal
+      const goHomeAnywayButton = screen.getByText('Go Home Anyway');
+      fireEvent.click(goHomeAnywayButton);
+
+      expect(mockOnCancel).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -618,6 +644,7 @@ describe('ShareChallenge', () => {
           {...defaultProps}
           opponentName="Bob"
           opponentHasDiscord={true}
+          lastDiscordNotificationTime={new Date().toISOString()}
         />
       );
 
@@ -869,6 +896,7 @@ describe('ShareChallenge', () => {
           opponentHasDiscord={true}
           userHasDiscord={false}
           onConnectDiscord={mockOnConnectDiscord}
+          lastDiscordNotificationTime={new Date().toISOString()}
         />
       );
 

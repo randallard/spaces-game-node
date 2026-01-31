@@ -1,0 +1,44 @@
+Ryan Start to Ted:
+
+{
+  "gameId": "game-1769400313283-bmr712s1p",
+  "round": 1,
+  "gameMode": "round-by-round",
+  "boardSize": 2,
+  "playerName": "Ryan",
+  "playerId": "b4c5d469-a8f7-4711-b8ca-4b3b4e2c19a7",
+  "gameCreatorId": "b4c5d469-a8f7-4711-b8ca-4b3b4e2c19a7",
+  "playerScore": 0,
+  "opponentScore": 0,
+  "playerDiscordId": "548057906936020994",
+  "playerDiscordUsername": "Randallard",
+  "playerDiscordAvatar": "36f4b055eedba657b9e020f5c1b71917",
+  "playerBoard": "2|2p3t0pG0f"
+}
+
+Ted Round 1 & 2 to Ryan:
+
+{
+  "gameId": "game-1769400313283-bmr712s1p",
+  "round": 2,
+  "gameMode": "round-by-round",
+  "boardSize": 2,
+  "playerName": "Ted",
+  "playerId": "418d2161-5007-43f6-a358-e1a888971b1c",
+  "gameCreatorId": "b4c5d469-a8f7-4711-b8ca-4b3b4e2c19a7",
+  "playerScore": 2,
+  "opponentScore": 0,
+  "previousRoundResults": [
+    {
+      "round": 1,
+      "winner": "player",
+      "playerPoints": 2,
+      "opponentPoints": 0,
+      "playerBoard": "2|3p3t1pG1f",
+      "opponentBoard": "2|2p3t0pG0f"
+    }
+  ],
+  "playerBoard": "2|3p3t1pG1f"
+}
+
+
