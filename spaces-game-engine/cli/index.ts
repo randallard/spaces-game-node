@@ -60,7 +60,7 @@ session
   });
 
 session
-  .command('replay <id>')
+  .command('replay [id]')
   .description('Replay a saved session')
   .option('-v, --verbose', 'Show all boards during replay')
   .action(async (id, options) => {
