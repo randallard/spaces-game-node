@@ -351,7 +351,7 @@ export async function replaySession(sessionId?: string, options: { verbose?: boo
   // Load session
   let session: Session;
   try {
-    session = await loadSession(sessionId);
+    session = await loadSession(sessionId!);
   } catch (error) {
     console.log(chalk.red(`❌ Session not found: ${sessionId}`));
     console.log(chalk.gray('Use "session list" to see available sessions'));

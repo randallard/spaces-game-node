@@ -501,10 +501,28 @@ export async function generateBoardsWithCache(
   // Generate boards
   const boards = size <= 5 ? generateAllBoards(size, limit, progressCallback) : generateBoardsWithSampling(size, limit, progressCallback);
 
-  // Save to cache
-  await saveToCache(size, limit, boards);
+  // GUARDRAIL: Validate all generated boards before caching
+  const validBoards: Board[] = [];
+  const invalidBoards: Board[] = [];
 
-  return boards;
+  for (const board of boards) {
+    const validation = validateBoard(board);
+    if (validation.valid) {
+      validBoards.push(board);
+    } else {
+      invalidBoards.push(board);
+    }
+  }
+
+  // Log if any invalid boards were filtered out
+  if (invalidBoards.length > 0) {
+    console.log(`⚠️  Filtered out ${invalidBoards.length} invalid boards (${validBoards.length} valid boards remaining)`);
+  }
+
+  // Save to cache (only valid boards)
+  await saveToCache(size, limit, validBoards);
+
+  return validBoards;
 }
 
 /**
