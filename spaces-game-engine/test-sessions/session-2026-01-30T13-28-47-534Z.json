@@ -2849,6 +2849,2444 @@
         },
         "collision": false
       }
+    },
+    {
+      "testNumber": 27,
+      "timestamp": "2026-01-31T00:40:50.573Z",
+      "playerBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 9
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 10
+          }
+        ]
+      },
+      "opponentBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "piece",
+            "piece"
+          ],
+          [
+            "empty",
+            "empty",
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 9
+          }
+        ]
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 4,
+        "opponentScore": 1,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 28,
+      "timestamp": "2026-01-31T02:16:48.287Z",
+      "playerBoard": {
+        "boardSize": 3,
+        "grid": [
+          [
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 7
+          }
+        ],
+        "index": 0,
+        "name": "Ryan size 3",
+        "createdAt": "2026-01-31T01:02:21.345Z"
+      },
+      "opponentBoard": {
+        "boardSize": 3,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece"
+          ],
+          [
+            "trap",
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 7
+          }
+        ],
+        "index": 1,
+        "name": "Ted size 3",
+        "createdAt": "2026-01-31T01:03:45.107Z"
+      },
+      "result": {
+        "winner": "opponent",
+        "playerScore": 0,
+        "opponentScore": 1,
+        "playerFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 0
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 29,
+      "timestamp": "2026-01-31T02:17:47.481Z",
+      "playerBoard": {
+        "boardSize": 3,
+        "grid": [
+          [
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 7
+          }
+        ],
+        "index": 0,
+        "name": "Ryan size 3",
+        "createdAt": "2026-01-31T01:02:21.345Z"
+      },
+      "opponentBoard": {
+        "boardSize": 3,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece"
+          ],
+          [
+            "trap",
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 7
+          }
+        ],
+        "index": 1,
+        "name": "Ted size 3",
+        "createdAt": "2026-01-31T01:03:45.107Z"
+      },
+      "result": {
+        "winner": "opponent",
+        "playerScore": 0,
+        "opponentScore": 1,
+        "playerFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 0
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 30,
+      "timestamp": "2026-01-31T02:26:43.211Z",
+      "playerBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "piece",
+            "piece"
+          ],
+          [
+            "empty",
+            "empty",
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 9
+          }
+        ],
+        "index": 3,
+        "name": "Ted size 4",
+        "createdAt": "2026-01-31T01:09:56.724Z"
+      },
+      "opponentBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 9
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 10
+          }
+        ],
+        "index": 2,
+        "name": "Ryan size 4",
+        "createdAt": "2026-01-31T01:06:48.750Z"
+      },
+      "result": {
+        "winner": "opponent",
+        "playerScore": 1,
+        "opponentScore": 4,
+        "playerFinalPosition": {
+          "row": 1,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 4,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 31,
+      "timestamp": "2026-01-31T02:26:47.457Z",
+      "playerBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 9
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 10
+          }
+        ],
+        "index": 2,
+        "name": "Ryan size 4",
+        "createdAt": "2026-01-31T01:06:48.750Z"
+      },
+      "opponentBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "piece",
+            "piece"
+          ],
+          [
+            "empty",
+            "empty",
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 9
+          }
+        ],
+        "index": 3,
+        "name": "Ted size 4",
+        "createdAt": "2026-01-31T01:09:56.724Z"
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 4,
+        "opponentScore": 1,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 32,
+      "timestamp": "2026-01-31T02:33:33.186Z",
+      "playerBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 9
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 10
+          }
+        ],
+        "index": 2,
+        "name": "Ryan size 4",
+        "createdAt": "2026-01-31T01:06:48.750Z"
+      },
+      "opponentBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "piece",
+            "piece"
+          ],
+          [
+            "empty",
+            "empty",
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 9
+          }
+        ],
+        "index": 3,
+        "name": "Ted size 4",
+        "createdAt": "2026-01-31T01:09:56.724Z"
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 4,
+        "opponentScore": 1,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 33,
+      "timestamp": "2026-01-31T02:35:47.885Z",
+      "playerBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 9
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 10
+          }
+        ],
+        "index": 2,
+        "name": "Ryan size 4",
+        "createdAt": "2026-01-31T01:06:48.750Z"
+      },
+      "opponentBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "piece",
+            "piece"
+          ],
+          [
+            "empty",
+            "empty",
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 9
+          }
+        ],
+        "index": 3,
+        "name": "Ted size 4",
+        "createdAt": "2026-01-31T01:09:56.724Z"
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 4,
+        "opponentScore": 1,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 34,
+      "timestamp": "2026-01-31T02:36:04.971Z",
+      "playerBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 9
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 10
+          }
+        ],
+        "index": 2,
+        "name": "Ryan size 4",
+        "createdAt": "2026-01-31T01:06:48.750Z"
+      },
+      "opponentBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "piece",
+            "piece"
+          ],
+          [
+            "empty",
+            "empty",
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 9
+          }
+        ],
+        "index": 3,
+        "name": "Ted size 4",
+        "createdAt": "2026-01-31T01:09:56.724Z"
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 4,
+        "opponentScore": 1,
+        "playerFinalPosition": {
+          "row": -1,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 2,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 35,
+      "timestamp": "2026-01-31T02:36:27.567Z",
+      "playerBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "piece",
+            "piece"
+          ],
+          [
+            "empty",
+            "empty",
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 9
+          }
+        ],
+        "index": 3,
+        "name": "Ted size 4",
+        "createdAt": "2026-01-31T01:09:56.724Z"
+      },
+      "opponentBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 9
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 10
+          }
+        ],
+        "index": 2,
+        "name": "Ryan size 4",
+        "createdAt": "2026-01-31T01:06:48.750Z"
+      },
+      "result": {
+        "winner": "opponent",
+        "playerScore": 1,
+        "opponentScore": 4,
+        "playerFinalPosition": {
+          "row": 1,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 4,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 36,
+      "timestamp": "2026-01-31T02:36:40.770Z",
+      "playerBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "piece",
+            "piece"
+          ],
+          [
+            "empty",
+            "empty",
+            "empty",
+            "piece"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 3
+            },
+            "type": "piece",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 9
+          }
+        ],
+        "index": 3,
+        "name": "Ted size 4",
+        "createdAt": "2026-01-31T01:09:56.724Z"
+      },
+      "opponentBoard": {
+        "boardSize": 4,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "piece",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 3,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 3
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 3,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 7
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 8
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 9
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 10
+          }
+        ],
+        "index": 2,
+        "name": "Ryan size 4",
+        "createdAt": "2026-01-31T01:06:48.750Z"
+      },
+      "result": {
+        "winner": "opponent",
+        "playerScore": 1,
+        "opponentScore": 4,
+        "playerFinalPosition": {
+          "row": 1,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 4,
+          "col": 1
+        },
+        "collision": false
+      }
+    },
+    {
+      "testNumber": 37,
+      "timestamp": "2026-01-31T02:37:31.524Z",
+      "playerBoard": {
+        "boardSize": 3,
+        "grid": [
+          [
+            "empty",
+            "empty",
+            "piece"
+          ],
+          [
+            "empty",
+            "trap",
+            "piece"
+          ],
+          [
+            "trap",
+            "piece",
+            "empty"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 2
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 2
+            },
+            "type": "final",
+            "order": 7
+          }
+        ],
+        "index": 1,
+        "name": "Ted size 3",
+        "createdAt": "2026-01-31T01:03:45.107Z"
+      },
+      "opponentBoard": {
+        "boardSize": 3,
+        "grid": [
+          [
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "empty",
+            "piece",
+            "empty"
+          ],
+          [
+            "trap",
+            "trap",
+            "trap"
+          ]
+        ],
+        "sequence": [
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 1
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 0
+            },
+            "type": "trap",
+            "order": 2
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 2
+            },
+            "type": "trap",
+            "order": 3
+          },
+          {
+            "position": {
+              "row": 2,
+              "col": 1
+            },
+            "type": "trap",
+            "order": 4
+          },
+          {
+            "position": {
+              "row": 1,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 5
+          },
+          {
+            "position": {
+              "row": 0,
+              "col": 1
+            },
+            "type": "piece",
+            "order": 6
+          },
+          {
+            "position": {
+              "row": -1,
+              "col": 1
+            },
+            "type": "final",
+            "order": 7
+          }
+        ],
+        "index": 0,
+        "name": "Ryan size 3",
+        "createdAt": "2026-01-31T01:02:21.345Z"
+      },
+      "result": {
+        "winner": "player",
+        "playerScore": 1,
+        "opponentScore": 0,
+        "playerFinalPosition": {
+          "row": 0,
+          "col": 2
+        },
+        "opponentFinalPosition": {
+          "row": 1,
+          "col": 1
+        },
+        "collision": false
+      }
     }
   ]
 }

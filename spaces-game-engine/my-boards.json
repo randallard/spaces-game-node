@@ -1,0 +1,389 @@
+{
+  "name": "trap-issue-testing",
+  "description": "issue where trap didn't work when piece moved and trap laid at step 7 on board size 4",
+  "createdAt": "2026-01-31T01:00:32.707Z",
+  "boards": [
+    {
+      "boardSize": 3,
+      "grid": [
+        [
+          "empty",
+          "piece",
+          "empty"
+        ],
+        [
+          "empty",
+          "piece",
+          "empty"
+        ],
+        [
+          "trap",
+          "trap",
+          "trap"
+        ]
+      ],
+      "sequence": [
+        {
+          "position": {
+            "row": 2,
+            "col": 1
+          },
+          "type": "piece",
+          "order": 1
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 0
+          },
+          "type": "trap",
+          "order": 2
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 2
+          },
+          "type": "trap",
+          "order": 3
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 1
+          },
+          "type": "trap",
+          "order": 4
+        },
+        {
+          "position": {
+            "row": 1,
+            "col": 1
+          },
+          "type": "piece",
+          "order": 5
+        },
+        {
+          "position": {
+            "row": 0,
+            "col": 1
+          },
+          "type": "piece",
+          "order": 6
+        },
+        {
+          "position": {
+            "row": -1,
+            "col": 1
+          },
+          "type": "final",
+          "order": 7
+        }
+      ],
+      "index": 0,
+      "name": "Ryan size 3",
+      "createdAt": "2026-01-31T01:02:21.345Z"
+    },
+    {
+      "boardSize": 3,
+      "grid": [
+        [
+          "empty",
+          "empty",
+          "piece"
+        ],
+        [
+          "empty",
+          "trap",
+          "piece"
+        ],
+        [
+          "trap",
+          "piece",
+          "empty"
+        ]
+      ],
+      "sequence": [
+        {
+          "position": {
+            "row": 2,
+            "col": 1
+          },
+          "type": "piece",
+          "order": 1
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 0
+          },
+          "type": "trap",
+          "order": 2
+        },
+        {
+          "position": {
+            "row": 1,
+            "col": 1
+          },
+          "type": "piece",
+          "order": 3
+        },
+        {
+          "position": {
+            "row": 1,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 4
+        },
+        {
+          "position": {
+            "row": 1,
+            "col": 1
+          },
+          "type": "trap",
+          "order": 5
+        },
+        {
+          "position": {
+            "row": 0,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 6
+        },
+        {
+          "position": {
+            "row": -1,
+            "col": 2
+          },
+          "type": "final",
+          "order": 7
+        }
+      ],
+      "index": 1,
+      "name": "Ted size 3",
+      "createdAt": "2026-01-31T01:03:45.107Z"
+    },
+    {
+      "boardSize": 4,
+      "grid": [
+        [
+          "empty",
+          "empty",
+          "piece",
+          "empty"
+        ],
+        [
+          "empty",
+          "empty",
+          "piece",
+          "empty"
+        ],
+        [
+          "empty",
+          "trap",
+          "piece",
+          "empty"
+        ],
+        [
+          "trap",
+          "piece",
+          "trap",
+          "trap"
+        ]
+      ],
+      "sequence": [
+        {
+          "position": {
+            "row": 3,
+            "col": 1
+          },
+          "type": "piece",
+          "order": 1
+        },
+        {
+          "position": {
+            "row": 3,
+            "col": 0
+          },
+          "type": "trap",
+          "order": 2
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 1
+          },
+          "type": "trap",
+          "order": 3
+        },
+        {
+          "position": {
+            "row": 3,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 4
+        },
+        {
+          "position": {
+            "row": 3,
+            "col": 3
+          },
+          "type": "trap",
+          "order": 5
+        },
+        {
+          "position": {
+            "row": 3,
+            "col": 2
+          },
+          "type": "trap",
+          "order": 6
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 7
+        },
+        {
+          "position": {
+            "row": 1,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 8
+        },
+        {
+          "position": {
+            "row": 0,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 9
+        },
+        {
+          "position": {
+            "row": -1,
+            "col": 2
+          },
+          "type": "final",
+          "order": 10
+        }
+      ],
+      "index": 2,
+      "name": "Ryan size 4",
+      "createdAt": "2026-01-31T01:06:48.750Z"
+    },
+    {
+      "boardSize": 4,
+      "grid": [
+        [
+          "empty",
+          "empty",
+          "piece",
+          "empty"
+        ],
+        [
+          "empty",
+          "trap",
+          "piece",
+          "empty"
+        ],
+        [
+          "empty",
+          "piece",
+          "piece",
+          "piece"
+        ],
+        [
+          "empty",
+          "empty",
+          "empty",
+          "piece"
+        ]
+      ],
+      "sequence": [
+        {
+          "position": {
+            "row": 3,
+            "col": 3
+          },
+          "type": "piece",
+          "order": 1
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 3
+          },
+          "type": "piece",
+          "order": 2
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 3
+        },
+        {
+          "position": {
+            "row": 2,
+            "col": 1
+          },
+          "type": "piece",
+          "order": 4
+        },
+        {
+          "position": {
+            "row": 1,
+            "col": 1
+          },
+          "type": "piece",
+          "order": 5
+        },
+        {
+          "position": {
+            "row": 1,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 6
+        },
+        {
+          "position": {
+            "row": 1,
+            "col": 1
+          },
+          "type": "trap",
+          "order": 7
+        },
+        {
+          "position": {
+            "row": 0,
+            "col": 2
+          },
+          "type": "piece",
+          "order": 8
+        },
+        {
+          "position": {
+            "row": -1,
+            "col": 2
+          },
+          "type": "final",
+          "order": 9
+        }
+      ],
+      "index": 3,
+      "name": "Ted size 4",
+      "createdAt": "2026-01-31T01:09:56.724Z"
+    }
+  ]
+}

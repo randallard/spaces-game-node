@@ -23,6 +23,7 @@ type BuilderState = {
   currentPosition: Position | null;
   stepCount: number;
   trapPositions: Set<string>;
+  visitedCells: Set<string>; // Cells where pieces have been placed
   supermoveActive: boolean; // True if last move was trap at current position
 };
 
@@ -84,7 +85,7 @@ function parseCoordinates(input: string): { row: number; col: number; type: 'pie
  * Parse user command
  */
 function parseCommand(input: string): {
-  type: 'move' | 'trap' | 'finish' | 'undo' | 'restart' | 'help' | 'coord' | 'invalid';
+  type: 'move' | 'trap' | 'finish' | 'undo' | 'restart' | 'help' | 'coord' | 'supermove' | 'supermove-and-move' | 'invalid';
   direction?: { row: number; col: number };
   position?: { row: number; col: number };
   moveType?: 'piece' | 'trap';
@@ -130,9 +131,22 @@ function parseCommand(input: string): {
     }
 
     if (cmd === 'trap' || cmd === 't') {
+      // Check for supermove: "trap here" or "t here"
+      if (dir === 'here' || dir === 'h') {
+        return { type: 'supermove' };
+      }
+
       const direction = parseDirection(dir);
       if (direction) {
         return { type: 'trap', direction };
+      }
+    }
+
+    if (cmd === 'supermove' || cmd === 's') {
+      // Supermove and move: "s up", "s left", "s right"
+      const direction = parseDirection(dir);
+      if (direction) {
+        return { type: 'supermove-and-move', direction };
       }
     }
   }
@@ -149,8 +163,11 @@ function showHelp(): void {
   console.log(chalk.bold('Movement Commands:'));
   console.log('  move <direction>    Move piece (abbreviation: m)');
   console.log('  trap <direction>    Place trap (abbreviation: t)');
+  console.log('  trap here           Place trap at current position - supermove! (t h)');
+  console.log('  supermove <dir>     Trap here AND move in direction (abbreviation: s)');
   console.log('  Directions: up/down/left/right (u/d/l/r)');
   console.log('  Examples: "move left", "m l", "trap right", "t r"');
+  console.log('            "trap here", "t h", "supermove up", "s u", "s l", "s r"');
 
   console.log(chalk.bold('\nCoordinate Entry:'));
   console.log('  <row>,<col>,<type>  Direct coordinate entry');
@@ -227,14 +244,15 @@ export async function buildBoard(options: BuilderOptions = {}): Promise<Board | 
     startingCol: startingCol!,
     sequence: [
       {
-        position: { row: 1, col: startingCol! },
+        position: { row: boardSize! - 1, col: startingCol! },
         type: 'piece',
         order: 1,
       },
     ],
-    currentPosition: { row: 1, col: startingCol! },
+    currentPosition: { row: boardSize! - 1, col: startingCol! },
     stepCount: 1,
     trapPositions: new Set<string>(),
+    visitedCells: new Set([`${boardSize! - 1},${startingCol!}`]),
     supermoveActive: false,
   });
 
@@ -403,6 +421,65 @@ export async function buildBoard(options: BuilderOptions = {}): Promise<Board | 
       continue;
     }
 
+    // Handle supermove-and-move command (s u, s l, s r)
+    if (command.type === 'supermove-and-move' && command.direction) {
+      if (!state.currentPosition) {
+        console.log(chalk.red('❌ No current position\n'));
+        continue;
+      }
+
+      // Calculate the final piece position after the move
+      const finalPosition = {
+        row: state.currentPosition.row + command.direction.row,
+        col: state.currentPosition.col + command.direction.col,
+      };
+
+      // Validate the piece move is valid
+      if (finalPosition.row < 0 || finalPosition.row >= state.boardSize ||
+          finalPosition.col < 0 || finalPosition.col >= state.boardSize) {
+        console.log(chalk.red(`❌ Cannot supermove ${command.direction.row === -1 ? 'up' : command.direction.col === -1 ? 'left' : 'right'} - would move off the board\n`));
+        continue;
+      }
+
+      const cellKey = `${finalPosition.row},${finalPosition.col}`;
+      if (state.visitedCells.has(cellKey)) {
+        console.log(chalk.red('❌ Cannot move to a previously visited cell\n'));
+        continue;
+      }
+
+      if (state.trapPositions.has(cellKey)) {
+        console.log(chalk.red('❌ Cannot move into a trap\n'));
+        continue;
+      }
+
+      // First, place trap at current position
+      state.stepCount++;
+      state.sequence.push({
+        position: state.currentPosition,
+        type: 'trap',
+        order: state.stepCount,
+      });
+      state.trapPositions.add(`${state.currentPosition.row},${state.currentPosition.col}`);
+
+      // Then, move piece
+      state.stepCount++;
+      state.sequence.push({
+        position: finalPosition,
+        type: 'piece',
+        order: state.stepCount,
+      });
+      state.currentPosition = finalPosition;
+      state.visitedCells.add(cellKey);
+      state.supermoveActive = false;
+
+      // Render updated board
+      const board = createBoardFromSequence(state.sequence, state.boardSize);
+      console.log(renderGrid(board, state.currentPosition));
+      console.log();
+
+      continue;
+    }
+
     // Handle move and trap commands
     let nextPosition: Position | null = null;
     let moveType: 'piece' | 'trap' | null = null;
@@ -418,6 +495,15 @@ export async function buildBoard(options: BuilderOptions = {}): Promise<Board | 
         col: state.currentPosition.col + command.direction.col,
       };
       moveType = 'piece';
+    } else if (command.type === 'supermove') {
+      if (!state.currentPosition) {
+        console.log(chalk.red('❌ No current position\n'));
+        continue;
+      }
+
+      // Supermove: trap at current position
+      nextPosition = state.currentPosition;
+      moveType = 'trap';
     } else if (command.type === 'trap' && command.direction) {
       if (!state.currentPosition) {
         console.log(chalk.red('❌ No current position\n'));
@@ -481,6 +567,7 @@ export async function buildBoard(options: BuilderOptions = {}): Promise<Board | 
       // Update state
       if (moveType === 'piece') {
         state.currentPosition = nextPosition;
+        state.visitedCells.add(`${nextPosition.row},${nextPosition.col}`);
         state.supermoveActive = false;
       } else if (moveType === 'trap') {
         state.trapPositions.add(`${nextPosition.row},${nextPosition.col}`);

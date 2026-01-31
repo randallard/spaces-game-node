@@ -75,7 +75,6 @@ const boards = program
 boards
   .command('create <file>')
   .description('Create a new board collection')
-  .argument('<file>', 'Collection file path')
   .action(async (file) => {
     await createBoardCollection(file);
   });
@@ -83,7 +82,6 @@ boards
 boards
   .command('add <file>')
   .description('Add board to existing collection')
-  .argument('<file>', 'Collection file path')
   .action(async (file) => {
     await addBoardToExistingCollection(file);
   });
@@ -91,7 +89,6 @@ boards
 boards
   .command('list <file>')
   .description('List boards in a collection')
-  .argument('<file>', 'Collection file path')
   .option('--compact', 'Show compact list (index, name, tags only)')
   .option('--verbose', 'Show verbose output with full sequence details')
   .action(async (file, options) => {
