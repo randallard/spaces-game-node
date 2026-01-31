@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { buildBoard } from '../interactive/builder.js';
 import { renderBoardsSideBySide } from '../interactive/visualizer.js';
-import { validateBoardOrThrow } from '../utils/validation.js';
+import { validateBoardOrThrow, validateBoard } from '../utils/validation.js';
 import { loadCollection, getBoardByIndex, loadSession, saveTestToSession } from '../utils/file-manager.js';
 import { simulateRound } from '../../src/simulation.js';
 import { getOrCreateActiveSession, saveLastTest, getLastTest, getSessionOpponentBoards } from './session.js';
@@ -104,127 +104,36 @@ async function generateRandomBoard(boardSize: number, startCol?: number): Promis
   // Check if we have cached boards for this size
   const hasCachedBoards = await cacheExists(boardSize, 500);
 
-  if (hasCachedBoards) {
-    // Load from cache and pick a random board
-    const boards = await generateBoardsWithCache(boardSize, 500);
-    if (boards.length > 0) {
-      const randomIndex = Math.floor(Math.random() * boards.length);
-      return boards[randomIndex];
-    }
+  if (!hasCachedBoards) {
+    // Generate and cache 500 boards for this size
+    console.log(chalk.gray(`Generating 500 opponent boards for size ${boardSize}...`));
   }
 
-  // Fallback to old random generation
-  return generateRandomBoardLegacy(boardSize, startCol);
-}
+  // Load from cache (or generate if needed) and pick a random board
+  const boards = await generateBoardsWithCache(boardSize, 500);
+  if (boards.length > 0) {
+    const randomIndex = Math.floor(Math.random() * boards.length);
+    const board = boards[randomIndex];
 
-/**
- * Legacy random board generation (fallback when cache doesn't exist)
- */
-function generateRandomBoardLegacy(boardSize: number, startCol?: number): Board {
-  const size = boardSize;
-  const col = startCol ?? Math.floor(Math.random() * size);
-
-  // Start at row 1 (second from bottom)
-  let currentRow = 1;
-  let currentCol = col;
-  let stepCount = 1;
-
-  const sequence: Board['sequence'] = [
-    { position: { row: currentRow, col: currentCol }, type: 'piece', order: stepCount },
-  ];
-
-  // Random path to top
-  while (currentRow > 0) {
-    // Randomly choose: move up, or move horizontally then place trap
-    const action = Math.random();
-
-    if (action < 0.7) {
-      // Move up (70% chance)
-      currentRow--;
-      stepCount++;
-      sequence.push({
-        position: { row: currentRow, col: currentCol },
-        type: 'piece',
-        order: stepCount,
-      });
-    } else {
-      // Place trap adjacent (30% chance)
-      const directions = [
-        { row: 0, col: 1 },  // right
-        { row: 0, col: -1 }, // left
-        { row: 1, col: 0 },  // down
-        { row: -1, col: 0 }, // up
-      ];
-
-      // Filter valid adjacent positions
-      const validDirections = directions.filter(d => {
-        const newRow = currentRow + d.row;
-        const newCol = currentCol + d.col;
-        return newRow >= 0 && newRow < size && newCol >= 0 && newCol < size;
-      });
-
-      if (validDirections.length > 0) {
-        const dir = validDirections[Math.floor(Math.random() * validDirections.length)];
-        stepCount++;
-        sequence.push({
-          position: { row: currentRow + dir.row, col: currentCol + dir.col },
-          type: 'trap',
-          order: stepCount,
-        });
-      }
-
-      // Then move up
-      if (currentRow > 0) {
-        currentRow--;
-        stepCount++;
-        sequence.push({
-          position: { row: currentRow, col: currentCol },
-          type: 'piece',
-          order: stepCount,
-        });
+    // GUARDRAIL: Validate board before returning
+    const validation = validateBoard(board);
+    if (!validation.valid) {
+      console.log(chalk.yellow('⚠️  Generated board failed validation, regenerating...'));
+      console.log(chalk.gray(`   Errors: ${validation.errors.join(', ')}`));
+      // Try again with a different random board
+      if (boards.length > 1) {
+        const nextIndex = (randomIndex + 1) % boards.length;
+        return boards[nextIndex];
       }
     }
+
+    return board;
   }
 
-  // Add final move (goal)
-  stepCount++;
-  sequence.push({
-    position: { row: -1, col: currentCol },
-    type: 'final',
-    order: stepCount,
-  });
-
-  // Generate grid from sequence
-  const grid: Board['grid'] = Array(size)
-    .fill(null)
-    .map(() => Array(size).fill('empty'));
-
-  const trapPositions = new Set<string>();
-  for (const move of sequence) {
-    if (move.type === 'trap' && move.position.row >= 0) {
-      trapPositions.add(`${move.position.row},${move.position.col}`);
-    }
-  }
-
-  for (const move of sequence) {
-    if (move.position.row < 0 || move.position.row >= size) continue;
-
-    const { row, col } = move.position;
-    const key = `${row},${col}`;
-
-    if (trapPositions.has(key)) {
-      grid[row][col] = 'trap';
-    } else if (move.type === 'piece' && grid[row][col] === 'empty') {
-      grid[row][col] = 'piece';
-    }
-  }
-
-  return {
-    boardSize: size,
-    grid,
-    sequence,
-  };
+  // This should never happen now that we auto-generate caches
+  throw new Error(`Failed to generate random board for size ${boardSize}. Cache generation failed.`);
 }
+
 
 /**
  * Generate step-by-step technical explanation of the simulation
@@ -529,7 +438,7 @@ export async function runTest(options: {
   notes?: string;
 }): Promise<void> {
   let playerBoard: Board;
-  let opponentBoard: Board;
+  let opponentBoard: Board | undefined;
 
   // Handle --last flag
   if (options.last) {
@@ -638,6 +547,12 @@ export async function runTest(options: {
       console.log(chalk.gray('Generating random opponent board...'));
       opponentBoard = await generateRandomBoard(playerBoard.boardSize);
     }
+  }
+
+  // Ensure opponent board is defined
+  if (!opponentBoard) {
+    console.log(chalk.red('❌ No opponent board specified'));
+    process.exit(1);
   }
 
   // Validate boards
