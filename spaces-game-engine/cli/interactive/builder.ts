@@ -203,7 +203,7 @@ export async function buildBoard(options: BuilderOptions = {}): Promise<Board | 
     const sizeAnswer = await inquirer.prompt([{
       type: 'input',
       name: 'size',
-      message: 'Board size (2-5 for standard, or enter custom size up to 100):',
+      message: 'Board size (2-100):',
       default: '3',
       validate: (input) => {
         const num = parseInt(input);
@@ -436,7 +436,7 @@ export async function buildBoard(options: BuilderOptions = {}): Promise<Board | 
 
       // Validate the piece move is valid
       if (finalPosition.row < 0 || finalPosition.row >= state.boardSize ||
-          finalPosition.col < 0 || finalPosition.col >= state.boardSize) {
+        finalPosition.col < 0 || finalPosition.col >= state.boardSize) {
         console.log(chalk.red(`❌ Cannot supermove ${command.direction.row === -1 ? 'up' : command.direction.col === -1 ? 'left' : 'right'} - would move off the board\n`));
         continue;
       }
