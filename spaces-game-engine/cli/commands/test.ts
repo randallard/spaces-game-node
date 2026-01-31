@@ -164,9 +164,18 @@ function generateTechnicalExplanation(
   let playerRoundEnded = false;
   let opponentRoundEnded = false;
 
-  // Starting positions
-  explanations.push(`Player starts with piece at (${size - 1}, 0)`);
-  explanations.push(`Opponent starts with piece at (0, ${size - 1})`);
+  // Get actual starting positions from board sequences
+  const playerStartPos = playerBoard.sequence.find(m => m.order === 1)?.position;
+  const opponentStartPos = opponentBoard.sequence.find(m => m.order === 1)?.position;
+
+  // Starting positions (opponent position shown in rotated coordinates)
+  if (playerStartPos) {
+    explanations.push(`Player starts with piece at (${playerStartPos.row}, ${playerStartPos.col})`);
+  }
+  if (opponentStartPos) {
+    const rotatedOpponentStart = rotatePosition(opponentStartPos.row, opponentStartPos.col);
+    explanations.push(`Opponent starts with piece at (${rotatedOpponentStart.row}, ${rotatedOpponentStart.col})`);
+  }
   explanations.push('');
 
   // Get max steps to simulate
