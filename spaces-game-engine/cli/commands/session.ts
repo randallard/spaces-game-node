@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import path from 'path';
 import fs from 'fs/promises';
+import inquirer from 'inquirer';
 import {
   createSession,
   loadSession,
@@ -313,7 +314,40 @@ export async function listAllSessions(): Promise<void> {
 /**
  * Replay a session
  */
-export async function replaySession(sessionId: string, options: { verbose?: boolean } = {}): Promise<void> {
+export async function replaySession(sessionId?: string, options: { verbose?: boolean } = {}): Promise<void> {
+  // If no session ID provided, prompt user to select one
+  if (!sessionId) {
+    const sessions = await listSessions();
+
+    if (sessions.length === 0) {
+      console.log(chalk.yellow('⚠️  No sessions found'));
+      console.log(chalk.gray('Use "session start" to create a new session'));
+      return;
+    }
+
+    // Build choices for inquirer
+    const choices = sessions.map(session => {
+      const name = session.name || chalk.gray('(unnamed)');
+      const tags = session.tags && session.tags.length > 0 ? chalk.gray(`[${session.tags.join(', ')}]`) : '';
+      const testCount = chalk.gray(`${session.testCount} tests`);
+      const date = chalk.gray(new Date(session.startTime).toLocaleDateString());
+
+      return {
+        name: `${session.id} - ${name} ${tags} - ${testCount} - ${date}`,
+        value: session.id,
+      };
+    });
+
+    const answer = await inquirer.prompt([{
+      type: 'list',
+      name: 'sessionId',
+      message: 'Select session to replay:',
+      choices,
+    }]);
+
+    sessionId = answer.sessionId;
+  }
+
   // Load session
   let session: Session;
   try {
