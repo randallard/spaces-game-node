@@ -48,3 +48,9 @@ api/*.local.ts
 api/*.prod
 scripts/use-local-kv.sh
 scripts/use-vercel-kv.sh
+
+# Python pickle files
+*.pkl
+
+# Custom/test board files
+my-boards*.json
