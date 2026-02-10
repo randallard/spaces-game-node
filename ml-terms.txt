@@ -1,0 +1,142 @@
+ok I've been learning ppo rl in spaces-game-python, take a look at our docs there and lets figure out next steps to hook
+  our remote cpu players up to agents running the models we've generated there - teach me the right language to use when I
+  don't use the right words according to the industry - I know we have zip files - they're on the training machine now but
+  can I move them here to the dev machine to make them available for local play through our ui?  I'd like to verify them here
+   before deploying them to live - but even in live I wonder about hosting them there on the training machine while we're
+  just a few people trying this out online...
+
+● Let me start by exploring the Python submodule docs and the current project structure to understand what we're working with.
+
+● 2 Explore agents finished (ctrl+o to expand)
+   ├─ Explore Python submodule docs · 26 tool uses · 77.1k tokens
+   │  ⎿  Done
+   └─ Explore node project structure · 43 tool uses · 88.7k tokens
+      ⎿  Done
+
+● Great questions, and a lot to unpack here. Let me walk through this with the proper terminology and then we can talk
+  architecture.
+
+  Terminology Guide
+  What you said: "zip files"
+  Industry term: Model weights or checkpoints
+  What it means: The .zip files are Stable Baselines3's serialization format containing the neural network weights, optimizer
+    state, and hyperparameters. You'd say "I trained a model" and "I have the model weights."
+  ────────────────────────────────────────
+  What you said: "running the models"
+  Industry term: Inference
+  What it means: Training = learning from experience. Inference = using the trained model to make decisions. "Running inference"
+  or
+     "serving the model."
+  ────────────────────────────────────────
+  What you said: "hook up to agents"
+  Industry term: Model serving / inference endpoint
+  What it means: Exposing a trained model behind an API so other systems can request predictions from it.
+  ────────────────────────────────────────
+  What you said: "move them here"
+  Industry term: Deploy the model artifacts
+  What it means: Moving the trained weights from the training environment to a serving environment.
+  ────────────────────────────────────────
+  What you said: "hosting them on the training machine"
+  Industry term: Serving infrastructure
+  What it means: Where inference runs. Could be the same machine you trained on, or different. For a small group, same machine is
+    totally fine - this is common in early-stage ML projects.
+  The Key Architectural Difference
+
+  Your current remote CPU system (remote-cpu-boards.ts) fetches pre-built static boards from GitHub Pages. An RL agent is
+  fundamentally different - it constructs boards dynamically based on game state (what round it is, the score, what the opponent
+  has played in previous rounds). This is what your Stage 3 SimultaneousPlayEnv trains for.
+
+  So you can't just export boards to JSON. You need a live inference server - a small Python service that:
+
+  1. Loads the model weights (your .zip files)
+  2. Accepts game state as input (round number, scores, opponent history)
+  3. Runs the model to construct a board step-by-step
+  4. Returns the constructed board as JSON
+
+  Proposed Architecture
+
+  ┌─────────────────────┐         ┌──────────────────────────┐
+  │  spaces-game-node   │  HTTP   │  Inference Server (Python)│
+  │  (React frontend)   │────────>│  FastAPI / Flask          │
+  │                     │  JSON   │  loads .zip model weights │
+  │  new opponent type: │<────────│  runs inference           │
+  │  "ai-agent"         │         │  returns constructed board│
+  └─────────────────────┘         └──────────────────────────┘
+
+  For local dev: Run the inference server on your dev machine alongside the game UI. Copy the .zip files over from the training
+  machine.
+
+  For live (small group): Run the inference server on the training machine, expose an endpoint, and have the deployed game call
+  it. This is perfectly reasonable for a handful of users - you're not doing high-throughput inference, just one board
+  construction per round per game.
+
+  Yes, You Can Absolutely Move the Models
+
+  The .zip files are fully self-contained. Just scp or rsync them from the training machine:
+
+  # From training machine → dev machine
+  scp -r training-machine:~/spaces-game-python/models/ ./spaces-game-python/models/
+
+  The inference server just needs:
+  - Python with stable-baselines3 (and sb3-contrib for MaskablePPO)
+  - The .zip model file
+  - The environment code from spaces-game-python (for observation/action space definitions)
+
+  The models are small (a few MB typically for PPO) so they're trivial to move around.
+
+  Next Steps to Discuss
+
+  1. Build an inference server in spaces-game-python - a FastAPI app that loads a model and exposes a /construct-board endpoint
+  2. Add a new opponent type in the node app (alongside cpu, remote-cpu) - something like ai-agent that calls the inference server
+   instead of fetching static boards
+  3. Define the API contract - what game state the frontend sends, what board JSON comes back
+  4. Configuration - the inference server URL would be an env var (VITE_AI_AGENT_URL) following your existing pattern in
+  src/config/api.ts
+
+  The inference server already has most of the logic written in examples/play_against_agent.py - specifically
+  _agent_build_board_blind() which does exactly what we need: feeds game state to the model and gets a constructed board back.
+  We'd be wrapping that in an HTTP endpoint.
+
+  Want to start planning this out? I'd suggest we begin with the inference server since that's the Python side you've been working
+   in, and it would let you verify the models are working on your dev machine before we touch the node app.
+
+
+
+   ❯ I wonder if we already did something like an inference server in spaces-game-python/examples/play_against_agent.py
+
+● Read 1 file (ctrl+o to expand)
+
+● You're absolutely right - you've already built the hard part. _agent_build_board_blind() (lines 325-411) is the inference logic.
+   It's doing exactly what an inference server would do:
+
+  1. Loads a model (_load_agent())
+  2. Accepts game state (round number, scores, opponent history)
+  3. Runs inference step-by-step through the model's policy to construct a board
+  4. Validates the output and retries if invalid
+  5. Returns a Board
+
+  What you have is the inference pipeline. What you don't have yet is the serving layer - the thin HTTP wrapper that lets the node
+   frontend call it over the network instead of through a CLI.
+
+  The gap is surprisingly small:
+  ┌────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────────┐
+  │                           Already built                            │                 Still needed                  │
+  ├────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
+  │ _load_agent() - model loading                                      │ Load model once at startup, not per-request   │
+  ├────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
+  │ _agent_build_board_blind() - full inference pipeline               │ Wrap in a POST /construct-board endpoint      │
+  ├────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
+  │ _encode_board_for_agent() - board encoding                         │ JSON request → numpy conversion               │
+  ├────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
+  │ _is_stage3_model() / _get_model_board_size() - model introspection │ GET /info endpoint (what size, what stage)    │
+  ├────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────┤
+  │ Board validation, retry logic                                      │ Serialize Board back to JSON for the response │
+  └────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────────┘
+  So the inference server is basically a FastAPI app that imports these existing functions, loads the model at startup, and
+  exposes one or two HTTP endpoints. The actual ML inference code doesn't need to change at all.
+
+  On the node side, you'd add a new opponent type (alongside cpu and remote-cpu) that calls this endpoint instead of fetching
+  static boards - and it would need to send along the game state (round, scores, what boards the human has played so far) since
+  the Stage 3 model uses that context to make decisions.
+
+  Want to plan this out and build it?
