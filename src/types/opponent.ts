@@ -2,7 +2,15 @@
  * Opponent-related types
  */
 
-export type OpponentType = 'human' | 'cpu' | 'remote-cpu';
+export type OpponentType = 'human' | 'cpu' | 'remote-cpu' | 'ai-agent';
+
+export type AiAgentSkillLevel =
+  | 'beginner'
+  | 'beginner_plus'
+  | 'intermediate'
+  | 'intermediate_plus'
+  | 'advanced'
+  | 'advanced_plus';
 
 export type Opponent = {
   id: string; // Generated from type + name
@@ -17,6 +25,9 @@ export type Opponent = {
   discordId?: string | undefined; // Discord user ID (for sending notifications)
   discordUsername?: string | undefined; // Discord username for display
   discordAvatar?: string | undefined; // Discord avatar hash (for displaying profile picture)
+
+  // AI Agent
+  skillLevel?: AiAgentSkillLevel | undefined; // Skill level for AI agent opponents
 };
 
 export type OpponentStats = {

@@ -4,7 +4,16 @@
 
 import { z } from 'zod';
 
-export const OpponentTypeSchema = z.enum(['human', 'cpu', 'remote-cpu']);
+export const OpponentTypeSchema = z.enum(['human', 'cpu', 'remote-cpu', 'ai-agent']);
+
+export const AiAgentSkillLevelSchema = z.enum([
+  'beginner',
+  'beginner_plus',
+  'intermediate',
+  'intermediate_plus',
+  'advanced',
+  'advanced_plus',
+]);
 
 export const OpponentSchema = z.object({
   id: z.string().min(1),
@@ -19,6 +28,9 @@ export const OpponentSchema = z.object({
   discordId: z.string().optional(),
   discordUsername: z.string().max(32).optional(),
   discordAvatar: z.string().optional(),
+
+  // AI Agent
+  skillLevel: AiAgentSkillLevelSchema.optional(),
 });
 
 export const OpponentStatsSchema = z.object({

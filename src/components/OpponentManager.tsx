@@ -4,10 +4,12 @@
  */
 
 import { useState, useCallback, useEffect, type ReactElement } from 'react';
-import { createCpuOpponent, createHumanOpponent, createRemoteCpuOpponent } from '@/utils/opponent-helpers';
-import type { Opponent } from '@/types';
+import { createCpuOpponent, createHumanOpponent, createRemoteCpuOpponent, createAiAgentOpponent } from '@/utils/opponent-helpers';
+import type { Opponent, AiAgentSkillLevel } from '@/types';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
 import { getApiEndpoint } from '@/config/api';
+import { FEATURES } from '@/config/features';
+import { AI_AGENT_SKILL_LEVELS } from '@/constants/game-rules';
 import styles from './OpponentManager.module.css';
 
 export interface OpponentManagerProps {
@@ -44,10 +46,11 @@ export function OpponentManager({
   discordUsername,
   discordId,
 }: OpponentManagerProps): ReactElement {
-  const [selectedType, setSelectedType] = useState<'cpu' | 'human' | 'remote-cpu' | null>(null);
+  const [selectedType, setSelectedType] = useState<'cpu' | 'human' | 'remote-cpu' | 'ai-agent' | null>(null);
   const [opponentName, setOpponentName] = useState('');
   const [showDiscordModal, setShowDiscordModal] = useState(false);
   const [isConnectingDiscord, setIsConnectingDiscord] = useState(false);
+  const [selectedSkillLevel, setSelectedSkillLevel] = useState<AiAgentSkillLevel | null>(null);
 
   const isDiscordConnected = !!(discordId && discordUsername);
 
@@ -89,6 +92,39 @@ export function OpponentManager({
     setSelectedType('remote-cpu');
     setOpponentName('CPU Remote'); // Default name
   }, []);
+
+  /**
+   * Handle AI Agent opponent selection
+   */
+  const handleSelectAiAgent = useCallback((): void => {
+    setSelectedType('ai-agent');
+    setSelectedSkillLevel(null);
+  }, []);
+
+  /**
+   * Handle skill level selection
+   */
+  const handleSkillLevelSelect = useCallback((level: AiAgentSkillLevel): void => {
+    setSelectedSkillLevel(level);
+    setOpponentName(AI_AGENT_SKILL_LEVELS[level].defaultName);
+  }, []);
+
+  /**
+   * Handle AI Agent name submission
+   */
+  const handleAiAgentNameSubmit = useCallback(
+    (e: React.FormEvent): void => {
+      e.preventDefault();
+
+      if (!opponentName.trim() || !selectedSkillLevel) {
+        return;
+      }
+
+      const aiOpponent = createAiAgentOpponent(opponentName.trim(), selectedSkillLevel);
+      onOpponentSelected(aiOpponent);
+    },
+    [opponentName, selectedSkillLevel, onOpponentSelected]
+  );
 
   /**
    * Handle Discord connection
@@ -270,6 +306,95 @@ export function OpponentManager({
     );
   }
 
+  // If AI agent selected but no skill level yet, show skill picker
+  if (selectedType === 'ai-agent' && !selectedSkillLevel) {
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.title}>Choose AI Skill Level</h2>
+        <p className={styles.subtitle}>
+          Select the difficulty of your AI opponent
+        </p>
+
+        <div className={styles.skillGrid}>
+          {(Object.entries(AI_AGENT_SKILL_LEVELS) as Array<[AiAgentSkillLevel, typeof AI_AGENT_SKILL_LEVELS[AiAgentSkillLevel]]>).map(([level, config]) => (
+            <button
+              key={level}
+              onClick={() => handleSkillLevelSelect(level)}
+              className={styles.skillCard}
+              style={{ borderColor: config.color }}
+              aria-label={`Select ${config.label} difficulty`}
+            >
+              <div className={styles.skillIcon}>{config.emoji}</div>
+              <div className={styles.skillLabel} style={{ color: config.color }}>
+                {config.label}
+              </div>
+              <div className={styles.skillName}>{config.defaultName}</div>
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.buttonGroup} style={{ maxWidth: '400px', margin: '2rem auto 0' }}>
+          <button
+            type="button"
+            onClick={() => setSelectedType(null)}
+            className={styles.backButton}
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If AI agent selected with skill level, show name form
+  if (selectedType === 'ai-agent' && selectedSkillLevel) {
+    const skillConfig = AI_AGENT_SKILL_LEVELS[selectedSkillLevel];
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.title}>AI Agent Opponent</h2>
+        <div className={styles.skillPreview}>
+          <span>{skillConfig.emoji}</span>
+          <span style={{ color: skillConfig.color, fontWeight: 600 }}>{skillConfig.label}</span>
+        </div>
+
+        <form onSubmit={handleAiAgentNameSubmit} className={styles.form}>
+          <div className={styles.fieldGroup}>
+            <label htmlFor="ai-agent-name" className={styles.label}>
+              Opponent Name
+            </label>
+            <input
+              id="ai-agent-name"
+              type="text"
+              value={opponentName}
+              onChange={(e) => setOpponentName(e.target.value)}
+              className={styles.input}
+              placeholder={skillConfig.defaultName}
+              maxLength={20}
+              autoFocus
+            />
+          </div>
+
+          <div className={styles.buttonGroup}>
+            <button
+              type="button"
+              onClick={() => setSelectedSkillLevel(null)}
+              className={styles.backButton}
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={!opponentName.trim()}
+            >
+              Continue
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   // Default: show opponent type selection
   return (
     <div className={styles.container}>
@@ -306,6 +431,22 @@ export function OpponentManager({
           </p>
           <span className={styles.optionBadge}>Online</span>
         </button>
+
+        {/* AI Agent Opponent Card (feature-flagged) */}
+        {FEATURES.AI_AGENT && (
+          <button
+            onClick={handleSelectAiAgent}
+            className={styles.optionCard}
+            aria-label="Play against AI agent"
+          >
+            <div className={styles.optionIcon}>🧠</div>
+            <h3 className={styles.optionTitle}>AI Agent</h3>
+            <p className={styles.optionDescription}>
+              Play against a trained RL agent that builds boards dynamically each round.
+            </p>
+            <span className={styles.optionBadge}>AI Powered</span>
+          </button>
+        )}
 
         {/* Human Opponent Card */}
         <button

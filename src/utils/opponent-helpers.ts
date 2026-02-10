@@ -4,13 +4,13 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { CPU_OPPONENT_ID, CPU_OPPONENT_NAME, CPU_TOUGHER_OPPONENT_ID } from '@/constants/game-rules';
-import type { Opponent, Board } from '@/types';
+import type { Opponent, Board, AiAgentSkillLevel } from '@/types';
 
 /**
  * Generate opponent ID from type and name
  */
 export function generateOpponentId(
-  type: 'human' | 'cpu' | 'remote-cpu',
+  type: 'human' | 'cpu' | 'remote-cpu' | 'ai-agent',
   _name: string
 ): string {
   if (type === 'cpu') {
@@ -19,6 +19,9 @@ export function generateOpponentId(
   if (type === 'remote-cpu') {
     // For remote CPU, use UUID for uniqueness
     return `remote-cpu-${uuidv4()}`;
+  }
+  if (type === 'ai-agent') {
+    return `ai-agent-${uuidv4()}`;
   }
   // For human opponents, use UUID for uniqueness
   return `human-${uuidv4()}`;
@@ -64,12 +67,27 @@ export function createRemoteCpuOpponent(name: string): Opponent {
 }
 
 /**
- * Check if opponent is CPU (local or remote)
+ * Create AI agent opponent
+ */
+export function createAiAgentOpponent(name: string, skillLevel: AiAgentSkillLevel): Opponent {
+  return {
+    id: generateOpponentId('ai-agent', name),
+    name,
+    type: 'ai-agent',
+    wins: 0,
+    losses: 0,
+    skillLevel,
+  };
+}
+
+/**
+ * Check if opponent is CPU (local, remote, or AI agent)
  */
 export function isCpuOpponent(opponent: Opponent): boolean {
   return (
     opponent.type === 'cpu' ||
     opponent.type === 'remote-cpu' ||
+    opponent.type === 'ai-agent' ||
     opponent.id === CPU_OPPONENT_ID ||
     opponent.id === CPU_TOUGHER_OPPONENT_ID
   );

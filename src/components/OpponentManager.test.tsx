@@ -30,6 +30,24 @@ vi.mock('@/utils/opponent-helpers', () => ({
     wins: 0,
     losses: 0,
   })),
+  createAiAgentOpponent: vi.fn((name: string, skillLevel: string) => ({
+    type: 'ai-agent',
+    id: `ai-agent-${Math.random().toString(36).substring(2, 9)}`,
+    name,
+    wins: 0,
+    losses: 0,
+    skillLevel,
+  })),
+}));
+
+// Mock features config
+vi.mock('@/config/features', () => ({
+  FEATURES: {
+    DISCORD_NOTIFICATIONS: true,
+    URL_SHORTENING: true,
+    REMOTE_CPU: true,
+    AI_AGENT: true,
+  },
 }));
 
 describe('OpponentManager', () => {
@@ -1110,6 +1128,156 @@ describe('OpponentManager', () => {
       expect(screen.getByText("Enter Opponent's Name")).toBeInTheDocument();
 
       unmount2();
+    });
+  });
+
+  describe('AI Agent opponent selection', () => {
+    it('should render AI Agent option card when feature flag is enabled', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      expect(screen.getByText('AI Agent')).toBeInTheDocument();
+      expect(screen.getByText(/Play against a trained RL agent/)).toBeInTheDocument();
+      expect(screen.getByText('AI Powered')).toBeInTheDocument();
+    });
+
+    it('should show skill level picker when AI Agent card is clicked', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+
+      expect(screen.getByText('Choose AI Skill Level')).toBeInTheDocument();
+      // All 6 skill levels should be shown
+      expect(screen.getByText('Beginner')).toBeInTheDocument();
+      expect(screen.getByText('Beginner+')).toBeInTheDocument();
+      expect(screen.getByText('Intermediate')).toBeInTheDocument();
+      expect(screen.getByText('Intermediate+')).toBeInTheDocument();
+      expect(screen.getByText('Advanced')).toBeInTheDocument();
+      expect(screen.getByText('Advanced+')).toBeInTheDocument();
+    });
+
+    it('should show all 6 skill level character names', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+
+      expect(screen.getByText('Pip')).toBeInTheDocument();
+      expect(screen.getByText('Pebble')).toBeInTheDocument();
+      expect(screen.getByText('Scout')).toBeInTheDocument();
+      expect(screen.getByText('Sage')).toBeInTheDocument();
+      expect(screen.getByText('Fang')).toBeInTheDocument();
+      expect(screen.getByText('Ember')).toBeInTheDocument();
+    });
+
+    it('should show name form pre-populated with character name when skill level is selected', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByLabelText('Select Beginner difficulty'));
+
+      expect(screen.getByText('AI Agent Opponent')).toBeInTheDocument();
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      expect(input.value).toBe('Pip');
+    });
+
+    it('should allow editing the pre-populated name', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByLabelText('Select Advanced+ difficulty'));
+
+      const input = screen.getByLabelText('Opponent Name');
+      fireEvent.change(input, { target: { value: 'My Dragon' } });
+      expect(input).toHaveValue('My Dragon');
+    });
+
+    it('should create AI agent opponent with correct skill level on submit', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByLabelText('Select Intermediate difficulty'));
+      fireEvent.click(screen.getByText('Continue'));
+
+      expect(mockOnOpponentSelected).toHaveBeenCalledTimes(1);
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.type).toBe('ai-agent');
+      expect(opponent.name).toBe('Scout');
+      expect(opponent.skillLevel).toBe('intermediate');
+    });
+
+    it('should navigate back from name form to skill picker', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByLabelText('Select Beginner difficulty'));
+      expect(screen.getByText('AI Agent Opponent')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Back'));
+      expect(screen.getByText('Choose AI Skill Level')).toBeInTheDocument();
+    });
+
+    it('should navigate back from skill picker to opponent selection', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      expect(screen.getByText('Choose AI Skill Level')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Back'));
+      expect(screen.getByText('Choose Your Opponent')).toBeInTheDocument();
+    });
+
+    it('should show skill level preview in name form', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByLabelText('Select Advanced difficulty'));
+
+      // Should show the skill preview with emoji and label
+      expect(screen.getByText('Advanced')).toBeInTheDocument();
     });
   });
 });

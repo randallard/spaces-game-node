@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getOpponentIcon, createEmptyUser, createInitialState } from './app-helpers';
+import { getOpponentIcon, getOpponentIconColor, createEmptyUser, createInitialState } from './app-helpers';
 import { derivePhase, deriveCurrentRound, derivePlayerScore, deriveOpponentScore, derivePlayerSelectedBoard, deriveOpponentSelectedBoard } from './derive-state';
 import type { Opponent, UserProfile } from '@/types';
 import {
@@ -121,6 +121,87 @@ describe('getOpponentIcon', () => {
 
     // Should return person emoji because type is 'human'
     expect(getOpponentIcon(opponent)).toBe('👤');
+  });
+
+  it('should return skill-level-specific emoji for AI agent opponents', () => {
+    const levels = [
+      { skillLevel: 'beginner' as const, emoji: '🐣' },
+      { skillLevel: 'beginner_plus' as const, emoji: '🐤' },
+      { skillLevel: 'intermediate' as const, emoji: '🦊' },
+      { skillLevel: 'intermediate_plus' as const, emoji: '🦉' },
+      { skillLevel: 'advanced' as const, emoji: '🐺' },
+      { skillLevel: 'advanced_plus' as const, emoji: '🐉' },
+    ];
+
+    for (const { skillLevel, emoji } of levels) {
+      const opponent: Opponent = {
+        id: `ai-agent-${skillLevel}`,
+        name: 'Test',
+        type: 'ai-agent',
+        wins: 0,
+        losses: 0,
+        skillLevel,
+      };
+      expect(getOpponentIcon(opponent)).toBe(emoji);
+    }
+  });
+
+  it('should return default robot emoji for AI agent without skill level', () => {
+    const opponent: Opponent = {
+      id: 'ai-agent-123',
+      name: 'Test',
+      type: 'ai-agent',
+      wins: 0,
+      losses: 0,
+    };
+    expect(getOpponentIcon(opponent)).toBe('🤖');
+  });
+});
+
+describe('getOpponentIconColor', () => {
+  it('should return color for AI agent skill levels', () => {
+    const levels = [
+      { skillLevel: 'beginner' as const, color: '#8FBC8F' },
+      { skillLevel: 'beginner_plus' as const, color: '#5F9EA0' },
+      { skillLevel: 'intermediate' as const, color: '#9B8EC4' },
+      { skillLevel: 'intermediate_plus' as const, color: '#6B8DAD' },
+      { skillLevel: 'advanced' as const, color: '#C4A35A' },
+      { skillLevel: 'advanced_plus' as const, color: '#8B7355' },
+    ];
+
+    for (const { skillLevel, color } of levels) {
+      const opponent: Opponent = {
+        id: `ai-agent-${skillLevel}`,
+        name: 'Test',
+        type: 'ai-agent',
+        wins: 0,
+        losses: 0,
+        skillLevel,
+      };
+      expect(getOpponentIconColor(opponent)).toBe(color);
+    }
+  });
+
+  it('should return null for non-AI-agent opponents', () => {
+    const opponent: Opponent = {
+      id: 'cpu-opponent',
+      name: 'CPU',
+      type: 'cpu',
+      wins: 0,
+      losses: 0,
+    };
+    expect(getOpponentIconColor(opponent)).toBeNull();
+  });
+
+  it('should return null for AI agent without skill level', () => {
+    const opponent: Opponent = {
+      id: 'ai-agent-123',
+      name: 'Test',
+      type: 'ai-agent',
+      wins: 0,
+      losses: 0,
+    };
+    expect(getOpponentIconColor(opponent)).toBeNull();
   });
 });
 

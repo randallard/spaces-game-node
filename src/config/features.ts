@@ -33,6 +33,12 @@ export const FEATURES = {
    * When disabled, will only use local CPU opponents
    */
   REMOTE_CPU: getEnvBoolean('VITE_ENABLE_REMOTE_CPU', true),
+
+  /**
+   * Enable AI Agent opponent (uses inference server for board construction)
+   * Requires the Python inference server to be running
+   */
+  AI_AGENT: getEnvBoolean('VITE_ENABLE_AI_AGENT', false),
 } as const;
 
 /**

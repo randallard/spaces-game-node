@@ -7,12 +7,14 @@ import {
   OpponentSchema,
   OpponentTypeSchema,
   OpponentStatsSchema,
+  AiAgentSkillLevelSchema,
 } from './opponent.schema';
 
 describe('OpponentTypeSchema', () => {
   it('should accept valid opponent types', () => {
     expect(OpponentTypeSchema.parse('human')).toBe('human');
     expect(OpponentTypeSchema.parse('cpu')).toBe('cpu');
+    expect(OpponentTypeSchema.parse('ai-agent')).toBe('ai-agent');
   });
 
   it('should reject invalid opponent types', () => {
@@ -79,6 +81,56 @@ describe('OpponentSchema', () => {
       losses: 0,
     };
     expect(() => OpponentSchema.parse(cpuOpponent)).not.toThrow();
+  });
+
+  it('should accept AI agent opponent with skill level', () => {
+    const aiOpponent = {
+      id: 'ai-agent-123',
+      name: 'Pip',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      skillLevel: 'beginner' as const,
+    };
+    expect(() => OpponentSchema.parse(aiOpponent)).not.toThrow();
+  });
+
+  it('should accept AI agent opponent without skill level', () => {
+    const aiOpponent = {
+      id: 'ai-agent-123',
+      name: 'Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+    };
+    expect(() => OpponentSchema.parse(aiOpponent)).not.toThrow();
+  });
+
+  it('should reject AI agent opponent with invalid skill level', () => {
+    const aiOpponent = {
+      id: 'ai-agent-123',
+      name: 'Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      skillLevel: 'super_hard',
+    };
+    expect(() => OpponentSchema.parse(aiOpponent)).toThrow();
+  });
+});
+
+describe('AiAgentSkillLevelSchema', () => {
+  it('should accept all valid skill levels', () => {
+    const levels = ['beginner', 'beginner_plus', 'intermediate', 'intermediate_plus', 'advanced', 'advanced_plus'];
+    for (const level of levels) {
+      expect(AiAgentSkillLevelSchema.parse(level)).toBe(level);
+    }
+  });
+
+  it('should reject invalid skill levels', () => {
+    expect(() => AiAgentSkillLevelSchema.parse('expert')).toThrow();
+    expect(() => AiAgentSkillLevelSchema.parse('')).toThrow();
+    expect(() => AiAgentSkillLevelSchema.parse('BEGINNER')).toThrow();
   });
 });
 

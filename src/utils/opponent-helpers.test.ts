@@ -8,6 +8,7 @@ import {
   createCpuOpponent,
   createHumanOpponent,
   createRemoteCpuOpponent,
+  createAiAgentOpponent,
   isCpuOpponent,
   selectRandomBoard,
   updateOpponentStats,
@@ -37,6 +38,14 @@ describe('generateOpponentId', () => {
     expect(id1).not.toBe(id2);
     expect(id1).toContain('remote-cpu-');
     expect(id2).toContain('remote-cpu-');
+  });
+
+  it('should generate unique IDs for ai-agent opponents', () => {
+    const id1 = generateOpponentId('ai-agent', 'Pip');
+    const id2 = generateOpponentId('ai-agent', 'Pip');
+    expect(id1).not.toBe(id2);
+    expect(id1).toContain('ai-agent-');
+    expect(id2).toContain('ai-agent-');
   });
 });
 
@@ -94,6 +103,34 @@ describe('createRemoteCpuOpponent', () => {
   });
 });
 
+describe('createAiAgentOpponent', () => {
+  it('should create AI agent opponent with given name and skill level', () => {
+    const agent = createAiAgentOpponent('Pip', 'beginner');
+    expect(agent.name).toBe('Pip');
+    expect(agent.type).toBe('ai-agent');
+    expect(agent.skillLevel).toBe('beginner');
+    expect(agent.wins).toBe(0);
+    expect(agent.losses).toBe(0);
+  });
+
+  it('should generate unique IDs for different AI agent opponents', () => {
+    const agent1 = createAiAgentOpponent('Pip', 'beginner');
+    const agent2 = createAiAgentOpponent('Ember', 'advanced_plus');
+    expect(agent1.id).not.toBe(agent2.id);
+    expect(agent1.id).toContain('ai-agent-');
+    expect(agent2.id).toContain('ai-agent-');
+  });
+
+  it('should support all six skill levels', () => {
+    const levels = ['beginner', 'beginner_plus', 'intermediate', 'intermediate_plus', 'advanced', 'advanced_plus'] as const;
+    for (const level of levels) {
+      const agent = createAiAgentOpponent('Test', level);
+      expect(agent.skillLevel).toBe(level);
+      expect(agent.type).toBe('ai-agent');
+    }
+  });
+});
+
 describe('isCpuOpponent', () => {
   it('should return true for CPU opponent', () => {
     const cpu = createCpuOpponent();
@@ -125,6 +162,11 @@ describe('isCpuOpponent', () => {
   it('should return true for remote-cpu opponent type', () => {
     const remoteCpu = createRemoteCpuOpponent('Remote CPU');
     expect(isCpuOpponent(remoteCpu)).toBe(true);
+  });
+
+  it('should return true for ai-agent opponent type', () => {
+    const aiAgent = createAiAgentOpponent('Pip', 'beginner');
+    expect(isCpuOpponent(aiAgent)).toBe(true);
   });
 
   it('should return false for human opponent', () => {

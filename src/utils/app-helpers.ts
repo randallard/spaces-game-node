@@ -7,6 +7,7 @@ import type { UserProfile, Opponent, GameState } from '@/types';
 import {
   CPU_TOUGHER_OPPONENT_ID,
   CPU_TOUGHER_OPPONENT_NAME,
+  AI_AGENT_SKILL_LEVELS,
 } from '@/constants/game-rules';
 
 /**
@@ -39,8 +40,31 @@ export function getOpponentIcon(opponent: Opponent): string {
     // Remote CPU gets the globe emoji
     return '🌐';
   }
+  if (opponent.type === 'ai-agent') {
+    // AI Agent gets skill-level-specific emoji
+    const skillLevel = opponent.skillLevel;
+    if (skillLevel && skillLevel in AI_AGENT_SKILL_LEVELS) {
+      return AI_AGENT_SKILL_LEVELS[skillLevel].emoji;
+    }
+    // Default AI agent emoji
+    return '🤖';
+  }
   // Human opponents get the person emoji
   return '👤';
+}
+
+/**
+ * Get the color associated with an AI agent opponent's skill level
+ * Returns null for non-AI-agent opponents
+ */
+export function getOpponentIconColor(opponent: Opponent): string | null {
+  if (opponent.type !== 'ai-agent' || !opponent.skillLevel) {
+    return null;
+  }
+  if (opponent.skillLevel in AI_AGENT_SKILL_LEVELS) {
+    return AI_AGENT_SKILL_LEVELS[opponent.skillLevel].color;
+  }
+  return null;
 }
 
 /**

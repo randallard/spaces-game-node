@@ -28,3 +28,21 @@ export function getApiEndpoint(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${baseUrl}${normalizedPath}`;
 }
+
+/**
+ * Get the inference API base URL for AI agent opponents
+ * Uses VITE_INFERENCE_API_URL from environment, defaults to localhost:8100
+ */
+export function getInferenceApiUrl(): string {
+  return import.meta.env.VITE_INFERENCE_API_URL || 'http://localhost:8100';
+}
+
+/**
+ * Get the full URL for an inference API endpoint
+ * @param path - API path (e.g., '/construct-board')
+ */
+export function getInferenceApiEndpoint(path: string): string {
+  const baseUrl = getInferenceApiUrl();
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${normalizedPath}`;
+}

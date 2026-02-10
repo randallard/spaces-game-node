@@ -4,12 +4,13 @@ import { useGameState } from '@/hooks/useGameState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { simulateRound, simulateAllRounds, isBoardPlayable } from '@/utils/game-simulation';
 import { initializeDefaultCpuData, initializeCpuTougherData, generateCpuBoardsForSize, generateCpuDeckForSize } from '@/utils/default-cpu-data';
-import { getOpponentIcon, createInitialState } from '@/utils/app-helpers';
-import { updateOpponentStats, createHumanOpponent } from '@/utils/opponent-helpers';
+import { getOpponentIcon, getOpponentIconColor, createInitialState } from '@/utils/app-helpers';
+import { updateOpponentStats, createHumanOpponent, isCpuOpponent } from '@/utils/opponent-helpers';
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
 import { generateChallengeUrl, generateChallengeUrlShortened, generateFinalResultsUrl, getChallengeFromUrl, getChallengeFromUrlAsync, clearChallengeFromUrl, hasChallengeInUrl } from '@/utils/challenge-url';
 import { decodeMinimalBoard } from '@/utils/board-encoding';
 import { fetchRemoteCpuBoards, fetchRemoteCpuDeck } from '@/utils/remote-cpu-boards';
+import { requestAiAgentBoard, checkInferenceServerHealth } from '@/utils/ai-agent-inference';
 import { getApiEndpoint } from '@/config/api';
 import { markRoundCompleted, markRoundPending, hasCompletedRound, getGameProgress } from '@/utils/game-progress';
 import { getActiveGames, saveActiveGame, removeActiveGame, archiveActiveGame, type ActiveGameInfo } from '@/utils/active-games';
@@ -1447,6 +1448,29 @@ function App(): React.ReactElement {
           // Proceed to next phase based on game mode
           setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
         }, 500);
+      } else if (state.opponent && state.opponent.type === 'ai-agent') {
+        // AI agent - check inference server health before proceeding
+        setGeneratingSize(size);
+        setIsGeneratingCpuBoards(true);
+
+        try {
+          const isHealthy = await checkInferenceServerHealth();
+          if (!isHealthy) {
+            alert('AI Agent inference server is not available. Please make sure it is running and try again.');
+            setIsGeneratingCpuBoards(false);
+            return;
+          }
+        } catch {
+          alert('Could not connect to AI Agent inference server. Please check your connection.');
+          setIsGeneratingCpuBoards(false);
+          return;
+        }
+
+        // AI agent boards are generated per-round, no pre-fetching needed
+        setTimeout(() => {
+          setIsGeneratingCpuBoards(false);
+          setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
+        }, 300);
       } else if (state.opponent) {
         // Non-CPU opponent, skip opponent selection and go to next phase
         setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
@@ -2096,6 +2120,57 @@ function App(): React.ReactElement {
       return;
     }
 
+    // AI Agent opponent flow - request board from inference server
+    if (state.opponent.type === 'ai-agent') {
+      setIsSimulatingRound(true);
+
+      try {
+        // Collect player's board history from completed rounds
+        const playerBoardHistory = state.roundHistory
+          .filter(r => r.playerBoard)
+          .map(r => r.playerBoard!);
+
+        console.log(`[handleBoardSelect] AI Agent: requesting board for round ${currentRound}, skill=${state.opponent.skillLevel}`);
+
+        const aiBoard = await requestAiAgentBoard(
+          state.boardSize!,
+          currentRound,
+          playerScore,
+          opponentScore,
+          playerBoardHistory,
+          state.opponent.skillLevel!
+        );
+
+        if (!aiBoard) {
+          console.error('[handleBoardSelect] AI Agent failed to construct board');
+          alert('AI Agent could not construct a board. Please try again or check the inference server.');
+          setIsSimulatingRound(false);
+          return;
+        }
+
+        selectOpponentBoardAction(aiBoard);
+
+        // Run simulation
+        const result = simulateRound(currentRound, board, aiBoard);
+
+        if (savedUser?.playerCreature) {
+          result.playerCreature = savedUser.playerCreature;
+        }
+        if (savedUser?.opponentCreature) {
+          result.opponentCreature = savedUser.opponentCreature;
+        }
+
+        completeRound(result);
+        saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
+        setIsSimulatingRound(false);
+      } catch (error) {
+        console.error('[handleBoardSelect] AI Agent error:', error);
+        alert('An error occurred while communicating with the AI Agent. Please try again.');
+        setIsSimulatingRound(false);
+      }
+      return;
+    }
+
     // CPU opponent flow - proceed with automatic simulation
     // Show loading state immediately
     setIsSimulatingRound(true);
@@ -2618,7 +2693,10 @@ function App(): React.ReactElement {
                               size={48}
                             />
                           ) : (
-                            <span className={styles.opponentIcon}>
+                            <span
+                              className={styles.opponentIcon}
+                              style={getOpponentIconColor(opponent) ? { color: getOpponentIconColor(opponent)! } : undefined}
+                            >
                               {getOpponentIcon(opponent)}
                             </span>
                           )}
@@ -3004,7 +3082,7 @@ function App(): React.ReactElement {
               explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
               onExplanationStyleChange={handleExplanationStyleChange}
               opponentHasDiscord={!!(state.opponent?.discordId)}
-              isCpuOpponent={state.opponent?.type === 'cpu' || state.opponent?.type === 'remote-cpu'}
+              isCpuOpponent={state.opponent ? isCpuOpponent(state.opponent) : false}
               onGoHome={handleGoHome}
               onShareModalClosed={() => {
                 // When share modal closes, phase stays as 'share-challenge' (derived from state)
@@ -3154,7 +3232,7 @@ function App(): React.ReactElement {
             playerScore={playerScore}
             opponentScore={opponentScore}
             winner={winner}
-            isCpuOpponent={state.opponent?.type === 'cpu'}
+            isCpuOpponent={state.opponent ? isCpuOpponent(state.opponent) : false}
             onPlayAgain={handleContinue}
             isReview={true}
             currentRound={currentRound}
@@ -3237,7 +3315,7 @@ function App(): React.ReactElement {
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
-            isCpuOpponent={state.opponent?.type === 'cpu' || state.opponent?.type === 'remote-cpu'}
+            isCpuOpponent={state.opponent ? isCpuOpponent(state.opponent) : false}
           />
         );
 

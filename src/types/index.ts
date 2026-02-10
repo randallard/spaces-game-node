@@ -20,7 +20,7 @@ export {
 } from './board';
 
 // Opponent types
-export type { Opponent, OpponentType, OpponentStats } from './opponent';
+export type { Opponent, OpponentType, OpponentStats, AiAgentSkillLevel } from './opponent';
 
 // User types
 export type { UserProfile, UserStats, OpponentStatsMap } from './user';
