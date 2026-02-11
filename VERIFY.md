@@ -100,3 +100,45 @@ Changes from commits:
 - [ ] Agent fails all retries, player forfeits, then plays remaining rounds normally
 - [ ] Multiple forfeit rounds in same game don't break state
 - [ ] Inference server offline: error handling still works (network error path)
+
+---
+
+## Node — feat/ui-trap-limit
+
+- **Node** `a1aacbf` — Enforce trap limit constraint (boardSize - 1) during board building
+
+### 13. Validation logic (`src/utils/board-validation.ts`, `src/schemas/board.schema.ts`)
+
+- [ ] `validateBoard()` uses `boardSize - 1` as max traps (not `boardSize² - 1`)
+- [ ] `hasTooManyTraps()` uses `boardSize - 1`
+- [ ] `validateBoardTrapCount()` in schema uses `board.boardSize - 1` (not hardcoded 3)
+- [ ] 2x2 board: max 1 trap allowed
+- [ ] 3x3 board: max 2 traps allowed
+- [ ] Run: `npx vitest run src/utils/board-validation.test.ts src/schemas/board.schema.test.ts` — all pass
+
+### 14. Game engine (`spaces-game-engine/src/simulation.ts`)
+
+- [ ] `isBoardPlayable()` rejects boards exceeding `boardSize - 1` traps
+- [ ] Run: `npx vitest run spaces-game-engine/src/__tests__/simulation.test.ts` — all pass
+
+### 15. BoardCreator real-time enforcement (`src/components/BoardCreator.tsx`)
+
+- [ ] "Traps: X/Y" budget indicator visible during board building
+- [ ] 2x2 board: after placing 1 trap, all trap controls disappear/disable
+  - [ ] Grid "Trap" buttons hidden
+  - [ ] "Trap Here" button hidden
+  - [ ] Directional "Trap ↑/↓/←/→" buttons disabled with "Trap limit reached" tooltip
+  - [ ] Keyboard Shift+WASD and Shift+X no longer place traps
+- [ ] 3x3 board: can place 2 traps, controls disabled after 2nd
+- [ ] Undo a trap: trap controls re-enable (budget frees up)
+- [ ] Restart: trap budget resets
+- [ ] Run: `npx vitest run src/components/BoardCreator.test.tsx` — all 67 tests pass
+
+### 16. Existing boards / backwards compatibility
+
+- [ ] Saved boards in localStorage still display correctly
+- [ ] Boards built before this change that exceed the new limit still render (just won't re-validate)
+
+### 17. Full test suite
+
+- [ ] Run: `npx vitest run` — all 1850 tests pass
