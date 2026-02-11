@@ -286,7 +286,7 @@ describe('validateBoardHasOnePiece', () => {
 });
 
 describe('validateBoardTrapCount', () => {
-  it('should return true for 2x2 board with 0-3 traps', () => {
+  it('should return true for 2x2 board with 0-(n-1) traps', () => {
     const baseBoard: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
@@ -303,7 +303,7 @@ describe('validateBoardTrapCount', () => {
     // 0 traps
     expect(validateBoardTrapCount(baseBoard)).toBe(true);
 
-    // 1 trap
+    // 1 trap (max for 2x2: 2-1 = 1)
     expect(
       validateBoardTrapCount({
         ...baseBoard,
@@ -313,20 +313,9 @@ describe('validateBoardTrapCount', () => {
         ],
       })
     ).toBe(true);
-
-    // 3 traps
-    expect(
-      validateBoardTrapCount({
-        ...baseBoard,
-        grid: [
-          ['trap', 'trap'],
-          ['trap', 'empty'],
-        ],
-      })
-    ).toBe(true);
   });
 
-  it('should return true for 3x3 board with 0-3 traps', () => {
+  it('should return true for 3x3 board with 0-(n-1) traps', () => {
     const base3x3Board: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
@@ -356,32 +345,49 @@ describe('validateBoardTrapCount', () => {
       })
     ).toBe(true);
 
-    // 3 traps
+    // 2 traps (max for 3x3: 3-1 = 2)
     expect(
       validateBoardTrapCount({
         ...base3x3Board,
         grid: [
           ['trap', 'trap', 'empty'],
-          ['trap', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
           ['empty', 'empty', 'empty'],
         ],
       })
     ).toBe(true);
   });
 
-  it('should return false for board with more than 3 traps', () => {
-    const board: Board = {
+  it('should return false for board exceeding trap limit', () => {
+    // 2x2 board with 2 traps (exceeds max of 1)
+    const board2x2: Board = {
       id: '123e4567-e89b-12d3-a456-426614174000',
       name: 'Test',
       boardSize: 2,
       grid: [
         ['trap', 'trap'],
-        ['trap', 'trap'],
+        ['empty', 'empty'],
       ],
       sequence: [],
       thumbnail: '',
       createdAt: Date.now(),
     };
-    expect(validateBoardTrapCount(board)).toBe(false);
+    expect(validateBoardTrapCount(board2x2)).toBe(false);
+
+    // 3x3 board with 3 traps (exceeds max of 2)
+    const board3x3: Board = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      name: 'Test',
+      boardSize: 3,
+      grid: [
+        ['trap', 'trap', 'trap'],
+        ['empty', 'empty', 'empty'],
+        ['empty', 'empty', 'empty'],
+      ],
+      sequence: [],
+      thumbnail: '',
+      createdAt: Date.now(),
+    };
+    expect(validateBoardTrapCount(board3x3)).toBe(false);
   });
 });

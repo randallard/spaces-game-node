@@ -364,6 +364,20 @@
   border-color: rgba(250, 140, 22, 0.5);
 }
 
+/* Trap Budget Indicator */
+.trapBudget {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  background-color: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 0.5rem;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
 /* Instruction Text */
 .instruction {
   font-size: 0.875rem;

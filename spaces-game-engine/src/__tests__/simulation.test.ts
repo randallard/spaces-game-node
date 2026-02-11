@@ -531,6 +531,25 @@ describe('isBoardPlayable', () => {
     expect(isBoardPlayable(board)).toBe(false);
   });
 
+  it('should reject board exceeding trap limit (boardSize - 1)', () => {
+    // 2x2 board with 2 traps (exceeds max of 1)
+    const board: Board = {
+      boardSize: 2,
+      grid: [
+        ['piece', 'trap'],
+        ['piece', 'trap']
+      ],
+      sequence: [
+        { position: { row: 1, col: 0 }, type: 'piece', order: 1 },
+        { position: { row: 0, col: 0 }, type: 'piece', order: 2 },
+        { position: { row: 0, col: 1 }, type: 'trap', order: 3 },
+        { position: { row: 1, col: 1 }, type: 'trap', order: 4 },
+      ]
+    };
+
+    expect(isBoardPlayable(board)).toBe(false);
+  });
+
   // Movement Rule Tests - Should PASS Validation
 
   it('should accept valid orthogonal moves (up, down, left, right)', () => {

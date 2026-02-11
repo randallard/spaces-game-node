@@ -319,6 +319,7 @@ export function simulateMultipleRounds(
  * - Valid positions (bounds, non-empty cells)
  * - Movement rules (orthogonal only, no diagonals, no jumps)
  * - Trap placement (only adjacent to piece or at current position)
+ * - Trap limit (max boardSize - 1 traps)
  * - Supermove constraint (piece must move immediately after trap at current position)
  * - Piece cannot move into trap
  * - Sequence must contain a final move (piece must reach the goal)
@@ -437,6 +438,11 @@ export function isBoardPlayable(board: Board): boolean {
       // Track trap position
       trapPositions.add(positionKey(move.position.row, move.position.col));
     }
+  }
+
+  // Check trap limit: max traps = boardSize - 1
+  if (trapPositions.size > board.boardSize - 1) {
+    return false; // Too many traps
   }
 
   // Final check: if sequence ends with supermove without moving, that's invalid

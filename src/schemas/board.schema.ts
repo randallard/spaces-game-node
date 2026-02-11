@@ -72,7 +72,7 @@ export function validateBoardHasOnePiece(board: z.infer<typeof BoardSchema>): bo
 }
 
 /**
- * Validates board has 0-3 traps
+ * Validates board trap count does not exceed boardSize - 1
  */
 export function validateBoardTrapCount(board: z.infer<typeof BoardSchema>): boolean {
   let trapCount = 0;
@@ -81,5 +81,5 @@ export function validateBoardTrapCount(board: z.infer<typeof BoardSchema>): bool
       if (cell === 'trap') trapCount++;
     }
   }
-  return trapCount >= 0 && trapCount <= 3;
+  return trapCount >= 0 && trapCount <= board.boardSize - 1;
 }
