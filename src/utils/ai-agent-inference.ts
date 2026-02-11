@@ -32,7 +32,17 @@ interface ConstructBoardResponse {
     grid: string[][];
   };
   valid: boolean;
+  attempts_used: number;
   model_info?: Record<string, unknown>;
+}
+
+/**
+ * Result of a board construction request
+ */
+export interface AiAgentBoardResult {
+  board: Board | null;
+  failed: boolean;
+  attemptsUsed: number;
 }
 
 /**
@@ -88,7 +98,7 @@ function responseBoardToBoard(
  * @param opponentScore - AI's cumulative score (game perspective)
  * @param playerBoardHistory - Player's boards from previous rounds
  * @param skillLevel - AI skill level
- * @returns Constructed Board or null on error
+ * @returns AiAgentBoardResult with board (or null), failure status, and attempts used
  */
 export async function requestAiAgentBoard(
   boardSize: BoardSize,
@@ -97,7 +107,7 @@ export async function requestAiAgentBoard(
   opponentScore: number,
   playerBoardHistory: Board[],
   skillLevel: AiAgentSkillLevel
-): Promise<Board | null> {
+): Promise<AiAgentBoardResult> {
   try {
     const url = getInferenceApiEndpoint('/construct-board');
 
@@ -129,14 +139,15 @@ export async function requestAiAgentBoard(
       console.error(
         `[requestAiAgentBoard] Server returned ${response.status}: ${response.statusText}`
       );
-      return null;
+      return { board: null, failed: true, attemptsUsed: 0 };
     }
 
     const data: ConstructBoardResponse = await response.json();
+    const attemptsUsed = data.attempts_used ?? 1;
 
     if (!data.valid || !data.board) {
-      console.error('[requestAiAgentBoard] Server returned invalid board');
-      return null;
+      console.error(`[requestAiAgentBoard] Server returned invalid board after ${attemptsUsed} attempts`);
+      return { board: null, failed: true, attemptsUsed };
     }
 
     // Validate response board size matches request
@@ -144,10 +155,10 @@ export async function requestAiAgentBoard(
       console.error(
         `[requestAiAgentBoard] Board size mismatch: requested ${boardSize}, got ${data.board.boardSize}`
       );
-      return null;
+      return { board: null, failed: true, attemptsUsed };
     }
 
-    return responseBoardToBoard(data.board, skillLevel);
+    return { board: responseBoardToBoard(data.board, skillLevel), failed: false, attemptsUsed };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       console.error('[requestAiAgentBoard] Request timed out');
@@ -156,7 +167,7 @@ export async function requestAiAgentBoard(
     } else {
       console.error('[requestAiAgentBoard] Unknown error:', error);
     }
-    return null;
+    return { board: null, failed: true, attemptsUsed: 0 };
   }
 }
 

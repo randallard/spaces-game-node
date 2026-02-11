@@ -53,6 +53,7 @@ describe('requestAiAgentBoard', () => {
       ],
     },
     valid: true,
+    attempts_used: 1,
     model_info: { checkpoint: 'early', deterministic: false },
   };
 
@@ -72,11 +73,13 @@ describe('requestAiAgentBoard', () => {
 
     const result = await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
 
-    expect(result).not.toBeNull();
-    expect(result!.boardSize).toBe(3);
-    expect(result!.sequence).toHaveLength(4);
-    expect(result!.id).toContain('ai-agent-');
-    expect(result!.name).toContain('beginner');
+    expect(result.board).not.toBeNull();
+    expect(result.failed).toBe(false);
+    expect(result.attemptsUsed).toBe(1);
+    expect(result.board!.boardSize).toBe(3);
+    expect(result.board!.sequence).toHaveLength(4);
+    expect(result.board!.id).toContain('ai-agent-');
+    expect(result.board!.name).toContain('beginner');
   });
 
   it('should flip scores in the API request (agent_score = opponent game score)', async () => {
@@ -117,7 +120,7 @@ describe('requestAiAgentBoard', () => {
     });
   });
 
-  it('should return null on HTTP error', async () => {
+  it('should return failed result on HTTP error', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -125,20 +128,23 @@ describe('requestAiAgentBoard', () => {
     } as Response);
 
     const result = await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
-    expect(result).toBeNull();
+    expect(result.board).toBeNull();
+    expect(result.failed).toBe(true);
   });
 
-  it('should return null when server returns invalid board', async () => {
+  it('should return failed result with attempts when server returns invalid board', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ board: null, valid: false }),
+      json: async () => ({ board: null, valid: false, attempts_used: 5 }),
     } as Response);
 
     const result = await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
-    expect(result).toBeNull();
+    expect(result.board).toBeNull();
+    expect(result.failed).toBe(true);
+    expect(result.attemptsUsed).toBe(5);
   });
 
-  it('should return null on board size mismatch', async () => {
+  it('should return failed result on board size mismatch', async () => {
     const badResponse = {
       ...mockApiResponse,
       board: { ...mockApiResponse.board, boardSize: 2 },
@@ -149,23 +155,26 @@ describe('requestAiAgentBoard', () => {
     } as Response);
 
     const result = await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
-    expect(result).toBeNull();
+    expect(result.board).toBeNull();
+    expect(result.failed).toBe(true);
   });
 
-  it('should return null on network error', async () => {
+  it('should return failed result on network error', async () => {
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'));
 
     const result = await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
-    expect(result).toBeNull();
+    expect(result.board).toBeNull();
+    expect(result.failed).toBe(true);
   });
 
-  it('should return null on timeout', async () => {
+  it('should return failed result on timeout', async () => {
     const abortError = new Error('AbortError');
     abortError.name = 'AbortError';
     vi.mocked(global.fetch).mockRejectedValueOnce(abortError);
 
     const result = await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
-    expect(result).toBeNull();
+    expect(result.board).toBeNull();
+    expect(result.failed).toBe(true);
   });
 
   it('should send correct request body fields', async () => {

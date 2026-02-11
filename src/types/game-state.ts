@@ -37,6 +37,7 @@ export type RoundResult = {
   playerVisualOutcome?: OutcomeType;
   opponentVisualOutcome?: OutcomeType;
   collision?: boolean;
+  forfeit?: boolean;
 };
 
 /**

@@ -2132,7 +2132,7 @@ function App(): React.ReactElement {
 
         console.log(`[handleBoardSelect] AI Agent: requesting board for round ${currentRound}, skill=${state.opponent.skillLevel}`);
 
-        const aiBoard = await requestAiAgentBoard(
+        const aiResult = await requestAiAgentBoard(
           state.boardSize!,
           currentRound,
           playerScore,
@@ -2141,17 +2141,90 @@ function App(): React.ReactElement {
           state.opponent.skillLevel!
         );
 
-        if (!aiBoard) {
-          console.error('[handleBoardSelect] AI Agent failed to construct board');
-          alert('AI Agent could not construct a board. Please try again or check the inference server.');
-          setIsSimulatingRound(false);
-          return;
+        if (aiResult.failed || !aiResult.board) {
+          console.error(`[handleBoardSelect] AI Agent failed to construct board after ${aiResult.attemptsUsed} attempts`);
+
+          // Offer retry or forfeit
+          const retryOrForfeit = confirm(
+            `${state.opponent.name} couldn't decide on a board (${aiResult.attemptsUsed} attempts).\n\n` +
+            `OK = Give them more time (retry)\n` +
+            `Cancel = They forfeit this round (you win the round)`
+          );
+
+          if (retryOrForfeit) {
+            // Retry - call again
+            const retryResult = await requestAiAgentBoard(
+              state.boardSize!,
+              currentRound,
+              playerScore,
+              opponentScore,
+              playerBoardHistory,
+              state.opponent.skillLevel!
+            );
+
+            if (retryResult.failed || !retryResult.board) {
+              // Still failed - auto-forfeit
+              console.error(`[handleBoardSelect] AI Agent retry also failed (${retryResult.attemptsUsed} more attempts)`);
+              alert(`${state.opponent.name} still couldn't build a valid board. You win this round by forfeit!`);
+
+              // Score the round as a forfeit win for the player
+              const forfeitResult: RoundResult = {
+                round: currentRound,
+                winner: 'player',
+                playerBoard: board,
+                opponentBoard: board, // placeholder
+                playerFinalPosition: { row: -1, col: 0 },
+                opponentFinalPosition: { row: board.boardSize - 1, col: 0 },
+                playerPoints: 1,
+                opponentPoints: 0,
+                forfeit: true,
+              };
+              if (savedUser?.playerCreature) forfeitResult.playerCreature = savedUser.playerCreature;
+              if (savedUser?.opponentCreature) forfeitResult.opponentCreature = savedUser.opponentCreature;
+
+              completeRound(forfeitResult);
+              saveRoundResult(forfeitResult, state.gameId, state.opponent, state.boardSize!);
+              setIsSimulatingRound(false);
+              return;
+            }
+
+            // Retry succeeded
+            selectOpponentBoardAction(retryResult.board);
+            const result = simulateRound(currentRound, board, retryResult.board);
+            if (savedUser?.playerCreature) result.playerCreature = savedUser.playerCreature;
+            if (savedUser?.opponentCreature) result.opponentCreature = savedUser.opponentCreature;
+            completeRound(result);
+            saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
+            setIsSimulatingRound(false);
+            return;
+          } else {
+            // Player chose forfeit
+            const forfeitResult: RoundResult = {
+              round: currentRound,
+              winner: 'player',
+              playerBoard: board,
+              opponentBoard: board, // placeholder
+              playerFinalPosition: { row: -1, col: 0 },
+              opponentFinalPosition: { row: board.boardSize - 1, col: 0 },
+              playerPoints: 1,
+              opponentPoints: 0,
+              steps: [],
+              forfeit: true,
+            };
+            if (savedUser?.playerCreature) forfeitResult.playerCreature = savedUser.playerCreature;
+            if (savedUser?.opponentCreature) forfeitResult.opponentCreature = savedUser.opponentCreature;
+
+            completeRound(forfeitResult);
+            saveRoundResult(forfeitResult, state.gameId, state.opponent, state.boardSize!);
+            setIsSimulatingRound(false);
+            return;
+          }
         }
 
-        selectOpponentBoardAction(aiBoard);
+        selectOpponentBoardAction(aiResult.board);
 
         // Run simulation
-        const result = simulateRound(currentRound, board, aiBoard);
+        const result = simulateRound(currentRound, board, aiResult.board);
 
         if (savedUser?.playerCreature) {
           result.playerCreature = savedUser.playerCreature;
