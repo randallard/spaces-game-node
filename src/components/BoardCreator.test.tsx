@@ -383,21 +383,21 @@ describe('BoardCreator', () => {
       expect(moveButtons.length + trapButtons.length).toBe(4);
     });
 
-    it('should not show buttons on squares with traps', () => {
+    it('should not show trap buttons after trap limit reached', () => {
       render(<BoardCreator {...defaultProps} />);
 
       // Start at bottom-left (1,0)
       const startButtons = screen.getAllByText('Start');
       fireEvent.click(startButtons[0]!);
 
-      // Place trap on adjacent square
+      // Place trap on adjacent square (2x2 board: max 1 trap)
       const trapButtons = screen.getAllByText('Trap');
-      const initialTrapCount = trapButtons.length;
+      expect(trapButtons.length).toBeGreaterThan(0);
       fireEvent.click(trapButtons[0]!);
 
-      // After placing trap, that square should not have Move/Trap buttons
-      const newTrapButtons = screen.getAllByText('Trap');
-      expect(newTrapButtons.length).toBeLessThan(initialTrapCount);
+      // After placing 1 trap on 2x2 board, trap limit is reached — no more Trap buttons
+      const newTrapButtons = screen.queryAllByText('Trap');
+      expect(newTrapButtons.length).toBe(0);
     });
   });
 

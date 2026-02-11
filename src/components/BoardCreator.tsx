@@ -560,6 +560,11 @@ export function BoardCreator({
   const canFinish = piecePosition?.row === 0;
   const canFinishAllTheWay = piecePosition && !hasTrapAbove;
 
+  // Track trap budget: max traps = boardSize - 1
+  const maxTraps = boardSize - 1;
+  const currentTrapCount = sequence.filter(m => m.type === 'trap').length;
+  const trapLimitReached = currentTrapCount >= maxTraps;
+
   // Get directional moves for control buttons
   const directionalMoves = getDirectionalMoves();
 
@@ -606,7 +611,7 @@ export function BoardCreator({
       }
 
       // Handle Shift+X for "Trap Here" at current position
-      if (key === 'x' && event.shiftKey && piecePosition) {
+      if (key === 'x' && event.shiftKey && piecePosition && !trapLimitReached) {
         event.preventDefault();
         handleTrap(piecePosition.row, piecePosition.col);
         return;
@@ -634,9 +639,9 @@ export function BoardCreator({
 
       if (targetPosition) {
         event.preventDefault();
-        if (isTrap) {
+        if (isTrap && !trapLimitReached) {
           handleTrap(targetPosition.row, targetPosition.col);
-        } else {
+        } else if (!isTrap) {
           handleMove(targetPosition.row, targetPosition.col);
         }
       }
@@ -644,7 +649,7 @@ export function BoardCreator({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [phase, directionalMoves, handleMove, handleTrap, canFinish, handleFinalMove, piecePosition]);
+  }, [phase, directionalMoves, handleMove, handleTrap, canFinish, handleFinalMove, piecePosition, trapLimitReached]);
 
   // Get instruction text
   const getInstruction = (): string => {
@@ -834,7 +839,7 @@ export function BoardCreator({
                 )}
 
                 {/* Show Trap Here button on current piece (supermove - small boards only) */}
-                {isCurrentPiece && phase === 'building' && !useLargeBoard && !trapAtPosition && (
+                {isCurrentPiece && phase === 'building' && !useLargeBoard && !trapAtPosition && !trapLimitReached && (
                   <button
                     onClick={() => handleTrap(rowIdx, colIdx)}
                     className={styles.trapHereButton}
@@ -845,7 +850,7 @@ export function BoardCreator({
                 )}
 
                 {/* Show clickable overlay for trap on current piece (large boards only) */}
-                {isCurrentPiece && phase === 'building' && useLargeBoard && !trapAtPosition && (
+                {isCurrentPiece && phase === 'building' && useLargeBoard && !trapAtPosition && !trapLimitReached && (
                   <div
                     className={styles.trapHereOverlay}
                     onClick={(e) => {
@@ -875,12 +880,14 @@ export function BoardCreator({
                     >
                       Move
                     </button>
-                    <button
-                      onClick={() => handleTrap(rowIdx, colIdx)}
-                      className={styles.trapButton}
-                    >
-                      Trap
-                    </button>
+                    {!trapLimitReached && (
+                      <button
+                        onClick={() => handleTrap(rowIdx, colIdx)}
+                        className={styles.trapButton}
+                      >
+                        Trap
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -895,14 +902,16 @@ export function BoardCreator({
                       }}
                       title="Move (W/A/S/D)"
                     />
-                    <div
-                      className={styles.splitCellTrap}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTrap(rowIdx, colIdx);
-                      }}
-                      title="Trap (Shift+W/A/S/D)"
-                    />
+                    {!trapLimitReached && (
+                      <div
+                        className={styles.splitCellTrap}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTrap(rowIdx, colIdx);
+                        }}
+                        title="Trap (Shift+W/A/S/D)"
+                      />
+                    )}
                   </div>
                 )}
               </div>
@@ -968,9 +977,9 @@ export function BoardCreator({
                 </button>
                 <button
                   onClick={() => directionalMoves.up && handleTrap(directionalMoves.up.row, directionalMoves.up.col)}
-                  disabled={!directionalMoves.up}
+                  disabled={!directionalMoves.up || trapLimitReached}
                   className={`${styles.dirButtonSmall} ${styles.dirButtonTrap}`}
-                  title="Trap Up (Shift+W)"
+                  title={trapLimitReached ? `Trap limit reached (${maxTraps})` : 'Trap Up (Shift+W)'}
                 >
                   Trap ↑
                 </button>
@@ -989,9 +998,9 @@ export function BoardCreator({
                 </button>
                 <button
                   onClick={() => directionalMoves.left && handleTrap(directionalMoves.left.row, directionalMoves.left.col)}
-                  disabled={!directionalMoves.left}
+                  disabled={!directionalMoves.left || trapLimitReached}
                   className={`${styles.dirButton} ${styles.dirButtonTrap}`}
-                  title="Trap Left (Shift+A)"
+                  title={trapLimitReached ? `Trap limit reached (${maxTraps})` : 'Trap Left (Shift+A)'}
                 >
                   Trap ←
                 </button>
@@ -1017,9 +1026,9 @@ export function BoardCreator({
                 </button>
                 <button
                   onClick={() => directionalMoves.right && handleTrap(directionalMoves.right.row, directionalMoves.right.col)}
-                  disabled={!directionalMoves.right}
+                  disabled={!directionalMoves.right || trapLimitReached}
                   className={`${styles.dirButton} ${styles.dirButtonTrap}`}
-                  title="Trap Right (Shift+D)"
+                  title={trapLimitReached ? `Trap limit reached (${maxTraps})` : 'Trap Right (Shift+D)'}
                 >
                   Trap →
                 </button>
@@ -1038,9 +1047,9 @@ export function BoardCreator({
                 </button>
                 <button
                   onClick={() => directionalMoves.down && handleTrap(directionalMoves.down.row, directionalMoves.down.col)}
-                  disabled={!directionalMoves.down}
+                  disabled={!directionalMoves.down || trapLimitReached}
                   className={`${styles.dirButton} ${styles.dirButtonTrap}`}
-                  title="Trap Down (Shift+S)"
+                  title={trapLimitReached ? `Trap limit reached (${maxTraps})` : 'Trap Down (Shift+S)'}
                 >
                   Trap ↓
                 </button>
@@ -1050,6 +1059,14 @@ export function BoardCreator({
           </div>
         )}
       </div>
+
+      {/* Trap Budget Indicator */}
+      {phase === 'building' && (
+        <div className={styles.trapBudget}>
+          Traps: {currentTrapCount}/{maxTraps}
+          {trapLimitReached && ' (limit reached)'}
+        </div>
+      )}
 
       {/* Instruction */}
       <div className={styles.instruction}>{getInstruction()}</div>
