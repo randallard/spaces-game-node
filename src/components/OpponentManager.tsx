@@ -427,7 +427,7 @@ export function OpponentManager({
           <div className={styles.optionIcon}>🌐</div>
           <h3 className={styles.optionTitle}>Remote CPU</h3>
           <p className={styles.optionDescription}>
-            Play against a CPU with boards from a remote server. New challenges every time.
+            Play against a CPU with boards from a remote server.
           </p>
           <span className={styles.optionBadge}>Online</span>
         </button>
@@ -439,7 +439,7 @@ export function OpponentManager({
             className={styles.optionCard}
             aria-label="Play against AI agent"
           >
-            <div className={styles.optionIcon}>🧠</div>
+            <div className={styles.optionIcon}>🔮</div>
             <h3 className={styles.optionTitle}>AI Agent</h3>
             <p className={styles.optionDescription}>
               Play against a trained RL agent that builds boards dynamically each round.
@@ -454,10 +454,10 @@ export function OpponentManager({
           className={styles.optionCard}
           aria-label="Play against human opponent"
         >
-          <div className={styles.optionIcon}>👤</div>
+          <div className={styles.optionIcon}>🤝</div>
           <h3 className={styles.optionTitle}>Human Opponent</h3>
           <p className={styles.optionDescription}>
-            Play against another person. Enter their name to get started.
+            Invite a freind to play. Enter their name to get started.
           </p>
           <span className={styles.optionBadge}>Multiplayer</span>
         </button>

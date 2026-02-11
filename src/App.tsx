@@ -2850,7 +2850,8 @@ function App(): React.ReactElement {
 
         // Check if playing against human opponent who hasn't completed a game yet
         const isFirstTimeHumanOpponent = state.opponent?.type === 'human' && !state.opponent?.hasCompletedGame;
-        const deckModeAllowed = deckModeUnlocked && !isFirstTimeHumanOpponent;
+        const isAiAgent = state.opponent?.type === 'ai-agent';
+        const deckModeAllowed = deckModeUnlocked && !isFirstTimeHumanOpponent && !isAiAgent;
 
         return (
           <div className={styles.gameModeSelection}>
@@ -2893,6 +2894,11 @@ function App(): React.ReactElement {
                 {deckModeUnlocked && isFirstTimeHumanOpponent && (
                   <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#9ca3af' }}>
                     Complete your first game with {state.opponent?.name} to unlock
+                  </p>
+                )}
+                {deckModeUnlocked && isAiAgent && (
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+                    Not available for AI agents
                   </p>
                 )}
               </button>
