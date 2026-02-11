@@ -114,6 +114,15 @@ export function BoardSizeSelector({
       };
     }
 
+    // For AI agents, boards are generated per-round by the inference server
+    if (opponent?.type === 'ai-agent') {
+      return {
+        playerHasBoards,
+        cpuHasBoards: true, // Generated dynamically each round
+        bothHaveBoards: playerHasBoards,
+      };
+    }
+
     // Local CPU needs at least 3 boards for the size to be considered "ready"
     // This matches the check in App.tsx cpuHasBoardsForSize function
     let cpuHasBoards = false;
