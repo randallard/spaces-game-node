@@ -103,7 +103,7 @@ describe('OpponentManager', () => {
       );
 
       expect(screen.getByText('Human Opponent')).toBeInTheDocument();
-      expect(screen.getByText(/Play against another person/)).toBeInTheDocument();
+      expect(screen.getByText(/Invite a friend to play/)).toBeInTheDocument();
       expect(screen.getByText('Multiplayer')).toBeInTheDocument();
     });
 

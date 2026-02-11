@@ -349,10 +349,16 @@ body {
   min-width: 80px;
 }
 
-.playButton:hover {
+.playButton:hover:not(:disabled) {
   background-color: #45a317;
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
+}
+
+.playButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .emptyOpponents {

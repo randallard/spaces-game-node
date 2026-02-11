@@ -432,21 +432,24 @@ export function OpponentManager({
           <span className={styles.optionBadge}>Online</span>
         </button>
 
-        {/* AI Agent Opponent Card (feature-flagged) */}
-        {FEATURES.AI_AGENT && (
-          <button
-            onClick={handleSelectAiAgent}
-            className={styles.optionCard}
-            aria-label="Play against AI agent"
-          >
-            <div className={styles.optionIcon}>🔮</div>
-            <h3 className={styles.optionTitle}>AI Agent</h3>
-            <p className={styles.optionDescription}>
-              Play against a trained RL agent that builds boards dynamically each round.
-            </p>
+        {/* AI Agent Opponent Card */}
+        <button
+          onClick={FEATURES.AI_AGENT ? handleSelectAiAgent : undefined}
+          className={`${styles.optionCard} ${!FEATURES.AI_AGENT ? styles.lockedCard : ''}`}
+          aria-label="Play against AI agent"
+          disabled={!FEATURES.AI_AGENT}
+        >
+          <div className={styles.optionIcon}>🔮</div>
+          <h3 className={styles.optionTitle}>AI Agent {!FEATURES.AI_AGENT && '🔒'}</h3>
+          <p className={styles.optionDescription}>
+            Play against a trained RL agent that builds boards dynamically each round.
+          </p>
+          {FEATURES.AI_AGENT ? (
             <span className={styles.optionBadge}>AI Powered</span>
-          </button>
-        )}
+          ) : (
+            <span className={styles.optionBadge} style={{ color: '#9ca3af', backgroundColor: '#f3f4f6' }}>Temporarily disabled</span>
+          )}
+        </button>
 
         {/* Human Opponent Card */}
         <button
@@ -457,7 +460,7 @@ export function OpponentManager({
           <div className={styles.optionIcon}>🤝</div>
           <h3 className={styles.optionTitle}>Human Opponent</h3>
           <p className={styles.optionDescription}>
-            Invite a freind to play. Enter their name to get started.
+            Invite a friend to play. Enter their name to get started.
           </p>
           <span className={styles.optionBadge}>Multiplayer</span>
         </button>

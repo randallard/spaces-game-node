@@ -2734,9 +2734,14 @@ function App(): React.ReactElement {
                             });
                           }}
                           className={styles.playButton}
+                          disabled={opponent.type === 'ai-agent' && !FEATURES.AI_AGENT}
+                          title={opponent.type === 'ai-agent' && !FEATURES.AI_AGENT ? 'AI agent is not enabled' : undefined}
                         >
                           Play
                         </button>
+                        {opponent.type === 'ai-agent' && !FEATURES.AI_AGENT && (
+                          <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Temporarily disabled</span>
+                        )}
                       </div>
                     ))
                   ) : (
