@@ -2829,6 +2829,7 @@ function App(): React.ReactElement {
             userName={state.user.name}
             discordId={state.user.discordId}
             discordUsername={state.user.discordUsername}
+            existingOpponents={savedOpponents || []}
             onOpponentSelected={(opponent) => {
               // Save opponent to localStorage
               const existingIndex = (savedOpponents || []).findIndex((o) => o.id === opponent.id);
@@ -2948,6 +2949,7 @@ function App(): React.ReactElement {
             userName={state.user.name}
             discordId={state.user.discordId}
             discordUsername={state.user.discordUsername}
+            existingOpponents={savedOpponents || []}
             onOpponentSelected={(opponent) =>
               handleOpponentSelect(opponent, phase.type === 'opponent-selection' ? phase.gameMode : 'round-by-round')
             }

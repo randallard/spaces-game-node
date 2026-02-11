@@ -1177,7 +1177,7 @@ describe('OpponentManager', () => {
 
       expect(screen.getByText('Pip')).toBeInTheDocument();
       expect(screen.getByText('Pebble')).toBeInTheDocument();
-      expect(screen.getByText('Scout')).toBeInTheDocument();
+      expect(screen.getByText('Dash')).toBeInTheDocument();
       expect(screen.getByText('Sage')).toBeInTheDocument();
       expect(screen.getByText('Fang')).toBeInTheDocument();
       expect(screen.getByText('Ember')).toBeInTheDocument();
@@ -1230,7 +1230,7 @@ describe('OpponentManager', () => {
       expect(mockOnOpponentSelected).toHaveBeenCalledTimes(1);
       const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
       expect(opponent.type).toBe('ai-agent');
-      expect(opponent.name).toBe('Scout');
+      expect(opponent.name).toBe('Dash');
       expect(opponent.skillLevel).toBe('intermediate');
     });
 

@@ -44,7 +44,7 @@ export const AI_AGENT_SKILL_LEVELS = {
   },
   intermediate: {
     emoji: '🦊',
-    defaultName: 'Scout',
+    defaultName: 'Dash',
     color: '#9B8EC4',
     label: 'Intermediate',
   },

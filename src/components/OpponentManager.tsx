@@ -5,11 +5,12 @@
 
 import { useState, useCallback, useEffect, type ReactElement } from 'react';
 import { createCpuOpponent, createHumanOpponent, createRemoteCpuOpponent, createAiAgentOpponent } from '@/utils/opponent-helpers';
+import { createCpuTougherOpponent } from '@/utils/default-cpu-data';
 import type { Opponent, AiAgentSkillLevel } from '@/types';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
 import { getApiEndpoint } from '@/config/api';
 import { FEATURES } from '@/config/features';
-import { AI_AGENT_SKILL_LEVELS } from '@/constants/game-rules';
+import { AI_AGENT_SKILL_LEVELS, CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID } from '@/constants/game-rules';
 import styles from './OpponentManager.module.css';
 
 export interface OpponentManagerProps {
@@ -20,6 +21,8 @@ export interface OpponentManagerProps {
   /** Discord connection info */
   discordUsername?: string | undefined;
   discordId?: string | undefined;
+  /** Existing opponents in the list */
+  existingOpponents?: Opponent[];
 }
 
 /**
@@ -45,6 +48,7 @@ export function OpponentManager({
   userName,
   discordUsername,
   discordId,
+  existingOpponents = [],
 }: OpponentManagerProps): ReactElement {
   const [selectedType, setSelectedType] = useState<'cpu' | 'human' | 'remote-cpu' | 'ai-agent' | null>(null);
   const [opponentName, setOpponentName] = useState('');
@@ -53,6 +57,10 @@ export function OpponentManager({
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<AiAgentSkillLevel | null>(null);
 
   const isDiscordConnected = !!(discordId && discordUsername);
+
+  const hasCpuSam = existingOpponents.some(o => o.id === CPU_OPPONENT_ID);
+  const hasCpuTougher = existingOpponents.some(o => o.id === CPU_TOUGHER_OPPONENT_ID);
+  const allCpuAdded = hasCpuSam && hasCpuTougher;
 
   // Restore form state after Discord OAuth redirect
   useEffect(() => {
@@ -71,12 +79,15 @@ export function OpponentManager({
   }, []);
 
   /**
-   * Handle CPU opponent selection
+   * Handle CPU opponent selection - adds CPU Sam first, then CPU Tougher
    */
   const handleSelectCpu = useCallback((): void => {
-    const cpuOpponent = createCpuOpponent();
-    onOpponentSelected(cpuOpponent);
-  }, [onOpponentSelected]);
+    if (!hasCpuSam) {
+      onOpponentSelected(createCpuOpponent());
+    } else if (!hasCpuTougher) {
+      onOpponentSelected(createCpuTougherOpponent());
+    }
+  }, [onOpponentSelected, hasCpuSam, hasCpuTougher]);
 
   /**
    * Handle human opponent selection
@@ -406,16 +417,25 @@ export function OpponentManager({
       <div className={styles.optionsGrid}>
         {/* CPU Opponent Card */}
         <button
-          onClick={handleSelectCpu}
-          className={styles.optionCard}
+          onClick={allCpuAdded ? undefined : handleSelectCpu}
+          className={`${styles.optionCard} ${allCpuAdded ? styles.lockedCard : ''}`}
           aria-label="Play against CPU"
+          disabled={allCpuAdded}
         >
           <div className={styles.optionIcon}>🤖</div>
           <h3 className={styles.optionTitle}>CPU Opponent</h3>
           <p className={styles.optionDescription}>
-            Play against the computer. Perfect for practice and solo play.
+            {allCpuAdded
+              ? 'CPU Sam and CPU Tougher are already in your opponents list.'
+              : hasCpuSam
+                ? 'Add CPU Tougher for a bigger challenge.'
+                : 'Play against the computer. Perfect for practice and solo play.'}
           </p>
-          <span className={styles.optionBadge}>Quick Start</span>
+          {allCpuAdded ? (
+            <span className={styles.optionBadge} style={{ color: '#9ca3af', backgroundColor: '#f3f4f6' }}>Already added</span>
+          ) : (
+            <span className={styles.optionBadge}>{hasCpuSam ? 'Add CPU Tougher' : 'Quick Start'}</span>
+          )}
         </button>
 
         {/* Remote CPU Opponent Card */}
