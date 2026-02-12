@@ -1551,8 +1551,8 @@ function App(): React.ReactElement {
       setSavedOpponents([...(savedOpponents || []), opponent]);
     }
 
-    // Generate game ID for human opponents (for tracking across challenges)
-    const gameId = opponent.type === 'human' ? `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : null;
+    // Generate game ID for all opponent types (for tracking in active games)
+    const gameId = `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Get user ID for game creator tracking
     const userId = state.user.id;
@@ -2795,8 +2795,8 @@ function App(): React.ReactElement {
                         </div>
                         <button
                           onClick={() => {
-                            // Generate game ID for human opponents (for tracking across challenges)
-                            const gameId = opponent.type === 'human' ? `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` : null;
+                            // Generate game ID for all opponent types (for tracking in active games)
+                            const gameId = `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                             const userId = state.user.id;
 
                             console.log('[APP] Play button clicked - userId:', userId, 'opponent:', opponent.name, 'gameId:', gameId);
