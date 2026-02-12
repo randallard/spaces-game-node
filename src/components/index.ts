@@ -88,3 +88,6 @@ export type { RemoveOpponentModalProps } from './RemoveOpponentModal';
 
 export { WaitingForOpponent } from './WaitingForOpponent';
 export type { WaitingForOpponentProps } from './WaitingForOpponent';
+
+export { AiRetryModal } from './AiRetryModal';
+export type { AiRetryModalProps } from './AiRetryModal';

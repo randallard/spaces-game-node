@@ -6,6 +6,7 @@
 import type { GameState, GamePhase } from '@/types/game-state';
 import type { Opponent } from '@/types/opponent';
 import { derivePhase, deriveCurrentRound, derivePlayerScore, deriveOpponentScore } from './derive-state';
+import { isCpuOpponent } from './opponent-helpers';
 
 /**
  * Simplified game info for display in the active games list
@@ -68,10 +69,10 @@ export function saveActiveGame(state: GameState): void {
     return;
   }
 
-  // For CPU games, generate a local gameId if one doesn't exist
-  // This allows CPU games to appear in active games list
+  // For non-human games (CPU, remote-cpu, ai-agent), generate a local gameId if one doesn't exist
+  // This allows these games to appear in active games list
   let gameId = state.gameId;
-  if (!gameId && (state.opponent.type === 'cpu' || state.opponent.type === 'remote-cpu')) {
+  if (!gameId && isCpuOpponent(state.opponent)) {
     // Check if we already have an active game with this opponent
     const games = getActiveGames(true); // Include archived
     const existingGame = games.find(g =>
@@ -85,7 +86,7 @@ export function saveActiveGame(state: GameState): void {
       gameId = existingGame.gameId;
     } else {
       // Generate a new stable ID based on opponent, boardSize, and gameMode
-      gameId = `cpu-${state.opponent.id}-${state.boardSize}-${state.gameMode}-${Date.now()}`;
+      gameId = `local-${state.opponent.id}-${state.boardSize}-${state.gameMode}-${Date.now()}`;
     }
   }
 
