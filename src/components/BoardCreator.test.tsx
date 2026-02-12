@@ -1423,6 +1423,103 @@ describe('BoardCreator', () => {
       expect(screen.getByText('2')).toBeInTheDocument();
     });
 
+    it('should disable trap buttons after supermove (trap at current position)', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start at bottom-left (2,0)
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[0]!);
+
+      // Place trap at current position (supermove)
+      const trapHereButton = screen.getByText('Trap Here');
+      fireEvent.click(trapHereButton);
+
+      // Instruction text should indicate must move
+      expect(screen.getByText('Piece must move after trap is placed in same square')).toBeInTheDocument();
+
+      // Adjacent Trap buttons should be gone (trapsDisabled hides them)
+      expect(screen.queryAllByText('Trap').length).toBe(0);
+
+      // Directional trap buttons should be disabled
+      const trapUpButton = screen.getByText('Trap ↑');
+      expect(trapUpButton).toBeDisabled();
+      expect(trapUpButton).toHaveAttribute('title', 'Must move after supermove');
+    });
+
+    it('should re-enable trap buttons after moving following supermove', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start at bottom-middle (2,1)
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Place trap at current position (supermove)
+      const trapHereButton = screen.getByText('Trap Here');
+      fireEvent.click(trapHereButton);
+
+      // Traps should be disabled
+      expect(screen.getByText('Piece must move after trap is placed in same square')).toBeInTheDocument();
+
+      // Move up
+      fireEvent.keyDown(document, { key: 'w', code: 'KeyW' });
+
+      // Instruction text should go back to normal
+      expect(screen.getByText(/Use WASD keys/)).toBeInTheDocument();
+
+      // Trap buttons should be available again (adjacent Trap buttons rendered)
+      expect(screen.queryAllByText('Trap').length).toBeGreaterThan(0);
+    });
+
+    it('should block Shift+X keyboard shortcut after supermove', () => {
+      const onBoardSaved = vi.fn();
+      const onCancel = vi.fn();
+
+      render(
+        <BoardCreator
+          boardSize={3}
+          existingBoards={[]}
+          onBoardSaved={onBoardSaved}
+          onCancel={onCancel}
+        />
+      );
+
+      // Start at bottom-middle (2,1)
+      const startButtons = screen.getAllByText('Start');
+      fireEvent.click(startButtons[1]!);
+
+      // Place trap at current position via Shift+X
+      fireEvent.keyDown(document, { key: 'x', code: 'KeyX', shiftKey: true });
+
+      // Should show supermove notice
+      expect(screen.getByText('Piece must move after trap is placed in same square')).toBeInTheDocument();
+
+      // Try Shift+W to place another trap — should NOT work
+      fireEvent.keyDown(document, { key: 'W', code: 'KeyW', shiftKey: true });
+
+      // Still showing supermove notice (no new trap placed, still must move)
+      expect(screen.getByText('Piece must move after trap is placed in same square')).toBeInTheDocument();
+    });
+
     it('should create valid board with supermove sequence', () => {
       const onBoardSaved = vi.fn();
       const onCancel = vi.fn();
