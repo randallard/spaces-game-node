@@ -121,7 +121,7 @@ describe('OpponentSchema', () => {
 
 describe('AiAgentSkillLevelSchema', () => {
   it('should accept all valid skill levels', () => {
-    const levels = ['beginner', 'beginner_plus', 'intermediate', 'intermediate_plus', 'advanced', 'advanced_plus'];
+    const levels = ['beginner', 'beginner_plus', 'intermediate', 'intermediate_plus', 'advanced', 'advanced_plus', 'test_fail'];
     for (const level of levels) {
       expect(AiAgentSkillLevelSchema.parse(level)).toBe(level);
     }

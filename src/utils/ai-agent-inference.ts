@@ -14,6 +14,50 @@ import { v4 as uuidv4 } from 'uuid';
 const REQUEST_TIMEOUT = 30000;
 
 /**
+ * Convert a deterministic (_plus) skill level to its stochastic variant.
+ * Useful for retries: if a deterministic seed produced a bad board,
+ * switching to stochastic gives the model a better chance.
+ */
+export function toStochasticSkillLevel(skillLevel: AiAgentSkillLevel): AiAgentSkillLevel {
+  if (skillLevel.endsWith('_plus')) {
+    return skillLevel.replace('_plus', '') as AiAgentSkillLevel;
+  }
+  return skillLevel;
+}
+
+/**
+ * Validate that an AI-constructed board has a complete path.
+ * Checks that the piece visits every row (0 through boardSize-1)
+ * and reaches the goal (has a final move).
+ * This mirrors Python's is_board_playable() full-path checks.
+ */
+function isValidAiBoard(board: Board): boolean {
+  const size = board.boardSize;
+  const rowsWithPiece = new Set<number>();
+  let hasFinal = false;
+
+  for (const move of board.sequence) {
+    if (move.type === 'piece') {
+      rowsWithPiece.add(move.position.row);
+    } else if (move.type === 'final') {
+      hasFinal = true;
+    }
+  }
+
+  if (!hasFinal) {
+    return false;
+  }
+
+  for (let r = 0; r < size; r++) {
+    if (!rowsWithPiece.has(r)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
  * Move in the API response format
  */
 interface ApiMove {
@@ -46,21 +90,20 @@ export interface AiAgentBoardResult {
 }
 
 /**
- * Convert a Board's sequence to the API request history format
- * Each history entry is the sequence of moves from that round's board
+ * Convert a Board to the API request history format (OpponentBoardHistory)
+ * Each history entry has a `sequence` field containing the moves
  */
-function boardToHistoryEntry(board: Board): Array<{
-  row: number;
-  col: number;
-  type: string;
-  order: number;
-}> {
-  return board.sequence.map((move) => ({
-    row: move.position.row,
-    col: move.position.col,
-    type: move.type,
-    order: move.order,
-  }));
+function boardToHistoryEntry(board: Board): {
+  sequence: Array<{ row: number; col: number; type: string; order: number }>;
+} {
+  return {
+    sequence: board.sequence.map((move) => ({
+      row: move.position.row,
+      col: move.position.col,
+      type: move.type,
+      order: move.order,
+    })),
+  };
 }
 
 /**
@@ -115,9 +158,10 @@ export async function requestAiAgentBoard(
     const opponentHistory = playerBoardHistory.map(boardToHistoryEntry);
 
     // Flip scores: API expects agent_score = AI's score, opponent_score = player's score
+    // round_num is 0-indexed on the server (0-4), but Node uses 1-indexed (1-5)
     const requestBody = {
       board_size: boardSize,
-      round_num: roundNum,
+      round_num: roundNum - 1,
       agent_score: opponentScore,    // AI's score from game perspective
       opponent_score: playerScore,    // Player's score from game perspective
       opponent_history: opponentHistory,
@@ -158,7 +202,17 @@ export async function requestAiAgentBoard(
       return { board: null, failed: true, attemptsUsed };
     }
 
-    return { board: responseBoardToBoard(data.board, skillLevel), failed: false, attemptsUsed };
+    const constructedBoard = responseBoardToBoard(data.board, skillLevel);
+
+    // Local validation: ensure the board has a complete path (visits every row + reaches goal)
+    if (!isValidAiBoard(constructedBoard)) {
+      console.error(
+        `[requestAiAgentBoard] Board failed local validation (incomplete path or missing goal)`
+      );
+      return { board: null, failed: true, attemptsUsed };
+    }
+
+    return { board: constructedBoard, failed: false, attemptsUsed };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       console.error('[requestAiAgentBoard] Request timed out');

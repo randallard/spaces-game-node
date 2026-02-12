@@ -10,7 +10,8 @@ export type AiAgentSkillLevel =
   | 'intermediate'
   | 'intermediate_plus'
   | 'advanced'
-  | 'advanced_plus';
+  | 'advanced_plus'
+  | 'test_fail';
 
 export type Opponent = {
   id: string; // Generated from type + name

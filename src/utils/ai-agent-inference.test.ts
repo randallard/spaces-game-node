@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { requestAiAgentBoard, checkInferenceServerHealth } from './ai-agent-inference';
+import { requestAiAgentBoard, checkInferenceServerHealth, toStochasticSkillLevel } from './ai-agent-inference';
 import type { Board } from '@/types';
 
 // Mock the api config module
@@ -40,16 +40,17 @@ describe('requestAiAgentBoard', () => {
   const mockApiResponse = {
     board: {
       sequence: [
-        { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
-        { position: { row: 0, col: 1 }, type: 'trap', order: 2 },
-        { position: { row: 1, col: 1 }, type: 'piece', order: 3 },
-        { position: { row: -1, col: 2 }, type: 'final', order: 4 },
+        { position: { row: 2, col: 0 }, type: 'piece', order: 1 },
+        { position: { row: 1, col: 0 }, type: 'piece', order: 2 },
+        { position: { row: 1, col: 1 }, type: 'trap', order: 3 },
+        { position: { row: 0, col: 0 }, type: 'piece', order: 4 },
+        { position: { row: -1, col: 0 }, type: 'final', order: 5 },
       ],
       boardSize: 3,
       grid: [
+        ['piece', 'empty', 'empty'],
         ['piece', 'trap', 'empty'],
-        ['empty', 'piece', 'empty'],
-        ['empty', 'empty', 'empty'],
+        ['piece', 'empty', 'empty'],
       ],
     },
     valid: true,
@@ -77,7 +78,7 @@ describe('requestAiAgentBoard', () => {
     expect(result.failed).toBe(false);
     expect(result.attemptsUsed).toBe(1);
     expect(result.board!.boardSize).toBe(3);
-    expect(result.board!.sequence).toHaveLength(4);
+    expect(result.board!.sequence).toHaveLength(5);
     expect(result.board!.id).toContain('ai-agent-');
     expect(result.board!.name).toContain('beginner');
   });
@@ -111,8 +112,8 @@ describe('requestAiAgentBoard', () => {
     const body = JSON.parse(fetchCall[1]!.body as string);
 
     expect(body.opponent_history).toHaveLength(1);
-    expect(body.opponent_history[0]).toHaveLength(5); // 5 moves in mockBoard
-    expect(body.opponent_history[0][0]).toEqual({
+    expect(body.opponent_history[0].sequence).toHaveLength(5); // 5 moves in mockBoard
+    expect(body.opponent_history[0].sequence[0]).toEqual({
       row: 2,
       col: 2,
       type: 'piece',
@@ -189,7 +190,7 @@ describe('requestAiAgentBoard', () => {
     const body = JSON.parse(fetchCall[1]!.body as string);
 
     expect(body.board_size).toBe(3);
-    expect(body.round_num).toBe(3);
+    expect(body.round_num).toBe(2); // 0-indexed: round 3 -> 2
     expect(body.skill_level).toBe('advanced_plus');
     expect(body.opponent_history).toEqual([]);
   });
@@ -209,6 +210,65 @@ describe('requestAiAgentBoard', () => {
         headers: { 'Content-Type': 'application/json' },
       })
     );
+  });
+
+  it('should reject board that does not visit all rows (local validation)', async () => {
+    const incompletePathResponse = {
+      board: {
+        sequence: [
+          { position: { row: 2, col: 0 }, type: 'piece', order: 1 },
+          // Skips row 1 entirely
+          { position: { row: 0, col: 0 }, type: 'piece', order: 2 },
+          { position: { row: -1, col: 0 }, type: 'final', order: 3 },
+        ],
+        boardSize: 3,
+        grid: [
+          ['piece', 'empty', 'empty'],
+          ['empty', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+        ],
+      },
+      valid: true, // Server says valid, but local check catches it
+      attempts_used: 1,
+    };
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => incompletePathResponse,
+    } as Response);
+
+    const result = await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
+    expect(result.board).toBeNull();
+    expect(result.failed).toBe(true);
+  });
+
+  it('should reject board without a final move (local validation)', async () => {
+    const noGoalResponse = {
+      board: {
+        sequence: [
+          { position: { row: 2, col: 0 }, type: 'piece', order: 1 },
+          { position: { row: 1, col: 0 }, type: 'piece', order: 2 },
+          { position: { row: 0, col: 0 }, type: 'piece', order: 3 },
+        ],
+        boardSize: 3,
+        grid: [
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+          ['piece', 'empty', 'empty'],
+        ],
+      },
+      valid: true, // Server says valid, but no goal
+      attempts_used: 1,
+    };
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => noGoalResponse,
+    } as Response);
+
+    const result = await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
+    expect(result.board).toBeNull();
+    expect(result.failed).toBe(true);
   });
 });
 
@@ -270,5 +330,35 @@ describe('checkInferenceServerHealth', () => {
       'http://localhost:8100/health',
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
+  });
+});
+
+describe('toStochasticSkillLevel', () => {
+  it('should strip _plus suffix from beginner_plus', () => {
+    expect(toStochasticSkillLevel('beginner_plus')).toBe('beginner');
+  });
+
+  it('should strip _plus suffix from intermediate_plus', () => {
+    expect(toStochasticSkillLevel('intermediate_plus')).toBe('intermediate');
+  });
+
+  it('should strip _plus suffix from advanced_plus', () => {
+    expect(toStochasticSkillLevel('advanced_plus')).toBe('advanced');
+  });
+
+  it('should return beginner unchanged (already stochastic)', () => {
+    expect(toStochasticSkillLevel('beginner')).toBe('beginner');
+  });
+
+  it('should return intermediate unchanged (already stochastic)', () => {
+    expect(toStochasticSkillLevel('intermediate')).toBe('intermediate');
+  });
+
+  it('should return advanced unchanged (already stochastic)', () => {
+    expect(toStochasticSkillLevel('advanced')).toBe('advanced');
+  });
+
+  it('should return test_fail unchanged (no stochastic variant)', () => {
+    expect(toStochasticSkillLevel('test_fail')).toBe('test_fail');
   });
 });

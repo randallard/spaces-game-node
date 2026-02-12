@@ -13,6 +13,7 @@ export const AiAgentSkillLevelSchema = z.enum([
   'intermediate_plus',
   'advanced',
   'advanced_plus',
+  'test_fail',
 ]);
 
 export const OpponentSchema = z.object({

@@ -66,4 +66,10 @@ export const AI_AGENT_SKILL_LEVELS = {
     color: '#8B7355',
     label: 'Advanced+',
   },
+  test_fail: {
+    emoji: '🧪',
+    defaultName: 'Glitch',
+    color: '#DC2626',
+    label: 'Test (Fail)',
+  },
 } as const;
