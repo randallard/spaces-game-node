@@ -270,21 +270,102 @@
   min-height: 0;
 }
 
-.explanations {
-  padding: 1rem;
-  background-color: #f9fafb;
+.explanationsWrapper {
+  display: flex;
+  flex-direction: column;
   border-radius: 0.5rem;
   border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.scoreColumnHeaders {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 1rem;
+  background-color: #e5e7eb;
+  border-bottom: 1px solid #d1d5db;
+  gap: 0;
+}
+
+.scoreColumnHeaderSpacer {
+  flex: 1;
+}
+
+.scoreColumnHeader {
+  width: 40px;
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explanations {
+  padding: 0.75rem 1rem;
+  background-color: #f9fafb;
   overflow-y: auto;
-  max-height: 460px;
-  height: 460px;
+  max-height: 420px;
+  height: 420px;
 }
 
 .explanationLine {
+  display: flex;
+  align-items: baseline;
+  padding: 0.125rem 0;
+  line-height: 1.5;
+  min-height: 1.5em;
+}
+
+.explanationText {
+  flex: 1;
   font-size: 0.875rem;
   color: #374151;
-  padding: 0.25rem 0;
-  line-height: 1.5;
+  min-width: 0;
+}
+
+.deltaCell {
+  width: 40px;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.deltaPositive {
+  color: #059669;
+}
+
+.deltaNegative {
+  color: #dc2626;
+}
+
+.scoreTotalsRow {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #e5e7eb;
+  border-top: 1px solid #d1d5db;
+}
+
+.scoreTotalLabel {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.scoreTotalValue {
+  width: 40px;
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1a1a1a;
 }
 
 /* Legend */

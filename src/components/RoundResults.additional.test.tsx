@@ -328,8 +328,8 @@ describe('RoundResults - Additional Coverage', () => {
       // Advance to see forward movement
       fireEvent.click(screen.getByText('▶ Step'));
 
-      // Should show technical point explanation
-      expect(screen.getByText(/Player \+1 point \(forward movement\)/)).toBeInTheDocument();
+      // Should show point in delta column (no longer inline text)
+      expect(screen.getAllByText('+1').length).toBeGreaterThan(0);
     });
   });
 

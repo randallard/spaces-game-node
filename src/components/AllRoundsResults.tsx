@@ -8,7 +8,7 @@ import type { RoundResult, Board, UserProfile } from '@/types';
 import { RoundResults } from './RoundResults';
 import { HelpModal } from './HelpModal';
 import { SavedBoards } from './SavedBoards';
-import { generateOpponentThumbnail, generateBoardThumbnail } from '@/utils/svg-thumbnail';
+import { generateOpponentThumbnail, generateBoardThumbnail, generateBlankThumbnail } from '@/utils/svg-thumbnail';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
 import styles from './AllRoundsResults.module.css';
@@ -375,8 +375,16 @@ export function AllRoundsResults({
                       )}
                     </div>
                     <div className={styles.thumbnailWrapper}>
-                      <span className={styles.thumbnailLabel}>{opponentName}</span>
-                      {result.opponentBoard ? (
+                      <span className={styles.thumbnailLabel}>
+                        {opponentName}{result.forfeit ? ' (Forfeit)' : ''}
+                      </span>
+                      {result.forfeit ? (
+                        <img
+                          src={generateBlankThumbnail(result.playerBoard?.boardSize ?? 2)}
+                          alt="Forfeited"
+                          className={styles.thumbnail}
+                        />
+                      ) : result.opponentBoard ? (
                         <img
                           src={generateOpponentThumbnail(
                             result.opponentBoard,

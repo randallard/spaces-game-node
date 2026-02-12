@@ -6,6 +6,7 @@
 import { type ReactElement, useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import type { RoundResult } from '@/types';
 import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
+import { generateBlankThumbnail } from '@/utils/svg-thumbnail';
 import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
 import { HelpModal } from './HelpModal';
@@ -72,10 +73,17 @@ export function RoundResults({
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard } = result;
 
+  // Explanation entry: text with optional score deltas for the columns
+  interface ExplanationEntry {
+    text: string;
+    playerDelta?: number;
+    opponentDelta?: number;
+  }
+
   // Replay state
   const [isReplaying, setIsReplaying] = useState(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [explanations, setExplanations] = useState<string[]>([]);
+  const [explanations, setExplanations] = useState<ExplanationEntry[]>([]);
   const [showCompleteResults, setShowCompleteResults] = useState(showCompleteResultsByDefault);
 
   // Ref for auto-scrolling explanations panel
@@ -163,10 +171,10 @@ export function RoundResults({
     [playerBoard, opponentBoard, result, currentStep, isReplaying, playerLastStep, opponentLastStep]
   );
 
-  // Generate explanation text for a step (with scoring)
-  const getStepExplanation = useCallback((step: number, lively: boolean = useLivelyStyle): string[] => {
+  // Generate explanation entries for a step (with score deltas in columns, not inline text)
+  const getStepExplanation = useCallback((step: number, lively: boolean = useLivelyStyle): ExplanationEntry[] => {
     const size = playerBoard.grid.length;
-    const explanations: string[] = [];
+    const entries: ExplanationEntry[] = [];
 
     // Helper to rotate position
     const rotatePosition = (row: number, col: number) => ({
@@ -225,69 +233,61 @@ export function RoundResults({
     if (!playerRoundEnded && !opponentRoundEnded && step <= playerLastStep && step < playerBoard.sequence.length) {
       const move = playerBoard.sequence[step]!;
       if (move.type === 'piece') {
-        if (lively) {
-          explanations.push(`${playerName} moves!`);
-        } else {
-          explanations.push(`Player moves to (${move.position.row}, ${move.position.col})`);
-        }
-
-        // Check for forward movement scoring
-        if (playerPosition !== null && move.position.row < playerPosition.row) {
-          explanations.push(lively ? `  ${playerName} +1 point!` : '  Player +1 point (forward movement)');
-        }
-
+        const isForward = playerPosition !== null && move.position.row < playerPosition.row;
+        entries.push({
+          text: lively
+            ? `${playerName} moves!`
+            : `Player moves to (${move.position.row}, ${move.position.col})`,
+          ...(isForward && { playerDelta: 1 }),
+        });
         newPlayerPosition = move.position;
       } else if (move.type === 'trap') {
-        if (lively) {
-          explanations.push(`${playerName} sets a trap!`);
-        } else {
-          explanations.push(`Player places trap at (${move.position.row}, ${move.position.col})`);
-        }
+        entries.push({
+          text: lively
+            ? `${playerName} sets a trap!`
+            : `Player places trap at (${move.position.row}, ${move.position.col})`,
+        });
         playerTraps.push(move.position);
       } else if (move.type === 'final') {
-        if (lively) {
-          explanations.push(`${playerName} makes it to the goal!`);
-          explanations.push(`  ${playerName} +1 point!`);
-        } else {
-          explanations.push('Player reaches the goal!');
-          explanations.push('  Player +1 point (goal reached)');
-        }
+        entries.push({
+          text: lively
+            ? `${playerName} makes it to the goal!`
+            : 'Player reaches the goal!',
+          playerDelta: 1,
+        });
         playerRoundEnded = true;
       }
     }
 
-    // Process opponent action (only if they haven't ended yet and round hasn't ended)
-    if (!opponentRoundEnded && !playerRoundEnded && step <= opponentLastStep && step < opponentBoard.sequence.length) {
+    // Process opponent action (only if they haven't ended yet)
+    // Note: do NOT check playerRoundEnded here — both players can reach the goal on the same step
+    // This matches simulateRound() which only checks !opponentRoundEnded
+    if (!opponentRoundEnded && step <= opponentLastStep && step < opponentBoard.sequence.length) {
       const move = opponentBoard.sequence[step]!;
       const rotated = rotatePosition(move.position.row, move.position.col);
       if (move.type === 'piece') {
-        if (lively) {
-          explanations.push(`${opponentName} moves!`);
-        } else {
-          explanations.push(`Opponent moves to (${rotated.row}, ${rotated.col})`);
-        }
-
-        // Check for forward movement scoring (opponent's forward is towards higher row)
-        if (opponentPosition !== null && rotated.row > opponentPosition.row) {
-          explanations.push(lively ? `  ${opponentName} +1 point!` : '  Opponent +1 point (forward movement)');
-        }
-
+        const isForward = opponentPosition !== null && rotated.row > opponentPosition.row;
+        entries.push({
+          text: lively
+            ? `${opponentName} moves!`
+            : `Opponent moves to (${rotated.row}, ${rotated.col})`,
+          ...(isForward && { opponentDelta: 1 }),
+        });
         newOpponentPosition = rotated;
       } else if (move.type === 'trap') {
-        if (lively) {
-          explanations.push(`${opponentName} sets a trap!`);
-        } else {
-          explanations.push(`Opponent places trap at (${rotated.row}, ${rotated.col})`);
-        }
+        entries.push({
+          text: lively
+            ? `${opponentName} sets a trap!`
+            : `Opponent places trap at (${rotated.row}, ${rotated.col})`,
+        });
         opponentTraps.push(rotated);
       } else if (move.type === 'final') {
-        if (lively) {
-          explanations.push(`${opponentName} makes it to the goal!`);
-          explanations.push(`  ${opponentName} +1 point!`);
-        } else {
-          explanations.push('Opponent reaches the goal!');
-          explanations.push('  Opponent +1 point (goal reached)');
-        }
+        entries.push({
+          text: lively
+            ? `${opponentName} makes it to the goal!`
+            : 'Opponent reaches the goal!',
+          opponentDelta: 1,
+        });
         opponentRoundEnded = true;
       }
     }
@@ -303,134 +303,134 @@ export function RoundResults({
     // After both actions are processed, check for trap hits and collisions (only if round hasn't ended)
     if (!playerRoundEnded && !opponentRoundEnded) {
       if (newPlayerPosition) {
-        // Check if player hit opponent's trap (including traps placed this turn)
         const hitTrap = opponentTraps.some(trap => positionsMatch(trap, newPlayerPosition));
         if (hitTrap) {
-          if (lively) {
-            explanations.push(`  ${playerName} steps right in the trap!`);
-            explanations.push(`  ${playerName} -1 point!`);
-          } else {
-            explanations.push('  Player -1 point (hit trap!)');
-          }
+          entries.push({
+            text: lively
+              ? `  ${playerName} steps right in the trap!`
+              : '  Player hit a trap!',
+            playerDelta: -1,
+          });
         }
       }
 
       if (newOpponentPosition) {
-        // Check if opponent hit player's trap (including traps placed this turn)
         const hitTrap = playerTraps.some(trap => positionsMatch(trap, newOpponentPosition));
         if (hitTrap) {
-          if (lively) {
-            explanations.push(`  ${opponentName} steps right in the trap!`);
-            explanations.push(`  ${opponentName} -1 point!`);
-          } else {
-            explanations.push('  Opponent -1 point (hit trap!)');
-          }
+          entries.push({
+            text: lively
+              ? `  ${opponentName} steps right in the trap!`
+              : '  Opponent hit a trap!',
+            opponentDelta: -1,
+          });
         }
       }
 
       // Check for collision - both players at same position (regardless of when they arrived)
       if (playerPosition && opponentPosition && positionsMatch(playerPosition, opponentPosition)) {
-        if (lively) {
-          explanations.push('  Crash! They collide!');
-          explanations.push(`  ${playerName} -1 point!`);
-          explanations.push(`  ${opponentName} -1 point!`);
-        } else {
-          explanations.push('  Player -1 point (collision!)');
-          explanations.push('  Opponent -1 point (collision!)');
-        }
+        entries.push({
+          text: lively
+            ? '  Crash! They collide!'
+            : '  Collision!',
+          playerDelta: -1,
+          opponentDelta: -1,
+        });
       }
     }
 
     // Add round end message if appropriate
     if (playerRoundEnded || opponentRoundEnded) {
-      if (playerRoundEnded) {
-        if (lively) {
-          explanations.push('');
-          explanations.push(`Game over - ${playerName} wins!`);
+      entries.push({ text: '' });
+      if (lively) {
+        if (winner === 'player') {
+          entries.push({ text: `Game over - ${playerName} wins!` });
+        } else if (winner === 'opponent') {
+          entries.push({ text: `Game over - ${opponentName} wins!` });
         } else {
-          explanations.push('');
-          explanations.push('Round ends - Player reached the goal!');
+          entries.push({ text: "Game over - it's a tie!" });
         }
-      } else if (opponentRoundEnded) {
-        if (lively) {
-          explanations.push('');
-          explanations.push(`Game over - ${opponentName} wins!`);
+      } else {
+        if (playerRoundEnded && opponentRoundEnded) {
+          entries.push({ text: 'Round ends - Both players reached the goal!' });
+        } else if (playerRoundEnded) {
+          entries.push({ text: 'Round ends - Player reached the goal!' });
         } else {
-          explanations.push('');
-          explanations.push('Round ends - Opponent reached the goal!');
+          entries.push({ text: 'Round ends - Opponent reached the goal!' });
         }
       }
     }
 
-    return explanations;
-  }, [playerBoard, opponentBoard, playerLastStep, opponentLastStep, playerName, opponentName, explanationStyle]);
+    return entries;
+  }, [playerBoard, opponentBoard, playerLastStep, opponentLastStep, playerName, opponentName, explanationStyle, winner]);
+
+  // Derive running score totals from explanation entries
+  const runningScores = useMemo((): [number, number] => {
+    let p = 0;
+    let o = 0;
+    for (const entry of explanations) {
+      if (entry.playerDelta) p += entry.playerDelta;
+      if (entry.opponentDelta) o += entry.opponentDelta;
+    }
+    return [Math.max(0, p), Math.max(0, o)];
+  }, [explanations]);
+
+  // Build initial explanation entries (pieces placed)
+  const buildInitialEntries = useCallback((): ExplanationEntry[] => {
+    const size = playerBoard.grid.length;
+    return useLivelyStyle
+      ? [{ text: 'Pieces placed!' }]
+      : [
+        { text: `Player starts with piece at (${size - 1}, 0)` },
+        { text: `Opponent starts with piece at (0, ${size - 1})` },
+      ];
+  }, [playerBoard, explanationStyle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Start replay
   const handleReplay = useCallback(() => {
-    const size = playerBoard.grid.length;
-    const initialExplanations = useLivelyStyle
-      ? ['Pieces placed!']
-      : [
-        `Player starts with piece at (${size - 1}, 0)`,
-        `Opponent starts with piece at (0, ${size - 1})`,
-      ];
-    setExplanations(initialExplanations);
+    setExplanations(buildInitialEntries());
     setCurrentStep(1); // Start at 1 so currentStep - 1 = 0, showing first pieces
     setIsReplaying(true);
-  }, [playerBoard, explanationStyle]);
+  }, [buildInitialEntries]);
 
   // Next step
   const handleNext = useCallback(() => {
-    const newExplanations = getStepExplanation(currentStep);
-    const allExplanations = [...newExplanations];
+    const newEntries = getStepExplanation(currentStep);
+    const allEntries: ExplanationEntry[] = [...newEntries];
 
     // Check if either player ended at this step
     if (result.simulationDetails) {
-      // Player hit trap at this step
       if (currentStep === playerLastStep && result.simulationDetails.playerHitTrap) {
-        if (useLivelyStyle) {
-          allExplanations.push(`${playerName} is stopped!`);
-        } else {
-          allExplanations.push('Player hit a trap and stopped!');
-        }
+        allEntries.push({
+          text: useLivelyStyle ? `${playerName} is stopped!` : 'Player hit a trap and stopped!',
+        });
       }
-
-      // Opponent hit trap at this step
       if (currentStep === opponentLastStep && result.simulationDetails.opponentHitTrap) {
-        if (useLivelyStyle) {
-          allExplanations.push(`${opponentName} is stopped!`);
-        } else {
-          allExplanations.push('Opponent hit a trap and stopped!');
-        }
+        allEntries.push({
+          text: useLivelyStyle ? `${opponentName} is stopped!` : 'Opponent hit a trap and stopped!',
+        });
       }
     }
 
-    setExplanations(prev => [...prev, ...allExplanations]);
+    setExplanations(prev => [...prev, ...allEntries]);
     setCurrentStep(prev => prev + 1);
   }, [currentStep, getStepExplanation, playerLastStep, opponentLastStep, result.simulationDetails, explanationStyle, playerName, opponentName]);
 
+  // Build all entries from start to end
+  const buildAllEntries = useCallback((): ExplanationEntry[] => {
+    const allEntries = [...buildInitialEntries()];
+    for (let step = 1; step < maxSteps; step++) {
+      allEntries.push(...getStepExplanation(step));
+    }
+    return allEntries;
+  }, [buildInitialEntries, maxSteps, getStepExplanation]);
+
   // Finish button - skip to end and show all results (without affecting preference)
   const handleFinish = useCallback(() => {
-    // Skip to the end
     setCurrentStep(maxSteps);
-    // Generate all explanations if not already at the end
     if (currentStep < maxSteps) {
-      const allExplanations: string[] = [];
-      const size = playerBoard.grid.length;
-      if (useLivelyStyle) {
-        allExplanations.push('Pieces placed!');
-      } else {
-        allExplanations.push(
-          `Player starts with piece at (${size - 1}, 0)`,
-          `Opponent starts with piece at (0, ${size - 1})`
-        );
-      }
-      for (let step = 1; step < maxSteps; step++) {
-        allExplanations.push(...getStepExplanation(step));
-      }
-      setExplanations(allExplanations);
+      setExplanations(buildAllEntries());
     }
-  }, [maxSteps, currentStep, playerBoard, getStepExplanation, explanationStyle]);
+  }, [maxSteps, currentStep, buildAllEntries]);
 
   // Automatically start replay when component mounts
   useEffect(() => {
@@ -440,46 +440,22 @@ export function RoundResults({
       setTimeout(() => {
         setShowCompleteResults(true);
         setCurrentStep(maxSteps);
-        // Generate all explanations
-        const allExplanations: string[] = [];
-        const size = playerBoard.grid.length;
-        if (useLivelyStyle) {
-          allExplanations.push('Pieces placed!');
-        } else {
-          allExplanations.push(
-            `Player starts with piece at (${size - 1}, 0)`,
-            `Opponent starts with piece at (0, ${size - 1})`
-          );
-        }
-        for (let step = 1; step < maxSteps; step++) {
-          allExplanations.push(...getStepExplanation(step));
-        }
-        setExplanations(allExplanations);
+        setExplanations(buildAllEntries());
       }, 0);
     }
-  }, [handleReplay, showCompleteResultsByDefault, maxSteps, playerBoard, getStepExplanation, explanationStyle]);
+  }, [handleReplay, showCompleteResultsByDefault, maxSteps, buildAllEntries]);
 
   // Regenerate explanations when style changes
   useEffect(() => {
     if (currentStep > 0) {
-      const allExplanations: string[] = [];
-      const size = playerBoard.grid.length;
-      if (useLivelyStyle) {
-        allExplanations.push('Pieces placed!');
-      } else {
-        allExplanations.push(
-          `Player starts with piece at (${size - 1}, 0)`,
-          `Opponent starts with piece at (0, ${size - 1})`
-        );
-      }
-      // Regenerate all step explanations up to current step
+      const allEntries = [...buildInitialEntries()];
       const stepsToReplay = Math.min(currentStep, maxSteps);
       for (let step = 1; step < stepsToReplay; step++) {
-        allExplanations.push(...getStepExplanation(step));
+        allEntries.push(...getStepExplanation(step));
       }
-      setExplanations(allExplanations);
+      setExplanations(allEntries);
     }
-  }, [explanationStyle, playerBoard, currentStep, maxSteps, getStepExplanation]);
+  }, [explanationStyle, buildInitialEntries, currentStep, maxSteps, getStepExplanation]);
 
   const getWinnerText = (): string => {
     if (winner === 'player') {
@@ -524,6 +500,79 @@ export function RoundResults({
     return 'great! now click continue to finish the tutorial!';
   };
 
+  // Forfeit round: simplified display with blank opponent board
+  if (result.forfeit) {
+    const boardSize = result.playerBoard?.grid?.length ?? 2;
+    const blankThumbnail = generateBlankThumbnail(boardSize);
+
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>Round {result.round}</h2>
+        </div>
+
+        {/* Blank opponent board */}
+        <div className={styles.combinedBoard}>
+          <h4 className={styles.boardTitle}>Opponent Board</h4>
+          <div className={styles.boardColumn}>
+            <div
+              className={styles.boardThumbnail}
+              dangerouslySetInnerHTML={{ __html: `<img src="${blankThumbnail}" alt="No opponent board" style="width:100%;height:100%;object-fit:contain;" />` }}
+            />
+          </div>
+        </div>
+
+        {/* Winner Display */}
+        <div className={styles.winnerSection}>
+          <div className={styles.emoji}>🏆</div>
+          <h3 className={`${styles.winnerText} ${styles.winnerplayer}`}>
+            Won by forfeit!
+          </h3>
+        </div>
+
+        {/* Round Scores Display */}
+        <div className={styles.roundScoreSection}>
+          <div className={styles.roundScoreHeader}>
+            <h4 className={styles.roundScoreTitle}>Round Score</h4>
+          </div>
+          <div className={styles.scoreDisplay}>
+            <div className={styles.scoreItem}>
+              <span className={styles.scoreName}>{playerName}</span>
+              <span className={styles.scoreValue}>{result.playerPoints ?? 0}</span>
+            </div>
+            <span className={styles.scoreDivider}>-</span>
+            <div className={styles.scoreItem}>
+              <span className={styles.scoreName}>{opponentName}</span>
+              <span className={styles.scoreValue}>{result.opponentPoints ?? 0}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Score Display */}
+        <div className={styles.totalScoreSection}>
+          <h4 className={styles.totalScoreTitle}>Total Score</h4>
+          <div className={styles.scoreDisplay}>
+            <div className={styles.scoreItem}>
+              <span className={styles.scoreName}>{playerName}</span>
+              <span className={styles.scoreValue}>{playerScore}</span>
+            </div>
+            <span className={styles.scoreDivider}>-</span>
+            <div className={styles.scoreItem}>
+              <span className={styles.scoreName}>{opponentName}</span>
+              <span className={styles.scoreValue}>{opponentScore}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.buttonGroup}>
+          <button onClick={onContinue} className={styles.continueButton}>
+            {continueButtonText}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       {/* Tutorial Instruction Banner */}
@@ -567,33 +616,11 @@ export function RoundResults({
                     if (checked) {
                       // Skip directly to the end
                       setCurrentStep(maxSteps);
-                      // Generate all explanations
-                      const allExplanations: string[] = [];
-                      const size = playerBoard.grid.length;
-                      if (useLivelyStyle) {
-                        allExplanations.push('Pieces placed!');
-                      } else {
-                        allExplanations.push(
-                          `Player starts with piece at (${size - 1}, 0)`,
-                          `Opponent starts with piece at (0, ${size - 1})`
-                        );
-                      }
-                      for (let step = 1; step < maxSteps; step++) {
-                        allExplanations.push(...getStepExplanation(step));
-                      }
-                      setExplanations(allExplanations);
+                      setExplanations(buildAllEntries());
                     } else {
                       // Reset to step 1
                       setCurrentStep(1);
-                      const size = playerBoard.grid.length;
-                      if (useLivelyStyle) {
-                        setExplanations(['Pieces placed!']);
-                      } else {
-                        setExplanations([
-                          `Player starts with piece at (${size - 1}, 0)`,
-                          `Opponent starts with piece at (0, ${size - 1})`,
-                        ]);
-                      }
+                      setExplanations(buildInitialEntries());
                     }
                   }}
                   className={styles.checkbox}
@@ -608,12 +635,30 @@ export function RoundResults({
                 {useLivelyStyle ? '📖 Technical' : '🎉 Lively'}
               </button>
             </div>
-            <div className={styles.explanations} ref={explanationsRef}>
-              {explanations.map((text, index) => (
-                <div key={index} className={styles.explanationLine}>
-                  {text}
-                </div>
-              ))}
+            <div className={styles.explanationsWrapper}>
+              <div className={styles.scoreColumnHeaders}>
+                <div className={styles.scoreColumnHeaderSpacer} />
+                <div className={styles.scoreColumnHeader}>{playerName}</div>
+                <div className={styles.scoreColumnHeader}>{opponentName}</div>
+              </div>
+              <div className={styles.explanations} ref={explanationsRef}>
+                {explanations.map((entry, index) => (
+                  <div key={index} className={styles.explanationLine}>
+                    <span className={styles.explanationText}>{entry.text}</span>
+                    <span className={`${styles.deltaCell} ${entry.playerDelta ? (entry.playerDelta > 0 ? styles.deltaPositive : styles.deltaNegative) : ''}`}>
+                      {entry.playerDelta ? (entry.playerDelta > 0 ? `+${entry.playerDelta}` : entry.playerDelta) : ''}
+                    </span>
+                    <span className={`${styles.deltaCell} ${entry.opponentDelta ? (entry.opponentDelta > 0 ? styles.deltaPositive : styles.deltaNegative) : ''}`}>
+                      {entry.opponentDelta ? (entry.opponentDelta > 0 ? `+${entry.opponentDelta}` : entry.opponentDelta) : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className={styles.scoreTotalsRow}>
+                <div className={styles.scoreTotalLabel}>Total</div>
+                <div className={styles.scoreTotalValue}>{runningScores[0]}</div>
+                <div className={styles.scoreTotalValue}>{runningScores[1]}</div>
+              </div>
             </div>
           </div>
           <div className={styles.boardColumn}>

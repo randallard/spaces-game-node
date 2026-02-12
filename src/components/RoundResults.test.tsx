@@ -805,8 +805,8 @@ describe('RoundResults', () => {
       // Replay auto-starts, advance to second step where player moves forward
       fireEvent.click(screen.getByText('▶ Step'));
 
-      // Should show forward movement point
-      expect(screen.getByText(/\+1 point!/)).toBeInTheDocument();
+      // Should show forward movement point in delta column
+      expect(screen.getAllByText('+1').length).toBeGreaterThan(0);
     });
 
     it('should show goal reached explanation', () => {
@@ -827,9 +827,9 @@ describe('RoundResults', () => {
       fireEvent.click(screen.getByText('▶ Step')); // Step 1
       fireEvent.click(screen.getByText('▶ Step')); // Step 2 - goal reached
 
-      // Should show goal reached message
+      // Should show goal reached message and point in delta column
       expect(screen.getByText(/makes it to the goal!/)).toBeInTheDocument();
-      expect(screen.getAllByText(/\+1 point!/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText('+1').length).toBeGreaterThan(0);
     });
 
     it('should show round end message when goal is reached', () => {
