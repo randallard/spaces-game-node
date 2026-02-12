@@ -1,20 +1,21 @@
 /* Creator Layout with Sidebar */
 .creatorLayout {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   background-color: #f5f5f5;
   gap: 1rem;
+  overflow: hidden;
 }
 
 .container {
   flex: 1;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 2rem;
   gap: 1rem;
   background-color: #f5f5f5;
+  overflow-y: auto;
 }
 
 /* Existing Boards Sidebar */
