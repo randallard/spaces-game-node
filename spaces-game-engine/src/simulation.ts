@@ -321,6 +321,8 @@ export function simulateMultipleRounds(
  * - Trap placement (only adjacent to piece or at current position)
  * - Supermove constraint (piece must move immediately after trap at current position)
  * - Piece cannot move into trap
+ * - Sequence must contain a final move (piece must reach the goal)
+ * - Piece must visit every row (0 through boardSize-1)
  *
  * @param board - Board to validate
  * @returns true if board can be used in simulation
@@ -338,6 +340,8 @@ export function isBoardPlayable(board: Board): boolean {
   let currentPosition: Position | null = null;
   const trapPositions = new Set<string>();
   let supermovePosition: Position | null = null; // Track if last move was supermove
+  const rowsWithPiece = new Set<number>(); // Track rows visited by piece moves
+  let hasFinal = false;
 
   // Validate each move in sequence
   for (let i = 0; i < board.sequence.length; i++) {
@@ -354,6 +358,7 @@ export function isBoardPlayable(board: Board): boolean {
       if (supermovePosition !== null) {
         return false; // Cannot reach goal right after supermove without moving
       }
+      hasFinal = true;
       continue; // Don't check grid content for final moves
     }
 
@@ -391,8 +396,9 @@ export function isBoardPlayable(board: Board): boolean {
         }
       }
 
-      // Update current position
+      // Update current position and track row
       currentPosition = move.position;
+      rowsWithPiece.add(row);
     }
 
     // Process trap moves
@@ -437,6 +443,18 @@ export function isBoardPlayable(board: Board): boolean {
   // (unless goal is reached, but that's already handled above)
   if (supermovePosition !== null) {
     return false; // Sequence cannot end with supermove without piece moving
+  }
+
+  // Must reach the goal (sequence must contain a final move)
+  if (!hasFinal) {
+    return false;
+  }
+
+  // Piece must visit every row (path from bottom to top)
+  for (let r = 0; r < size; r++) {
+    if (!rowsWithPiece.has(r)) {
+      return false;
+    }
   }
 
   return true;

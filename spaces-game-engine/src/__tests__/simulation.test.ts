@@ -274,7 +274,25 @@ describe('simulateMultipleRounds', () => {
 });
 
 describe('isBoardPlayable', () => {
-  it('should validate a valid board', () => {
+  it('should validate a valid board with full path and goal', () => {
+    const board: Board = {
+      boardSize: 2,
+      grid: [
+        ['piece', 'empty'],
+        ['piece', 'piece']
+      ],
+      sequence: [
+        { position: { row: 1, col: 1 }, type: 'piece', order: 1 },
+        { position: { row: 1, col: 0 }, type: 'piece', order: 2 },
+        { position: { row: 0, col: 0 }, type: 'piece', order: 3 },
+        { position: { row: -1, col: 0 }, type: 'final', order: 4 }
+      ]
+    };
+
+    expect(isBoardPlayable(board)).toBe(true);
+  });
+
+  it('should reject board without final move (no goal)', () => {
     const board: Board = {
       boardSize: 2,
       grid: [
@@ -288,7 +306,27 @@ describe('isBoardPlayable', () => {
       ]
     };
 
-    expect(isBoardPlayable(board)).toBe(true);
+    expect(isBoardPlayable(board)).toBe(false);
+  });
+
+  it('should reject board that does not visit all rows', () => {
+    const board: Board = {
+      boardSize: 3,
+      grid: [
+        ['piece', 'empty', 'empty'],
+        ['empty', 'empty', 'empty'],
+        ['piece', 'piece', 'empty']
+      ],
+      sequence: [
+        { position: { row: 2, col: 0 }, type: 'piece', order: 1 },
+        { position: { row: 2, col: 1 }, type: 'piece', order: 2 },
+        // Skips row 1 entirely
+        { position: { row: 0, col: 0 }, type: 'piece', order: 3 },
+        { position: { row: -1, col: 0 }, type: 'final', order: 4 }
+      ]
+    };
+
+    expect(isBoardPlayable(board)).toBe(false);
   });
 
   it('should reject board with empty sequence', () => {

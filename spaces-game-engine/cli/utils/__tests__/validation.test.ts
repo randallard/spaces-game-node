@@ -56,14 +56,15 @@ describe('validation', () => {
         grid: [
           ['empty', 'piece', 'empty'],
           ['empty', 'piece', 'piece'],
-          ['empty', 'trap', 'empty'],
+          ['empty', 'trap', 'piece'],
         ],
         sequence: [
-          { position: { row: 1, col: 2 }, type: 'piece', order: 1 },
-          { position: { row: 1, col: 1 }, type: 'piece', order: 2 },
-          { position: { row: 2, col: 1 }, type: 'trap', order: 3 },
-          { position: { row: 0, col: 1 }, type: 'piece', order: 4 },
-          { position: { row: -1, col: 1 }, type: 'final', order: 5 },
+          { position: { row: 2, col: 2 }, type: 'piece', order: 1 },
+          { position: { row: 1, col: 2 }, type: 'piece', order: 2 },
+          { position: { row: 1, col: 1 }, type: 'piece', order: 3 },
+          { position: { row: 2, col: 1 }, type: 'trap', order: 4 },
+          { position: { row: 0, col: 1 }, type: 'piece', order: 5 },
+          { position: { row: -1, col: 1 }, type: 'final', order: 6 },
         ],
       };
       const result = validateBoard(board);
