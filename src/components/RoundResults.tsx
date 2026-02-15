@@ -43,6 +43,10 @@ export interface RoundResultsProps {
   opponentDiscordId?: string | undefined;
   /** Opponent's Discord avatar hash (optional) */
   opponentDiscordAvatar?: string | undefined;
+  /** Mobile explanation mode preference */
+  mobileExplanationMode?: 'overlay' | 'below' | 'hidden';
+  /** Callback when mobile explanation mode changes */
+  onMobileExplanationModeChange?: ((value: 'overlay' | 'below' | 'hidden') => void) | undefined;
 }
 
 /**
@@ -70,6 +74,8 @@ export function RoundResults({
   onExplanationStyleChange,
   isTutorial = false,
   waitingForOpponentResponse = false,
+  mobileExplanationMode = 'overlay',
+  onMobileExplanationModeChange,
 }: RoundResultsProps): ReactElement {
   const { winner, playerBoard, opponentBoard } = result;
 
@@ -94,6 +100,34 @@ export function RoundResults({
 
   // Help modal state
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
+  // Detect mobile viewport for conditional rendering
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 768px)').matches;
+  });
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
+  // Mobile overlay state
+  const [mobileOverlayVisible, setMobileOverlayVisible] = useState(mobileExplanationMode === 'overlay' || mobileExplanationMode === undefined);
+  const [mobileExplanationPosition, setMobileExplanationPosition] = useState<'overlay' | 'below' | 'hidden'>(mobileExplanationMode ?? 'overlay');
+  const [overlayHelpModalOpen, setOverlayHelpModalOpen] = useState(false);
+
+  // Ref for auto-scrolling overlay explanations
+  const overlayExplanationsRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll overlay explanations when new content is added
+  useEffect(() => {
+    if (overlayExplanationsRef.current) {
+      overlayExplanationsRef.current.scrollTop = overlayExplanationsRef.current.scrollHeight;
+    }
+  }, [explanations]);
 
   // Toggle explanation style and update user profile
   const toggleExplanationStyle = () => {
@@ -194,6 +228,10 @@ export function RoundResults({
     let playerRoundEnded = false;
     let opponentRoundEnded = false;
 
+    // Helper: use second-person verbs when name is "You"
+    const isPlayerYou = playerName === 'You';
+    const isOpponentYou = opponentName === 'You';
+
     // Replay all previous steps to get current state and check if round ended
     for (let i = 0; i < step; i++) {
       if (!playerRoundEnded && i <= playerLastStep && i < playerBoard.sequence.length) {
@@ -236,7 +274,7 @@ export function RoundResults({
         const isForward = playerPosition !== null && move.position.row < playerPosition.row;
         entries.push({
           text: lively
-            ? `${playerName} moves!`
+            ? (isPlayerYou ? 'You move!' : `${playerName} moves!`)
             : `Player moves to (${move.position.row}, ${move.position.col})`,
           ...(isForward && { playerDelta: 1 }),
         });
@@ -244,14 +282,14 @@ export function RoundResults({
       } else if (move.type === 'trap') {
         entries.push({
           text: lively
-            ? `${playerName} sets a trap!`
+            ? (isPlayerYou ? 'You set a trap!' : `${playerName} sets a trap!`)
             : `Player places trap at (${move.position.row}, ${move.position.col})`,
         });
         playerTraps.push(move.position);
       } else if (move.type === 'final') {
         entries.push({
           text: lively
-            ? `${playerName} makes it to the goal!`
+            ? (isPlayerYou ? 'You make it to the goal!' : `${playerName} makes it to the goal!`)
             : 'Player reaches the goal!',
           playerDelta: 1,
         });
@@ -269,7 +307,7 @@ export function RoundResults({
         const isForward = opponentPosition !== null && rotated.row > opponentPosition.row;
         entries.push({
           text: lively
-            ? `${opponentName} moves!`
+            ? (isOpponentYou ? 'You move!' : `${opponentName} moves!`)
             : `Opponent moves to (${rotated.row}, ${rotated.col})`,
           ...(isForward && { opponentDelta: 1 }),
         });
@@ -277,14 +315,14 @@ export function RoundResults({
       } else if (move.type === 'trap') {
         entries.push({
           text: lively
-            ? `${opponentName} sets a trap!`
+            ? (isOpponentYou ? 'You set a trap!' : `${opponentName} sets a trap!`)
             : `Opponent places trap at (${rotated.row}, ${rotated.col})`,
         });
         opponentTraps.push(rotated);
       } else if (move.type === 'final') {
         entries.push({
           text: lively
-            ? `${opponentName} makes it to the goal!`
+            ? (isOpponentYou ? 'You make it to the goal!' : `${opponentName} makes it to the goal!`)
             : 'Opponent reaches the goal!',
           opponentDelta: 1,
         });
@@ -307,7 +345,7 @@ export function RoundResults({
         if (hitTrap) {
           entries.push({
             text: lively
-              ? `  ${playerName} steps right in the trap!`
+              ? (isPlayerYou ? '  You step right in the trap!' : `  ${playerName} steps right in the trap!`)
               : '  Player hit a trap!',
             playerDelta: -1,
           });
@@ -319,7 +357,7 @@ export function RoundResults({
         if (hitTrap) {
           entries.push({
             text: lively
-              ? `  ${opponentName} steps right in the trap!`
+              ? (isOpponentYou ? '  You step right in the trap!' : `  ${opponentName} steps right in the trap!`)
               : '  Opponent hit a trap!',
             opponentDelta: -1,
           });
@@ -343,9 +381,9 @@ export function RoundResults({
       entries.push({ text: '' });
       if (lively) {
         if (winner === 'player') {
-          entries.push({ text: `Game over - ${playerName} wins!` });
+          entries.push({ text: isPlayerYou ? 'Game over - You win!' : `Game over - ${playerName} wins!` });
         } else if (winner === 'opponent') {
-          entries.push({ text: `Game over - ${opponentName} wins!` });
+          entries.push({ text: isOpponentYou ? 'Game over - You win!' : `Game over - ${opponentName} wins!` });
         } else {
           entries.push({ text: "Game over - it's a tie!" });
         }
@@ -401,12 +439,12 @@ export function RoundResults({
     if (result.simulationDetails) {
       if (currentStep === playerLastStep && result.simulationDetails.playerHitTrap) {
         allEntries.push({
-          text: useLivelyStyle ? `${playerName} is stopped!` : 'Player hit a trap and stopped!',
+          text: useLivelyStyle ? (playerName === 'You' ? 'You are stopped!' : `${playerName} is stopped!`) : 'Player hit a trap and stopped!',
         });
       }
       if (currentStep === opponentLastStep && result.simulationDetails.opponentHitTrap) {
         allEntries.push({
-          text: useLivelyStyle ? `${opponentName} is stopped!` : 'Opponent hit a trap and stopped!',
+          text: useLivelyStyle ? (opponentName === 'You' ? 'You are stopped!' : `${opponentName} is stopped!`) : 'Opponent hit a trap and stopped!',
         });
       }
     }
@@ -673,10 +711,122 @@ export function RoundResults({
                 <span>{opponentName}</span>
               </div>
             </div>
-            <div
-              className={styles.boardThumbnail}
-              dangerouslySetInnerHTML={{ __html: combinedBoardSvgData.svg }}
-            />
+            <div className={styles.boardColumnWrapper}>
+              <div
+                className={styles.boardThumbnail}
+                dangerouslySetInnerHTML={{ __html: combinedBoardSvgData.svg }}
+              />
+              {/* Mobile overlay - shown on mobile when mode is 'overlay' */}
+              {isMobile && mobileOverlayVisible && mobileExplanationPosition === 'overlay' && (
+                <div className={styles.mobileOverlay}>
+                  <div className={styles.overlayHeader}>
+                    <button
+                      className={styles.overlayHelpButton}
+                      onClick={() => setOverlayHelpModalOpen(true)}
+                      title="Settings"
+                    >
+                      &#9881;
+                    </button>
+                    <button
+                      className={styles.overlayCloseButton}
+                      onClick={() => {
+                        setMobileOverlayVisible(false);
+                        setMobileExplanationPosition('hidden');
+                        onMobileExplanationModeChange?.('hidden');
+                      }}
+                      title="Close overlay"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className={styles.overlayScoreHeaders}>
+                    <div className={styles.scoreColumnHeaderSpacer} />
+                    <div className={styles.scoreColumnHeader}>{playerName}</div>
+                    <div className={styles.scoreColumnHeader}>{opponentName}</div>
+                  </div>
+                  <div className={styles.overlayExplanations} ref={overlayExplanationsRef}>
+                    {explanations.map((entry, index) => (
+                      <div key={index} className={styles.explanationLine}>
+                        <span className={styles.explanationText}>{entry.text}</span>
+                        <span className={`${styles.deltaCell} ${entry.playerDelta ? (entry.playerDelta > 0 ? styles.deltaPositive : styles.deltaNegative) : ''}`}>
+                          {entry.playerDelta ? (entry.playerDelta > 0 ? `+${entry.playerDelta}` : entry.playerDelta) : ''}
+                        </span>
+                        <span className={`${styles.deltaCell} ${entry.opponentDelta ? (entry.opponentDelta > 0 ? styles.deltaPositive : styles.deltaNegative) : ''}`}>
+                          {entry.opponentDelta ? (entry.opponentDelta > 0 ? `+${entry.opponentDelta}` : entry.opponentDelta) : ''}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles.overlayScoreTotals}>
+                    <div className={styles.scoreTotalLabel}>Total</div>
+                    <div className={styles.scoreTotalValue}>{runningScores[0]}</div>
+                    <div className={styles.scoreTotalValue}>{runningScores[1]}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Mobile: Show Overlay button when overlay is hidden */}
+            {isMobile && mobileExplanationPosition === 'hidden' && (
+              <button
+                className={styles.showOverlayButton}
+                onClick={() => {
+                  setMobileOverlayVisible(true);
+                  setMobileExplanationPosition('overlay');
+                  onMobileExplanationModeChange?.('overlay');
+                }}
+              >
+                Show Overlay
+              </button>
+            )}
+            {/* Mobile: Controls below board when mode is 'below' */}
+            {isMobile && mobileExplanationPosition === 'below' && (
+              <div className={styles.mobileControlsBelow}>
+                <div className={styles.belowHeader}>
+                  <button
+                    className={styles.belowHelpButton}
+                    onClick={() => setOverlayHelpModalOpen(true)}
+                    title="Settings"
+                  >
+                    &#9881;
+                  </button>
+                  <button
+                    className={styles.belowCloseButton}
+                    onClick={() => {
+                      setMobileExplanationPosition('hidden');
+                      onMobileExplanationModeChange?.('hidden');
+                    }}
+                    title="Hide explanations"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className={styles.explanationsWrapper}>
+                  <div className={styles.scoreColumnHeaders}>
+                    <div className={styles.scoreColumnHeaderSpacer} />
+                    <div className={styles.scoreColumnHeader}>{playerName}</div>
+                    <div className={styles.scoreColumnHeader}>{opponentName}</div>
+                  </div>
+                  <div className={styles.explanations}>
+                    {explanations.map((entry, index) => (
+                      <div key={index} className={styles.explanationLine}>
+                        <span className={styles.explanationText}>{entry.text}</span>
+                        <span className={`${styles.deltaCell} ${entry.playerDelta ? (entry.playerDelta > 0 ? styles.deltaPositive : styles.deltaNegative) : ''}`}>
+                          {entry.playerDelta ? (entry.playerDelta > 0 ? `+${entry.playerDelta}` : entry.playerDelta) : ''}
+                        </span>
+                        <span className={`${styles.deltaCell} ${entry.opponentDelta ? (entry.opponentDelta > 0 ? styles.deltaPositive : styles.deltaNegative) : ''}`}>
+                          {entry.opponentDelta ? (entry.opponentDelta > 0 ? `+${entry.opponentDelta}` : entry.opponentDelta) : ''}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles.scoreTotalsRow}>
+                    <div className={styles.scoreTotalLabel}>Total</div>
+                    <div className={styles.scoreTotalValue}>{runningScores[0]}</div>
+                    <div className={styles.scoreTotalValue}>{runningScores[1]}</div>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className={styles.buttonGroup}>
               {currentStep < maxSteps ? (
                 <button onClick={handleNext} className={styles.nextButton}>
@@ -684,11 +834,11 @@ export function RoundResults({
                 </button>
               ) : (
                 <button onClick={handleReplay} className={styles.nextButton}>
-                  ↻ Restart
+                  ↻ Restart Replay
                 </button>
               )}
               <button onClick={handleFinish} className={styles.replayButton}>
-                ⏹ Finish
+                ⏹ Skip to End
               </button>
               <button onClick={onContinue} className={styles.continueButton}>
                 {continueButtonText}
@@ -807,6 +957,94 @@ export function RoundResults({
 
       {/* Help Modal */}
       <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
+
+      {/* Mobile Overlay Options Modal */}
+      {overlayHelpModalOpen && (
+        <div className={styles.overlayOptionsBackdrop} onClick={() => setOverlayHelpModalOpen(false)}>
+          <div className={styles.overlayOptionsModal} onClick={(e) => e.stopPropagation()}>
+            <p className={styles.overlayOptionsTitle}>Settings</p>
+            <div className={styles.settingsSection}>
+              <label className={styles.settingsCheckboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={showCompleteResults}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setShowCompleteResults(checked);
+                    onShowCompleteResultsChange?.(checked);
+                    if (checked) {
+                      setCurrentStep(maxSteps);
+                      setExplanations(buildAllEntries());
+                    } else {
+                      setCurrentStep(1);
+                      setExplanations(buildInitialEntries());
+                    }
+                  }}
+                  className={styles.checkbox}
+                />
+                <span>Show complete results</span>
+              </label>
+              <button
+                onClick={toggleExplanationStyle}
+                className={styles.settingsStyleToggle}
+              >
+                {useLivelyStyle ? 'Switch to Technical' : 'Switch to Lively'}
+              </button>
+            </div>
+            <div className={styles.settingsDivider} />
+            {mobileExplanationPosition === 'overlay' ? (
+              <>
+                <button
+                  className={styles.overlayOptionButton}
+                  onClick={() => {
+                    setMobileOverlayVisible(false);
+                    setMobileExplanationPosition('hidden');
+                    onMobileExplanationModeChange?.('hidden');
+                    setOverlayHelpModalOpen(false);
+                  }}
+                >
+                  Hide explanations
+                </button>
+                <button
+                  className={styles.overlayOptionButton}
+                  onClick={() => {
+                    setMobileOverlayVisible(false);
+                    setMobileExplanationPosition('below');
+                    onMobileExplanationModeChange?.('below');
+                    setOverlayHelpModalOpen(false);
+                  }}
+                >
+                  Show below board
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className={styles.overlayOptionButton}
+                  onClick={() => {
+                    setMobileExplanationPosition('hidden');
+                    onMobileExplanationModeChange?.('hidden');
+                    setOverlayHelpModalOpen(false);
+                  }}
+                >
+                  Hide explanations
+                </button>
+                <button
+                  className={styles.overlayOptionButton}
+                  onClick={() => {
+                    setMobileOverlayVisible(true);
+                    setMobileExplanationPosition('overlay');
+                    onMobileExplanationModeChange?.('overlay');
+                    setOverlayHelpModalOpen(false);
+                  }}
+                >
+                  Show as overlay
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

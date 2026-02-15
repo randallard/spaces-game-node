@@ -2439,6 +2439,18 @@ function App(): React.ReactElement {
     handleProfileUpdate(updatedUser);
   };
 
+  // Handle mobile explanation mode preference change
+  const handleMobileExplanationModeChange = (value: 'overlay' | 'below' | 'hidden') => {
+    const updatedUser: UserProfileType = {
+      ...state.user,
+      preferences: {
+        ...state.user.preferences,
+        mobileExplanationMode: value,
+      },
+    };
+    handleProfileUpdate(updatedUser);
+  };
+
   // Tutorial Handlers
 
   // Handle tutorial intro - player selected creature and clicked Next
@@ -2679,12 +2691,14 @@ function App(): React.ReactElement {
             playerScore={phase.result.playerPoints || 0}
             opponentScore={phase.result.opponentPoints || 0}
             onContinue={handleTutorialResultsContinue}
-            continueButtonText="Continue"
+            continueButtonText="Finish Tutorial"
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
             isTutorial={true}
+            mobileExplanationMode={state.user.preferences?.mobileExplanationMode ?? 'overlay'}
+            onMobileExplanationModeChange={handleMobileExplanationModeChange}
           />
         );
 
@@ -3174,6 +3188,8 @@ function App(): React.ReactElement {
               onShowCompleteResultsChange={handleShowCompleteResultsChange}
               explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
               onExplanationStyleChange={handleExplanationStyleChange}
+              mobileExplanationMode={state.user.preferences?.mobileExplanationMode ?? 'overlay'}
+              onMobileExplanationModeChange={handleMobileExplanationModeChange}
               opponentHasDiscord={!!(state.opponent?.discordId)}
               isCpuOpponent={state.opponent ? isCpuOpponent(state.opponent) : false}
               onGoHome={handleGoHome}
@@ -3379,6 +3395,8 @@ function App(): React.ReactElement {
             waitingForOpponentResponse={waitingForOpponent}
             opponentDiscordId={state.opponent?.discordId}
             opponentDiscordAvatar={state.opponent?.discordAvatar}
+            mobileExplanationMode={state.user.preferences?.mobileExplanationMode ?? 'overlay'}
+            onMobileExplanationModeChange={handleMobileExplanationModeChange}
           />
         );
 
@@ -3409,6 +3427,8 @@ function App(): React.ReactElement {
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
             isCpuOpponent={state.opponent ? isCpuOpponent(state.opponent) : false}
+            mobileExplanationMode={state.user.preferences?.mobileExplanationMode ?? 'overlay'}
+            onMobileExplanationModeChange={handleMobileExplanationModeChange}
           />
         );
 
@@ -3435,6 +3455,8 @@ function App(): React.ReactElement {
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
+            mobileExplanationMode={state.user.preferences?.mobileExplanationMode ?? 'overlay'}
+            onMobileExplanationModeChange={handleMobileExplanationModeChange}
           />
         );
       }

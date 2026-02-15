@@ -36,6 +36,10 @@ export interface AllRoundsResultsProps {
   explanationStyle?: 'lively' | 'technical';
   /** Optional callback when the explanation style preference changes */
   onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
+  /** Mobile explanation mode preference */
+  mobileExplanationMode?: 'overlay' | 'below' | 'hidden';
+  /** Callback when mobile explanation mode changes */
+  onMobileExplanationModeChange?: (value: 'overlay' | 'below' | 'hidden') => void;
   /** Optional custom button text */
   continueButtonText?: string;
   /** Optional: hide the header if this is mid-game review */
@@ -95,6 +99,8 @@ export function AllRoundsResults({
   onShowCompleteResultsChange,
   explanationStyle = 'lively',
   onExplanationStyleChange,
+  mobileExplanationMode = 'overlay',
+  onMobileExplanationModeChange,
   continueButtonText,
   isReview = false,
   opponentHasDiscord = false,
@@ -211,6 +217,8 @@ export function AllRoundsResults({
             onShowCompleteResultsChange={onShowCompleteResultsChange}
             explanationStyle={explanationStyle}
             onExplanationStyleChange={onExplanationStyleChange}
+            mobileExplanationMode={mobileExplanationMode}
+            onMobileExplanationModeChange={onMobileExplanationModeChange}
           />
         </div>
       </div>

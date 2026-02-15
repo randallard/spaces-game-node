@@ -16,6 +16,7 @@ export type UserStats = {
 export type UserPreferences = {
   showCompleteRoundResults?: boolean | undefined; // Default to false if undefined
   explanationStyle?: 'lively' | 'technical' | undefined; // Default to 'lively' if undefined
+  mobileExplanationMode?: 'overlay' | 'below' | 'hidden' | undefined; // Default to 'overlay' if undefined
 };
 
 export type UserProfile = {

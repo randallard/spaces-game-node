@@ -51,6 +51,10 @@ export interface ActiveGameViewProps {
   explanationStyle?: 'lively' | 'technical';
   /** Callback when explanation style changes */
   onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
+  /** Mobile explanation mode preference */
+  mobileExplanationMode?: 'overlay' | 'below' | 'hidden';
+  /** Callback when mobile explanation mode changes */
+  onMobileExplanationModeChange?: (value: 'overlay' | 'below' | 'hidden') => void;
   /** Whether opponent has Discord connected */
   opponentHasDiscord?: boolean;
   /** Timestamp of last Discord notification sent (ISO string) */
@@ -96,6 +100,8 @@ export function ActiveGameView({
   onShowCompleteResultsChange,
   explanationStyle = 'lively',
   onExplanationStyleChange,
+  mobileExplanationMode = 'overlay',
+  onMobileExplanationModeChange,
   opponentHasDiscord = false,
   onGoHome,
   onShareModalClosed,
@@ -211,6 +217,8 @@ export function ActiveGameView({
           {...(onShowCompleteResultsChange && { onShowCompleteResultsChange })}
           explanationStyle={explanationStyle}
           {...(onExplanationStyleChange && { onExplanationStyleChange })}
+          {...(onMobileExplanationModeChange && { onMobileExplanationModeChange })}
+          mobileExplanationMode={mobileExplanationMode}
           playerSelectedBoard={playerSelectedBoard ?? null}
           opponentSelectedBoard={opponentSelectedBoard ?? null}
           // Only allow board selection when waiting for player

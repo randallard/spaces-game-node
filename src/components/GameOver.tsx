@@ -39,6 +39,10 @@ export interface GameOverProps {
   explanationStyle?: 'lively' | 'technical';
   /** Optional callback when the explanation style preference changes */
   onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
+  /** Mobile explanation mode preference */
+  mobileExplanationMode?: 'overlay' | 'below' | 'hidden';
+  /** Callback when mobile explanation mode changes */
+  onMobileExplanationModeChange?: (value: 'overlay' | 'below' | 'hidden') => void;
 }
 
 /**
@@ -67,6 +71,8 @@ export function GameOver({
   onShowCompleteResultsChange,
   explanationStyle = 'lively',
   onExplanationStyleChange,
+  mobileExplanationMode = 'overlay',
+  onMobileExplanationModeChange,
 }: GameOverProps): ReactElement {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'thumbnails' | 'creatures' | 'both'>('both');
@@ -150,6 +156,8 @@ export function GameOver({
             onShowCompleteResultsChange={onShowCompleteResultsChange}
             explanationStyle={explanationStyle}
             onExplanationStyleChange={onExplanationStyleChange}
+            mobileExplanationMode={mobileExplanationMode}
+            onMobileExplanationModeChange={onMobileExplanationModeChange}
           />
         </div>
       </div>

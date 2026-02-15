@@ -50,6 +50,10 @@ export interface SavedBoardsProps {
   explanationStyle?: 'lively' | 'technical';
   /** Optional callback when the explanation style preference changes */
   onExplanationStyleChange?: (value: 'lively' | 'technical') => void;
+  /** Mobile explanation mode preference */
+  mobileExplanationMode?: 'overlay' | 'below' | 'hidden';
+  /** Callback when mobile explanation mode changes */
+  onMobileExplanationModeChange?: (value: 'overlay' | 'below' | 'hidden') => void;
   /** Player's selected board for current incomplete round (if waiting for opponent) */
   playerSelectedBoard?: Board | null;
   /** Opponent's selected board for current incomplete round */
@@ -146,6 +150,8 @@ export function SavedBoards({
   onShowCompleteResultsChange,
   explanationStyle = 'lively',
   onExplanationStyleChange,
+  mobileExplanationMode = 'overlay',
+  onMobileExplanationModeChange,
   playerSelectedBoard = null,
   opponentSelectedBoard = null,
   showBoardSelection = true,
@@ -399,6 +405,8 @@ export function SavedBoards({
             onShowCompleteResultsChange={onShowCompleteResultsChange}
             explanationStyle={explanationStyle}
             onExplanationStyleChange={onExplanationStyleChange}
+            mobileExplanationMode={mobileExplanationMode}
+            onMobileExplanationModeChange={onMobileExplanationModeChange}
           />
         </div>
       </div>

@@ -571,6 +571,334 @@
   background-color: #357abd;
 }
 
+/* ===========================================
+   Mobile Overlay Classes (hidden on desktop)
+   =========================================== */
+
+/* Wrapper for board + overlay positioning */
+.boardColumnWrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Semi-transparent overlay on top of the board */
+.mobileOverlay {
+  display: none; /* hidden on desktop by default */
+}
+
+/* Header row with ? and X buttons */
+.overlayHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.overlayHelpButton,
+.overlayCloseButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.overlayHelpButton {
+  font-size: 1.85rem;
+  font-weight: 400;
+}
+
+.overlayCloseButton {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.overlayHelpButton:hover,
+.overlayCloseButton:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Overlay score column headers */
+.overlayScoreHeaders {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 0.25rem;
+  flex-shrink: 0;
+}
+
+.overlayScoreHeaders .scoreColumnHeaderSpacer {
+  flex: 1;
+}
+
+.overlayScoreHeaders .scoreColumnHeader {
+  width: 40px;
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scrollable explanation area inside overlay */
+.overlayExplanations {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.overlayExplanations .explanationLine {
+  display: flex;
+  align-items: baseline;
+  padding: 0.125rem 0;
+  line-height: 1.5;
+  min-height: 1.5em;
+}
+
+.overlayExplanations .explanationText {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+  min-width: 0;
+}
+
+.overlayExplanations .deltaCell {
+  width: 40px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Overlay score totals row */
+.overlayScoreTotals {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.overlayScoreTotals .scoreTotalLabel {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.overlayScoreTotals .scoreTotalValue {
+  width: 40px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* Step button inside overlay */
+.overlayStepButton {
+  width: 100%;
+  padding: 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: white;
+  background-color: #10b981;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 0.5rem;
+  flex-shrink: 0;
+}
+
+.overlayStepButton:hover {
+  background-color: #059669;
+}
+
+/* Button to re-open overlay when hidden */
+.showOverlayButton {
+  display: none; /* hidden on desktop */
+}
+
+/* Header row with ? and X buttons for below-board mode */
+.belowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.belowHelpButton,
+.belowCloseButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.belowHelpButton {
+  font-size: 1.85rem;
+  font-weight: 400;
+}
+
+.belowCloseButton {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.belowHelpButton:hover,
+.belowCloseButton:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Below-mode: override inner text colors to match overlay look */
+.mobileControlsBelow .explanationsWrapper {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.mobileControlsBelow .scoreColumnHeaders {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.mobileControlsBelow .scoreColumnHeader {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.mobileControlsBelow .explanations {
+  background-color: transparent;
+}
+
+.mobileControlsBelow .explanationText {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+}
+
+.mobileControlsBelow .scoreTotalsRow {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+.mobileControlsBelow .scoreTotalLabel {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.mobileControlsBelow .scoreTotalValue {
+  color: white;
+}
+
+/* Controls section rendered below the board (for 'below' mode) */
+.mobileControlsBelow {
+  display: none; /* hidden on desktop */
+}
+
+/* Overlay options modal backdrop */
+.overlayOptionsBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Overlay options modal */
+.overlayOptionsModal {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 280px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.overlayOptionsTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-align: center;
+  margin: 0;
+}
+
+.settingsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.settingsCheckboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.settingsStyleToggle {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  background-color: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.settingsStyleToggle:hover {
+  background-color: #f3f4f6;
+}
+
+.settingsDivider {
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+.overlayOptionButton {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #374151;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.overlayOptionButton:hover {
+  background-color: #e5e7eb;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .boardsComparison {
@@ -598,6 +926,73 @@
 
   .outcomeImage {
     max-width: 250px;
+  }
+
+  /* Mobile layout: stack board container vertically */
+  .boardContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Hide the desktop controls section on mobile */
+  .controlsSection {
+    display: none;
+  }
+
+  /* Board column goes full width on mobile */
+  .boardColumn {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .boardThumbnail {
+    max-width: 100%;
+  }
+
+  /* Show the mobile overlay */
+  .mobileOverlay {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    z-index: 10;
+    border-radius: 0.75rem;
+    flex-direction: column;
+    padding: 0.75rem;
+  }
+
+  /* Show the "Show Overlay" button on mobile */
+  .showOverlayButton {
+    display: block;
+    width: 100%;
+    padding: 0.625rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #4a90e2;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    transition: background-color 0.2s;
+  }
+
+  .showOverlayButton:hover {
+    background-color: #dbeafe;
+  }
+
+  /* Show the mobile controls below section - matches overlay look */
+  .mobileControlsBelow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.75rem;
+    background: #1e293b;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
   }
 }
 

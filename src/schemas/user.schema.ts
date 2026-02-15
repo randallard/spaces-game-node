@@ -15,6 +15,7 @@ export const UserStatsSchema = z.object({
 
 export const UserPreferencesSchema = z.object({
   showCompleteRoundResults: z.boolean().optional(),
+  mobileExplanationMode: z.enum(['overlay', 'below', 'hidden']).optional(),
 });
 
 export const UserProfileSchema = z.object({
