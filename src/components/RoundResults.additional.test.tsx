@@ -377,7 +377,7 @@ describe('RoundResults - Additional Coverage', () => {
       );
 
       // Click finish button to skip to end
-      const finishButton = screen.getByText('⏹ Finish');
+      const finishButton = screen.getByText('⏹ Skip to End');
       fireEvent.click(finishButton);
 
       // Should show technical initial explanations with coordinates
@@ -407,7 +407,7 @@ describe('RoundResults - Additional Coverage', () => {
       fireEvent.click(screen.getByText('▶ Step'));
 
       // Then click finish
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       // Should show all technical explanations including initial ones
       expect(screen.getByText(/Player starts with piece at/)).toBeInTheDocument();
@@ -430,13 +430,13 @@ describe('RoundResults - Additional Coverage', () => {
       );
 
       // Click finish to go to end
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       // Click finish again (should not crash or duplicate)
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       // Should still show restart button (at the end)
-      expect(screen.getByText('↻ Restart')).toBeInTheDocument();
+      expect(screen.getByText('↻ Restart Replay')).toBeInTheDocument();
     });
   });
 
@@ -1604,7 +1604,7 @@ describe('RoundResults - Additional Coverage', () => {
       );
 
       // Click finish button to skip to end
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       // Should show finish instruction
       expect(screen.getByText(/great! now click continue to finish the tutorial!/)).toBeInTheDocument();

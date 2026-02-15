@@ -227,6 +227,8 @@ export function RoundResults({
     const opponentTraps: Array<{ row: number; col: number }> = [];
     let playerRoundEnded = false;
     let opponentRoundEnded = false;
+    let playerBestRow = Infinity; // Track closest row to goal (lowest index)
+    let opponentBestRow = -Infinity; // Track closest row to goal (highest index)
 
     // Helper: use second-person verbs when name is "You"
     const isPlayerYou = playerName === 'You';
@@ -237,6 +239,9 @@ export function RoundResults({
       if (!playerRoundEnded && i <= playerLastStep && i < playerBoard.sequence.length) {
         const move = playerBoard.sequence[i]!;
         if (move.type === 'piece') {
+          if (move.position.row < playerBestRow) {
+            playerBestRow = move.position.row;
+          }
           playerPosition = move.position;
         } else if (move.type === 'trap') {
           playerTraps.push(move.position);
@@ -249,6 +254,9 @@ export function RoundResults({
         const move = opponentBoard.sequence[i]!;
         const rotated = rotatePosition(move.position.row, move.position.col);
         if (move.type === 'piece') {
+          if (rotated.row > opponentBestRow) {
+            opponentBestRow = rotated.row;
+          }
           opponentPosition = rotated;
         } else if (move.type === 'trap') {
           opponentTraps.push(rotated);
@@ -271,13 +279,16 @@ export function RoundResults({
     if (!playerRoundEnded && !opponentRoundEnded && step <= playerLastStep && step < playerBoard.sequence.length) {
       const move = playerBoard.sequence[step]!;
       if (move.type === 'piece') {
-        const isForward = playerPosition !== null && move.position.row < playerPosition.row;
+        const isNewBestRow = playerPosition !== null && move.position.row < playerBestRow;
         entries.push({
           text: lively
             ? (isPlayerYou ? 'You move!' : `${playerName} moves!`)
             : `Player moves to (${move.position.row}, ${move.position.col})`,
-          ...(isForward && { playerDelta: 1 }),
+          ...(isNewBestRow && { playerDelta: 1 }),
         });
+        if (move.position.row < playerBestRow) {
+          playerBestRow = move.position.row;
+        }
         newPlayerPosition = move.position;
       } else if (move.type === 'trap') {
         entries.push({
@@ -304,13 +315,16 @@ export function RoundResults({
       const move = opponentBoard.sequence[step]!;
       const rotated = rotatePosition(move.position.row, move.position.col);
       if (move.type === 'piece') {
-        const isForward = opponentPosition !== null && rotated.row > opponentPosition.row;
+        const isNewBestRow = opponentPosition !== null && rotated.row > opponentBestRow;
         entries.push({
           text: lively
             ? (isOpponentYou ? 'You move!' : `${opponentName} moves!`)
             : `Opponent moves to (${rotated.row}, ${rotated.col})`,
-          ...(isForward && { opponentDelta: 1 }),
+          ...(isNewBestRow && { opponentDelta: 1 }),
         });
+        if (rotated.row > opponentBestRow) {
+          opponentBestRow = rotated.row;
+        }
         newOpponentPosition = rotated;
       } else if (move.type === 'trap') {
         entries.push({

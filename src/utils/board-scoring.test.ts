@@ -139,7 +139,7 @@ describe('calculateBoardScore', () => {
       createdAt: Date.now(),
     };
 
-    // 3 forward moves + 1 goal = 4
-    expect(calculateBoardScore(board)).toBe(4);
+    // 2 new rows reached (row 2→1, row 1→0) + 1 goal = 3 (revisiting row 1 doesn't score again)
+    expect(calculateBoardScore(board)).toBe(3);
   });
 });

@@ -4,7 +4,7 @@
  *
  * Rules:
  * - Players follow their board's sequence step-by-step
- * - +1 point for each forward move (toward goal)
+ * - +1 point for first move to each new closest row toward goal
  * - +1 point for reaching goal (Final cell)
  * - -1 point for collision (both players lose 1 point, min 0)
  * - -1 point for hitting opponent's trap (min 0)
@@ -95,6 +95,8 @@ export function simulateRound(
   let opponentLastStep = -1; // Last sequence step executed by opponent
   let playerTrapPosition: Position | null = null;
   let opponentTrapPosition: Position | null = null;
+  let playerBestRow = Infinity; // Track closest row to goal (lowest index) for player
+  let opponentBestRow = -Infinity; // Track closest row to goal (highest index) for opponent
 
   // Track trap placements
   const traps: TrapData = {
@@ -113,9 +115,12 @@ export function simulateRound(
       const cellContent = playerBoard.grid[move.position.row]?.[move.position.col];
 
       if (move.type === 'piece' || cellContent === 'piece') {
-        // Check for forward movement before updating position
-        if (playerPosition !== null && playerPosition.row > move.position.row) {
+        // Award point only for reaching a new closest row to goal
+        if (playerPosition !== null && move.position.row < playerBestRow) {
           playerScore++;
+        }
+        if (move.position.row < playerBestRow) {
+          playerBestRow = move.position.row;
         }
         playerPosition = move.position;
         playerMoves++;
@@ -139,9 +144,12 @@ export function simulateRound(
       const cellContent = opponentBoard.grid[move.position.row]?.[move.position.col];
 
       if (move.type === 'piece' || cellContent === 'piece') {
-        // Check for forward movement before updating position
-        if (opponentPosition !== null && opponentPosition.row < rotated.row) {
+        // Award point only for reaching a new closest row to goal
+        if (opponentPosition !== null && rotated.row > opponentBestRow) {
           opponentScore++;
+        }
+        if (rotated.row > opponentBestRow) {
+          opponentBestRow = rotated.row;
         }
         opponentPosition = rotated;
         opponentMoves++;

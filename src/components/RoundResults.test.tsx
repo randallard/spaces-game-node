@@ -693,7 +693,7 @@ describe('RoundResults', () => {
       );
 
       // Replay auto-starts, so finish button should be visible
-      expect(screen.getByText('⏹ Finish')).toBeInTheDocument();
+      expect(screen.getByText('⏹ Skip to End')).toBeInTheDocument();
       // Should show initial explanations
       expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
       expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
@@ -754,11 +754,11 @@ describe('RoundResults', () => {
       );
 
       // Click finish button to skip to end
-      const finishButton = screen.getByText('⏹ Finish');
+      const finishButton = screen.getByText('⏹ Skip to End');
       fireEvent.click(finishButton);
 
       // Should show restart button after finishing
-      expect(screen.getByText('↻ Restart')).toBeInTheDocument();
+      expect(screen.getByText('↻ Restart Replay')).toBeInTheDocument();
       expect(screen.queryByText('▶ Step')).not.toBeInTheDocument();
     });
 
@@ -785,7 +785,7 @@ describe('RoundResults', () => {
 
       // After all steps, step button should be hidden and restart shown
       expect(screen.queryByText('▶ Step')).not.toBeInTheDocument();
-      expect(screen.getByText('↻ Restart')).toBeInTheDocument();
+      expect(screen.getByText('↻ Restart Replay')).toBeInTheDocument();
     });
 
     it('should show forward movement explanation', () => {
@@ -959,9 +959,9 @@ describe('RoundResults', () => {
 
       // Click restart to reset
       // First finish the replay
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
       // Then restart
-      fireEvent.click(screen.getByText('↻ Restart'));
+      fireEvent.click(screen.getByText('↻ Restart Replay'));
 
       // Should have initial explanations again
       expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
@@ -983,10 +983,10 @@ describe('RoundResults', () => {
 
       // First replay
       // Finish replay
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       // Restart replay
-      fireEvent.click(screen.getByText('↻ Restart'));
+      fireEvent.click(screen.getByText('↻ Restart Replay'));
       expect(screen.getByText(/Pieces placed!/)).toBeInTheDocument();
     });
   });
@@ -1260,7 +1260,7 @@ describe('RoundResults', () => {
 
       // Should show step button again
       expect(screen.getByText('▶ Step')).toBeInTheDocument();
-      expect(screen.queryByText('↻ Restart')).not.toBeInTheDocument();
+      expect(screen.queryByText('↻ Restart Replay')).not.toBeInTheDocument();
     });
   });
 
@@ -1302,7 +1302,7 @@ describe('RoundResults', () => {
       );
 
       // Finish the replay to see the continue button
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       expect(screen.getByText('Next Round!')).toBeInTheDocument();
     });
@@ -1322,7 +1322,7 @@ describe('RoundResults', () => {
       );
 
       // Finish the replay to see the continue button
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       expect(screen.getByText('Continue to Next Round')).toBeInTheDocument();
     });
@@ -1347,7 +1347,7 @@ describe('RoundResults', () => {
       expect(screen.queryByText('Alice Wins!')).not.toBeInTheDocument();
 
       // Finish replay
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       // Winner should be shown
       expect(screen.getByText('Alice Wins!')).toBeInTheDocument();
@@ -1369,7 +1369,7 @@ describe('RoundResults', () => {
       );
 
       // Finish replay
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       expect(screen.getByText('You Win!')).toBeInTheDocument();
     });
@@ -1419,7 +1419,7 @@ describe('RoundResults', () => {
       );
 
       // Finish replay
-      fireEvent.click(screen.getByText('⏹ Finish'));
+      fireEvent.click(screen.getByText('⏹ Skip to End'));
 
       expect(screen.getByText('You Win!')).toBeInTheDocument();
     });
