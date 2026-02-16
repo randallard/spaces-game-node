@@ -18,7 +18,9 @@ import {
   deriveOpponentScore,
   derivePlayerSelectedBoard,
   deriveOpponentSelectedBoard,
+  isRoundComplete,
 } from '@/utils/derive-state';
+import { GAME_RULES } from '@/constants/game-rules';
 
 export interface UseGameStateReturn {
   state: GameState;
@@ -262,9 +264,36 @@ export function useGameState(initialState: GameState): UseGameStateReturn {
         newHistory.push(result);
       }
 
+      // Check if all rounds are now complete (game over)
+      // Update stats atomically in the same setState to avoid race conditions
+      // (derivePhase jumps directly to game-over after the final round,
+      //  so handleContinue never fires for the last round)
+      const allComplete = newHistory.length >= GAME_RULES.TOTAL_ROUNDS &&
+        newHistory.filter(r => isRoundComplete(r)).length >= GAME_RULES.TOTAL_ROUNDS;
+
+      let user = prev.user;
+      if (allComplete) {
+        const totalPlayerScore = newHistory.reduce((sum, r) => sum + (r.playerPoints ?? 0), 0);
+        const totalOpponentScore = newHistory.reduce((sum, r) => sum + (r.opponentPoints ?? 0), 0);
+        const winner = totalPlayerScore > totalOpponentScore ? 'player'
+          : totalOpponentScore > totalPlayerScore ? 'opponent' : 'tie';
+
+        user = {
+          ...prev.user,
+          stats: {
+            ...prev.user.stats,
+            totalGames: prev.user.stats.totalGames + 1,
+            wins: prev.user.stats.wins + (winner === 'player' ? 1 : 0),
+            losses: prev.user.stats.losses + (winner === 'opponent' ? 1 : 0),
+            ties: prev.user.stats.ties + (winner === 'tie' ? 1 : 0),
+          },
+        };
+      }
+
       return {
         ...prev,
         roundHistory: newHistory,
+        user,
         phaseOverride: null, // Clear override to allow natural phase derivation
         checksum: '',
       };

@@ -315,7 +315,6 @@ function App(): React.ReactElement {
     selectOpponentDeck,
     completeRound,
     completeAllRounds,
-    endGame,
     resetGame,
     loadState,
   } = useGameState(initialState);
@@ -1630,6 +1629,7 @@ function App(): React.ReactElement {
 
     loadState({
       ...restoredState,
+      user: state.user, // Use current user profile/stats, not stale saved copy
       phaseOverride: resumePhaseOverride,
     });
   };
@@ -2371,12 +2371,6 @@ function App(): React.ReactElement {
         ...state,
         phaseOverride: null,
       });
-    }
-
-    // If this was the final round (round 5), update stats now that player has viewed results
-    if (justCompletedRound === 5) {
-      const winner = playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie';
-      endGame(winner);
     }
   };
 
