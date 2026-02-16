@@ -455,7 +455,7 @@ describe('RoundResults', () => {
         />
       );
 
-      expect(screen.getByText('Continue to Next Round')).toBeInTheDocument();
+      expect(screen.getAllByText('Continue to Next Round')[0]).toBeInTheDocument();
     });
 
     it('should call onContinue when button clicked', () => {
@@ -472,7 +472,7 @@ describe('RoundResults', () => {
         />
       );
 
-      const continueButton = screen.getByText('Continue to Next Round');
+      const continueButton = screen.getAllByText('Continue to Next Round')[0]!;
       fireEvent.click(continueButton);
 
       expect(mockOnContinue).toHaveBeenCalledTimes(1);
@@ -492,7 +492,7 @@ describe('RoundResults', () => {
         />
       );
 
-      const continueButton = screen.getByText('Continue to Next Round');
+      const continueButton = screen.getAllByText('Continue to Next Round')[0]!;
       fireEvent.click(continueButton);
 
       expect(mockOnContinue).toHaveBeenCalledTimes(1);
@@ -560,7 +560,7 @@ describe('RoundResults', () => {
       );
 
       expect(screen.getByText("It's a Tie!")).toBeInTheDocument();
-      expect(screen.getByText('Continue to Next Round')).toBeInTheDocument();
+      expect(screen.getAllByText('Continue to Next Round')[0]).toBeInTheDocument();
     });
 
     it('should handle board names with special characters', () => {
@@ -1098,12 +1098,16 @@ describe('RoundResults', () => {
       // Should show collision caption
       expect(screen.getByText('Collision!')).toBeInTheDocument();
 
-      // Should show collision image
+      // Should show both creature default images crashing into each other
       const images = screen.getAllByRole('img');
-      const collisionImage = images.find((img) =>
-        img.getAttribute('src')?.includes('/creatures/shared/collision.svg')
+      const triangleImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/triangle/default.svg')
       );
-      expect(collisionImage).toBeDefined();
+      const bugImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/bug/default.svg')
+      );
+      expect(triangleImage).toBeDefined();
+      expect(bugImage).toBeDefined();
 
       // Should NOT show individual creature names
       expect(screen.queryByText(/Alice -/)).not.toBeInTheDocument();
@@ -1304,7 +1308,7 @@ describe('RoundResults', () => {
       // Finish the replay to see the continue button
       fireEvent.click(screen.getByText('⏹ Skip to End'));
 
-      expect(screen.getByText('Next Round!')).toBeInTheDocument();
+      expect(screen.getAllByText('Next Round!')[0]).toBeInTheDocument();
     });
 
     it('should use default text when no custom text provided', () => {
@@ -1324,7 +1328,7 @@ describe('RoundResults', () => {
       // Finish the replay to see the continue button
       fireEvent.click(screen.getByText('⏹ Skip to End'));
 
-      expect(screen.getByText('Continue to Next Round')).toBeInTheDocument();
+      expect(screen.getAllByText('Continue to Next Round')[0]).toBeInTheDocument();
     });
   });
 

@@ -7,7 +7,7 @@ import { type ReactElement, useMemo, useState, useCallback, useEffect, useRef } 
 import type { RoundResult } from '@/types';
 import { generateCombinedBoardSvg } from '@/utils/combined-board-svg';
 import { generateBlankThumbnail } from '@/utils/svg-thumbnail';
-import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
+import { getOutcomeGraphic, getDefaultGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
 import { HelpModal } from './HelpModal';
 import styles from './RoundResults.module.css';
@@ -893,13 +893,21 @@ export function RoundResults({
         return (
           <div className={styles.creatureOutcomeSection}>
             {result.collision ? (
-              // Show single collision graphic
+              // Show both creatures crashing into each other
               <div className={styles.outcomeGraphicSingle}>
-                <img
-                  src={getSharedGraphic('collision')}
-                  alt="Collision! Both creatures crashed into each other"
-                  className={styles.outcomeImage}
-                />
+                <div className={styles.collisionScene}>
+                  <img
+                    src={getDefaultGraphic(result.playerCreature)}
+                    alt={playerCreature.name}
+                    className={`${styles.outcomeImage} ${styles.collisionLeft}`}
+                  />
+                  <span className={styles.collisionBurst}>💥</span>
+                  <img
+                    src={getDefaultGraphic(result.opponentCreature)}
+                    alt={opponentCreature.name}
+                    className={`${styles.outcomeImage} ${styles.collisionRight}`}
+                  />
+                </div>
                 <p className={styles.outcomeCaption}>Collision!</p>
               </div>
             ) : (
@@ -966,6 +974,15 @@ export function RoundResults({
               <span className={styles.scoreValue}>{opponentScore}</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Bottom Continue Button (visible after replay finishes, for easy access after scrolling) */}
+      {currentStep >= maxSteps && (
+        <div className={styles.buttonGroup}>
+          <button onClick={onContinue} className={styles.continueButton}>
+            {continueButtonText}
+          </button>
         </div>
       )}
 

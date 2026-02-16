@@ -9,7 +9,7 @@ import { RoundResults } from './RoundResults';
 import { HelpModal } from './HelpModal';
 import { SavedBoards } from './SavedBoards';
 import { generateOpponentThumbnail, generateBoardThumbnail, generateBlankThumbnail } from '@/utils/svg-thumbnail';
-import { getOutcomeGraphic, getSharedGraphic } from '@/utils/creature-graphics';
+import { getOutcomeGraphic, getDefaultGraphic } from '@/utils/creature-graphics';
 import { CREATURES } from '@/types/creature';
 import styles from './AllRoundsResults.module.css';
 
@@ -421,12 +421,21 @@ export function AllRoundsResults({
                   return (
                     <div className={styles.creatureGraphics}>
                       {result.collision ? (
-                        <div className={styles.creatureWrapper}>
-                          <img
-                            src={getSharedGraphic('collision')}
-                            alt="Collision!"
-                            className={styles.creatureImage}
-                          />
+                        <div className={styles.collisionCard}>
+                          <div className={styles.collisionScene}>
+                            <img
+                              src={getDefaultGraphic(result.playerCreature)}
+                              alt={playerCreature.name}
+                              className={`${styles.creatureImage} ${styles.collisionLeft}`}
+                            />
+                            <span className={styles.collisionBurst}>💥</span>
+                            <img
+                              src={getDefaultGraphic(result.opponentCreature)}
+                              alt={opponentCreature.name}
+                              className={`${styles.creatureImage} ${styles.collisionRight}`}
+                            />
+                          </div>
+                          <span className={styles.collisionLabel}>Collision!</span>
                         </div>
                       ) : (
                         <>

@@ -112,6 +112,34 @@
   margin: 0;
 }
 
+.collisionScene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+}
+
+.collisionLeft {
+  max-width: 200px;
+  transform: rotate(12deg) translateX(20px);
+  z-index: 1;
+}
+
+.collisionRight {
+  max-width: 200px;
+  transform: rotate(-12deg) translateX(-20px);
+  z-index: 1;
+}
+
+.collisionBurst {
+  font-size: 3rem;
+  z-index: 2;
+  position: relative;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.5));
+}
+
 /* Combined Board */
 .combinedBoard {
   display: flex;

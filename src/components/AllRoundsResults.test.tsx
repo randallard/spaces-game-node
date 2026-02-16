@@ -439,7 +439,7 @@ describe('AllRoundsResults', () => {
       fireEvent.click(roundCard!);
 
       // Click back button (since this is the last/only round)
-      const backButton = screen.getByText('Back to All Rounds');
+      const backButton = screen.getAllByText('Back to All Rounds')[0];
       fireEvent.click(backButton);
 
       // Should close modal
@@ -469,14 +469,14 @@ describe('AllRoundsResults', () => {
       fireEvent.click(round1Card!);
 
       // Should show round 1 in modal - verify via continue button
-      expect(screen.getByText('Continue to Round 2')).toBeInTheDocument();
+      expect(screen.getAllByText('Continue to Round 2')[0]).toBeInTheDocument();
 
       // Click continue to advance to round 2
-      const continueButton = screen.getByText('Continue to Round 2');
+      const continueButton = screen.getAllByText('Continue to Round 2')[0];
       fireEvent.click(continueButton);
 
       // Should now show round 2 (last round) - verify via back button
-      expect(screen.getByText('Back to All Rounds')).toBeInTheDocument();
+      expect(screen.getAllByText('Back to All Rounds')[0]).toBeInTheDocument();
     });
 
     it('should show running total scores in modal', () => {
@@ -570,7 +570,7 @@ describe('AllRoundsResults', () => {
       const round1Card = screen.getByText('Round 1').closest('button');
       fireEvent.click(round1Card!);
       expect(screen.getByText('Combined Board View')).toBeInTheDocument();
-      expect(screen.getByText('Continue to Round 2')).toBeInTheDocument();
+      expect(screen.getAllByText('Continue to Round 2')[0]).toBeInTheDocument();
 
       // Close and view round 2
       const closeButton = screen.getByLabelText('Close');
@@ -579,7 +579,7 @@ describe('AllRoundsResults', () => {
       const round2Card = screen.getByText('Round 2').closest('button');
       fireEvent.click(round2Card!);
       expect(screen.getByText('Combined Board View')).toBeInTheDocument();
-      expect(screen.getByText('Back to All Rounds')).toBeInTheDocument();
+      expect(screen.getAllByText('Back to All Rounds')[0]).toBeInTheDocument();
     });
 
     it('should display all 10 rounds with mixed results', () => {
@@ -981,8 +981,18 @@ describe('AllRoundsResults', () => {
         />
       );
 
-      const collisionImage = screen.getByAltText('Collision!');
-      expect(collisionImage).toBeInTheDocument();
+      // Should show both creature images crashing into each other
+      expect(screen.getByText('Collision!')).toBeInTheDocument();
+      // Should show both creature default images (not a single collision graphic)
+      const images = screen.getAllByRole('img');
+      const squareImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/square/default.svg')
+      );
+      const circleImage = images.find((img) =>
+        img.getAttribute('src')?.includes('/creatures/circle/default.svg')
+      );
+      expect(squareImage).toBeDefined();
+      expect(circleImage).toBeDefined();
     });
   });
 

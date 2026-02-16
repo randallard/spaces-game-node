@@ -127,7 +127,7 @@ describe('creature-graphics', () => {
 
       it('should describe both getting stuck', () => {
         const result = getOutcomeAltText('Triangle', 'stuck', 'Bug', 'stuck', false);
-        expect(result).toBe('Both creatures got stuck');
+        expect(result).toBe("Both creatures didn't finish");
       });
     });
 
@@ -144,12 +144,12 @@ describe('creature-graphics', () => {
 
       it('should describe player forward and opponent stuck', () => {
         const result = getOutcomeAltText('Square', 'forward', 'Circle', 'stuck', false);
-        expect(result).toBe('Square moved forward, Circle got stuck');
+        expect(result).toBe("Square moved forward, Circle didn't finish");
       });
 
       it('should describe mixed outcomes', () => {
         const result = getOutcomeAltText('Triangle', 'stuck', 'Bug', 'forward', false);
-        expect(result).toBe('Triangle got stuck, Bug moved forward');
+        expect(result).toBe("Triangle didn't finish, Bug moved forward");
       });
 
       it('should handle complex creature names', () => {
@@ -182,7 +182,7 @@ describe('creature-graphics', () => {
 
       it('should use correct verb for stuck outcome', () => {
         const result = getOutcomeAltText('Square', 'goal', 'Circle', 'stuck', false);
-        expect(result).toContain('got stuck');
+        expect(result).toContain("didn't finish");
       });
     });
   });

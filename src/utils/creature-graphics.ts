@@ -41,7 +41,7 @@ function outcomeToVerb(outcome: OutcomeType): string {
     goal: 'reached the goal',
     trapped: 'was trapped',
     forward: 'moved forward',
-    stuck: 'got stuck',
+    stuck: "didn't finish",
   };
   return verbs[outcome];
 }
