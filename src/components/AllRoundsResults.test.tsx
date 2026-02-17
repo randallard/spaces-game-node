@@ -439,7 +439,7 @@ describe('AllRoundsResults', () => {
       fireEvent.click(roundCard!);
 
       // Click back button (since this is the last/only round)
-      const backButton = screen.getAllByText('Back to All Rounds')[0];
+      const backButton = screen.getAllByText('Back to All Rounds')[0]!;
       fireEvent.click(backButton);
 
       // Should close modal
@@ -472,7 +472,7 @@ describe('AllRoundsResults', () => {
       expect(screen.getAllByText('Continue to Round 2')[0]).toBeInTheDocument();
 
       // Click continue to advance to round 2
-      const continueButton = screen.getAllByText('Continue to Round 2')[0];
+      const continueButton = screen.getAllByText('Continue to Round 2')[0]!;
       fireEvent.click(continueButton);
 
       // Should now show round 2 (last round) - verify via back button

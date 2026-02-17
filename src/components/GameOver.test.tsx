@@ -931,7 +931,7 @@ describe('GameOver', () => {
       fireEvent.click(round1Card!);
 
       // Click continue
-      const continueButton = screen.getAllByText(/Continue to Round 2/)[0];
+      const continueButton = screen.getAllByText(/Continue to Round 2/)[0]!;
       fireEvent.click(continueButton);
 
       // Should now show round 2
@@ -978,7 +978,7 @@ describe('GameOver', () => {
       fireEvent.click(round3Card!);
 
       // Click Back to Summary
-      const backButton = screen.getAllByText('Back to Summary')[0];
+      const backButton = screen.getAllByText('Back to Summary')[0]!;
       fireEvent.click(backButton);
 
       // Modal should close
@@ -1003,11 +1003,11 @@ describe('GameOver', () => {
       fireEvent.click(round1Card!);
 
       // Navigate to round 2
-      const continueButton1 = screen.getAllByText(/Continue to Round 2/)[0];
+      const continueButton1 = screen.getAllByText(/Continue to Round 2/)[0]!;
       fireEvent.click(continueButton1);
 
       // Should now be on round 2, navigate to round 3
-      const continueButton2 = screen.getAllByText(/Continue to Round 3/)[0];
+      const continueButton2 = screen.getAllByText(/Continue to Round 3/)[0]!;
       fireEvent.click(continueButton2);
 
       // Should now be on round 3 (last round)
