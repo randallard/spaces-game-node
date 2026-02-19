@@ -29,6 +29,8 @@ export type Opponent = {
 
   // AI Agent
   skillLevel?: AiAgentSkillLevel | undefined; // Skill level for AI agent opponents
+  modelId?: string | undefined; // Stable model ID from inference server (overrides skillLevel)
+  modelBoardSize?: number | undefined; // Board size the model was trained on (locks board size selection)
 };
 
 export type OpponentStats = {

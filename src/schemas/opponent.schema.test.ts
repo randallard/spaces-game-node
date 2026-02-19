@@ -117,6 +117,69 @@ describe('OpponentSchema', () => {
     };
     expect(() => OpponentSchema.parse(aiOpponent)).toThrow();
   });
+
+  it('should accept AI agent opponent with modelId and modelBoardSize', () => {
+    const modelOpponent = {
+      id: 'ai-agent-123',
+      name: 'Model Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      modelId: 'abc12345',
+      modelBoardSize: 3,
+    };
+    expect(() => OpponentSchema.parse(modelOpponent)).not.toThrow();
+  });
+
+  it('should reject modelId shorter than 6 chars', () => {
+    const modelOpponent = {
+      id: 'ai-agent-123',
+      name: 'Model Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      modelId: 'abc',
+    };
+    expect(() => OpponentSchema.parse(modelOpponent)).toThrow();
+  });
+
+  it('should reject modelId longer than 16 chars', () => {
+    const modelOpponent = {
+      id: 'ai-agent-123',
+      name: 'Model Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      modelId: 'a'.repeat(17),
+    };
+    expect(() => OpponentSchema.parse(modelOpponent)).toThrow();
+  });
+
+  it('should reject modelBoardSize below 2', () => {
+    const modelOpponent = {
+      id: 'ai-agent-123',
+      name: 'Model Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      modelId: 'abc12345',
+      modelBoardSize: 1,
+    };
+    expect(() => OpponentSchema.parse(modelOpponent)).toThrow();
+  });
+
+  it('should reject modelBoardSize above 99', () => {
+    const modelOpponent = {
+      id: 'ai-agent-123',
+      name: 'Model Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      modelId: 'abc12345',
+      modelBoardSize: 100,
+    };
+    expect(() => OpponentSchema.parse(modelOpponent)).toThrow();
+  });
 });
 
 describe('AiAgentSkillLevelSchema', () => {

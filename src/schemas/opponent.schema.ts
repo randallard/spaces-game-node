@@ -32,6 +32,8 @@ export const OpponentSchema = z.object({
 
   // AI Agent
   skillLevel: AiAgentSkillLevelSchema.optional(),
+  modelId: z.string().min(6).max(16).optional(),
+  modelBoardSize: z.number().int().min(2).max(99).optional(),
 });
 
 export const OpponentStatsSchema = z.object({

@@ -81,6 +81,21 @@ export function createAiAgentOpponent(name: string, skillLevel: AiAgentSkillLeve
 }
 
 /**
+ * Create a model-backed AI agent opponent
+ */
+export function createModelOpponent(name: string, modelId: string, modelBoardSize: number): Opponent {
+  return {
+    id: generateOpponentId('ai-agent', name),
+    name,
+    type: 'ai-agent',
+    wins: 0,
+    losses: 0,
+    modelId,
+    modelBoardSize,
+  };
+}
+
+/**
  * Check if opponent is CPU (local, remote, or AI agent)
  */
 export function isCpuOpponent(opponent: Opponent): boolean {

@@ -9,6 +9,18 @@ import type { Board, BoardSize, AiAgentSkillLevel } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
+ * Model info returned by GET /models
+ */
+export interface ModelInfo {
+  index: number;
+  model_id: string;
+  board_size: number;
+  stage: string;
+  label: string;
+  use_fog: boolean;
+}
+
+/**
  * Request timeout in milliseconds
  */
 const REQUEST_TIMEOUT = 30000;
@@ -141,6 +153,7 @@ function responseBoardToBoard(
  * @param opponentScore - AI's cumulative score (game perspective)
  * @param playerBoardHistory - Player's boards from previous rounds
  * @param skillLevel - AI skill level
+ * @param modelId - Optional stable model ID (overrides skillLevel on server)
  * @returns AiAgentBoardResult with board (or null), failure status, and attempts used
  */
 export async function requestAiAgentBoard(
@@ -149,7 +162,8 @@ export async function requestAiAgentBoard(
   playerScore: number,
   opponentScore: number,
   playerBoardHistory: Board[],
-  skillLevel: AiAgentSkillLevel
+  skillLevel: AiAgentSkillLevel,
+  modelId?: string
 ): Promise<AiAgentBoardResult> {
   try {
     const url = getInferenceApiEndpoint('/construct-board');
@@ -159,7 +173,7 @@ export async function requestAiAgentBoard(
 
     // Flip scores: API expects agent_score = AI's score, opponent_score = player's score
     // round_num is 0-indexed on the server (0-4), but Node uses 1-indexed (1-5)
-    const requestBody = {
+    const requestBody: Record<string, unknown> = {
       board_size: boardSize,
       round_num: roundNum - 1,
       agent_score: opponentScore,    // AI's score from game perspective
@@ -167,6 +181,10 @@ export async function requestAiAgentBoard(
       opponent_history: opponentHistory,
       skill_level: skillLevel,
     };
+
+    if (modelId) {
+      requestBody.model_id = modelId;
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
@@ -222,6 +240,36 @@ export async function requestAiAgentBoard(
       console.error('[requestAiAgentBoard] Unknown error:', error);
     }
     return { board: null, failed: true, attemptsUsed: 0 };
+  }
+}
+
+/**
+ * Fetch the list of all available models from the inference server.
+ * @returns Array of ModelInfo, or empty array on failure
+ */
+export async function fetchAvailableModels(): Promise<ModelInfo[]> {
+  try {
+    const url = getInferenceApiEndpoint('/models');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error(`[fetchAvailableModels] Server returned ${response.status}`);
+      return [];
+    }
+
+    const data: ModelInfo[] = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('[fetchAvailableModels] Request timed out');
+    } else if (error instanceof Error) {
+      console.error('[fetchAvailableModels] Error:', error.message);
+    }
+    return [];
   }
 }
 

@@ -38,6 +38,23 @@ vi.mock('@/utils/opponent-helpers', () => ({
     losses: 0,
     skillLevel,
   })),
+  createModelOpponent: vi.fn((name: string, modelId: string, modelBoardSize: number) => ({
+    type: 'ai-agent',
+    id: `ai-agent-${Math.random().toString(36).substring(2, 9)}`,
+    name,
+    wins: 0,
+    losses: 0,
+    modelId,
+    modelBoardSize,
+  })),
+}));
+
+// Mock the ai-agent-inference module for ModelBrowser
+vi.mock('@/utils/ai-agent-inference', () => ({
+  fetchAvailableModels: vi.fn(() => Promise.resolve([
+    { index: 0, model_id: 'aaa11111', board_size: 3, stage: 'stage3', label: 'model_alpha', use_fog: false },
+    { index: 1, model_id: 'bbb22222', board_size: 5, stage: 'stage4', label: 'model_beta', use_fog: true },
+  ])),
 }));
 
 // Mock features config
@@ -1278,6 +1295,116 @@ describe('OpponentManager', () => {
 
       // Should show the skill preview with emoji and label
       expect(screen.getByText('Advanced')).toBeInTheDocument();
+    });
+  });
+
+  describe('Model browser flow', () => {
+    it('should show browse models link in skill level picker', () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      expect(screen.getByText('Or browse all available models')).toBeInTheDocument();
+    });
+
+    it('should show ModelBrowser when browse link is clicked', async () => {
+      render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByText('Or browse all available models'));
+
+      expect(screen.getByText('Browse Available Models')).toBeInTheDocument();
+    });
+
+    it('should show model name form when model is selected from browser', async () => {
+      const { findByText } = render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByText('Or browse all available models'));
+
+      // Wait for models to load then click one
+      const modelButton = await findByText('model_alpha');
+      fireEvent.click(modelButton);
+
+      // Should now be on the name form
+      expect(screen.getByText('AI Agent Opponent')).toBeInTheDocument();
+      const input = screen.getByLabelText('Opponent Name') as HTMLInputElement;
+      expect(input.value).toBe('model_alpha');
+    });
+
+    it('should create model opponent on submit', async () => {
+      const { findByText } = render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByText('Or browse all available models'));
+
+      const modelButton = await findByText('model_alpha');
+      fireEvent.click(modelButton);
+
+      fireEvent.click(screen.getByText('Continue'));
+
+      expect(mockOnOpponentSelected).toHaveBeenCalledTimes(1);
+      const opponent = mockOnOpponentSelected.mock.calls[0]![0]!;
+      expect(opponent.type).toBe('ai-agent');
+      expect(opponent.modelId).toBe('aaa11111');
+      expect(opponent.modelBoardSize).toBe(3);
+    });
+
+    it('should navigate back from model name form to browser', async () => {
+      const { findByText } = render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByText('Or browse all available models'));
+
+      const modelButton = await findByText('model_alpha');
+      fireEvent.click(modelButton);
+
+      expect(screen.getByText('AI Agent Opponent')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Back'));
+
+      expect(screen.getByText('Browse Available Models')).toBeInTheDocument();
+    });
+
+    it('should show volatility notice in model name form', async () => {
+      const { findByText } = render(
+        <OpponentManager
+          userName="TestUser"
+          onOpponentSelected={mockOnOpponentSelected}
+        />
+      );
+
+      fireEvent.click(screen.getByLabelText('Play against AI agent'));
+      fireEvent.click(screen.getByText('Or browse all available models'));
+
+      const modelButton = await findByText('model_alpha');
+      fireEvent.click(modelButton);
+
+      expect(screen.getByText(/Models are volatile/)).toBeInTheDocument();
     });
   });
 });

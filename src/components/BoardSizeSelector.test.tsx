@@ -781,6 +781,119 @@ describe('BoardSizeSelector', () => {
     });
   });
 
+  describe('Model-locked board size', () => {
+    it('should show locked view when opponent has modelBoardSize', () => {
+      const modelOpponent: Opponent = {
+        id: 'ai-agent-1',
+        name: 'Model Alpha',
+        type: 'ai-agent',
+        wins: 0,
+        losses: 0,
+        modelId: 'abc12345',
+        modelBoardSize: 3,
+      };
+
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          opponent={modelOpponent}
+        />
+      );
+
+      expect(screen.getByText('Board Size')).toBeInTheDocument();
+      expect(screen.getByText(/trained on 3×3 boards/)).toBeInTheDocument();
+      expect(screen.getByText('Model locked')).toBeInTheDocument();
+    });
+
+    it('should call onSizeSelected with locked size when button is clicked', () => {
+      const modelOpponent: Opponent = {
+        id: 'ai-agent-1',
+        name: 'Model Alpha',
+        type: 'ai-agent',
+        wins: 0,
+        losses: 0,
+        modelId: 'abc12345',
+        modelBoardSize: 5,
+      };
+
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          opponent={modelOpponent}
+        />
+      );
+
+      const button = screen.getByLabelText('Select 5x5 board size');
+      fireEvent.click(button);
+      expect(mockOnSizeSelected).toHaveBeenCalledWith(5);
+    });
+
+    it('should not show custom size input when locked', () => {
+      const modelOpponent: Opponent = {
+        id: 'ai-agent-1',
+        name: 'Model Alpha',
+        type: 'ai-agent',
+        wins: 0,
+        losses: 0,
+        modelId: 'abc12345',
+        modelBoardSize: 3,
+      };
+
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          opponent={modelOpponent}
+        />
+      );
+
+      expect(screen.queryByPlaceholderText(/Enter size/i)).not.toBeInTheDocument();
+    });
+
+    it('should show only the locked size option', () => {
+      const modelOpponent: Opponent = {
+        id: 'ai-agent-1',
+        name: 'Model Alpha',
+        type: 'ai-agent',
+        wins: 0,
+        losses: 0,
+        modelId: 'abc12345',
+        modelBoardSize: 3,
+      };
+
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          opponent={modelOpponent}
+        />
+      );
+
+      expect(screen.getByText('3×3')).toBeInTheDocument();
+      expect(screen.queryByText('2×2')).not.toBeInTheDocument();
+    });
+
+    it('should show Back button when onBack is provided', () => {
+      const modelOpponent: Opponent = {
+        id: 'ai-agent-1',
+        name: 'Model Alpha',
+        type: 'ai-agent',
+        wins: 0,
+        losses: 0,
+        modelId: 'abc12345',
+        modelBoardSize: 3,
+      };
+
+      render(
+        <BoardSizeSelector
+          onSizeSelected={mockOnSizeSelected}
+          onBack={mockOnBack}
+          opponent={modelOpponent}
+        />
+      );
+
+      expect(screen.getByText('Back')).toBeInTheDocument();
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle null user', () => {
       render(

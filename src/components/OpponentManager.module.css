@@ -290,6 +290,37 @@
   margin-bottom: 1rem;
 }
 
+/* Browse models link */
+.browseLink {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.browseLinkButton {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.browseLinkButton:hover {
+  color: #357abd;
+}
+
+/* Notice text */
+.notice {
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: #9ca3af;
+  text-align: center;
+  line-height: 1.5;
+}
+
 @media (max-width: 480px) {
   .skillGrid {
     grid-template-columns: repeat(2, 1fr);

@@ -4,10 +4,11 @@
  */
 
 import { useState, useCallback, useEffect, type ReactElement } from 'react';
-import { createCpuOpponent, createHumanOpponent, createRemoteCpuOpponent, createAiAgentOpponent } from '@/utils/opponent-helpers';
+import { createCpuOpponent, createHumanOpponent, createRemoteCpuOpponent, createAiAgentOpponent, createModelOpponent } from '@/utils/opponent-helpers';
 import { createCpuTougherOpponent } from '@/utils/default-cpu-data';
 import type { Opponent, AiAgentSkillLevel } from '@/types';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
+import { ModelBrowser } from './ModelBrowser';
 import { getApiEndpoint } from '@/config/api';
 import { FEATURES } from '@/config/features';
 import { AI_AGENT_SKILL_LEVELS, CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID } from '@/constants/game-rules';
@@ -55,6 +56,8 @@ export function OpponentManager({
   const [showDiscordModal, setShowDiscordModal] = useState(false);
   const [isConnectingDiscord, setIsConnectingDiscord] = useState(false);
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<AiAgentSkillLevel | null>(null);
+  const [browsing, setBrowsing] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<{ modelId: string; label: string; boardSize: number } | null>(null);
 
   const isDiscordConnected = !!(discordId && discordUsername);
 
@@ -110,6 +113,8 @@ export function OpponentManager({
   const handleSelectAiAgent = useCallback((): void => {
     setSelectedType('ai-agent');
     setSelectedSkillLevel(null);
+    setBrowsing(false);
+    setSelectedModel(null);
   }, []);
 
   /**
@@ -135,6 +140,38 @@ export function OpponentManager({
       onOpponentSelected(aiOpponent);
     },
     [opponentName, selectedSkillLevel, onOpponentSelected]
+  );
+
+  /**
+   * Handle model selection from ModelBrowser
+   */
+  const handleModelSelected = useCallback(
+    (modelId: string, label: string, boardSize: number): void => {
+      setSelectedModel({ modelId, label, boardSize });
+      setOpponentName(label);
+    },
+    []
+  );
+
+  /**
+   * Handle model-based opponent name submission
+   */
+  const handleModelNameSubmit = useCallback(
+    (e: React.FormEvent): void => {
+      e.preventDefault();
+
+      if (!opponentName.trim() || !selectedModel) {
+        return;
+      }
+
+      const modelOpponent = createModelOpponent(
+        opponentName.trim(),
+        selectedModel.modelId,
+        selectedModel.boardSize
+      );
+      onOpponentSelected(modelOpponent);
+    },
+    [opponentName, selectedModel, onOpponentSelected]
   );
 
   /**
@@ -317,6 +354,72 @@ export function OpponentManager({
     );
   }
 
+  // If AI agent selected and browsing models (no model selected yet)
+  if (selectedType === 'ai-agent' && browsing && !selectedModel) {
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.title}>Browse Available Models</h2>
+        <ModelBrowser
+          onModelSelected={handleModelSelected}
+          onBack={() => setBrowsing(false)}
+        />
+      </div>
+    );
+  }
+
+  // If AI agent selected with a model chosen, show name form
+  if (selectedType === 'ai-agent' && selectedModel) {
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.title}>AI Agent Opponent</h2>
+        <div className={styles.skillPreview}>
+          <span>{selectedModel.label}</span>
+          <span style={{ color: '#4a90e2', fontWeight: 600 }}>{selectedModel.boardSize}×{selectedModel.boardSize}</span>
+        </div>
+
+        <form onSubmit={handleModelNameSubmit} className={styles.form}>
+          <div className={styles.fieldGroup}>
+            <label htmlFor="model-agent-name" className={styles.label}>
+              Opponent Name
+            </label>
+            <input
+              id="model-agent-name"
+              type="text"
+              value={opponentName}
+              onChange={(e) => setOpponentName(e.target.value)}
+              className={styles.input}
+              placeholder={selectedModel.label}
+              maxLength={20}
+              autoFocus
+            />
+          </div>
+
+          <p className={styles.notice}>
+            This model requires a {selectedModel.boardSize}×{selectedModel.boardSize} board.
+            Models are volatile and may change between server deployments.
+          </p>
+
+          <div className={styles.buttonGroup}>
+            <button
+              type="button"
+              onClick={() => setSelectedModel(null)}
+              className={styles.backButton}
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={!opponentName.trim()}
+            >
+              Continue
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   // If AI agent selected but no skill level yet, show skill picker
   if (selectedType === 'ai-agent' && !selectedSkillLevel) {
     return (
@@ -343,6 +446,16 @@ export function OpponentManager({
             </button>
           ))}
         </div>
+
+        <p className={styles.browseLink}>
+          <button
+            type="button"
+            onClick={() => setBrowsing(true)}
+            className={styles.browseLinkButton}
+          >
+            Or browse all available models
+          </button>
+        </p>
 
         <div className={styles.buttonGroup} style={{ maxWidth: '400px', margin: '2rem auto 0' }}>
           <button

@@ -53,6 +53,9 @@ export function BoardSizeSelector({
   const [customError, setCustomError] = useState<string>('');
   const [generatingSize, setGeneratingSize] = useState<number | null>(null);
 
+  // If the opponent has a modelBoardSize, lock to that size
+  const lockedBoardSize = opponent?.modelBoardSize;
+
   // Get unlocked board sizes
   const { boardSizes: unlockedSizes } = getFeatureUnlocks(user ?? null);
   const nextUnlock = getNextUnlock(user ?? null);
@@ -171,6 +174,41 @@ export function BoardSizeSelector({
 
   // Format game mode display
   const gameModeDisplay = gameMode === 'round-by-round' ? 'Round by Round' : gameMode === 'deck' ? 'Deck Mode' : '';
+
+  // Locked board size for model-based opponents
+  if (lockedBoardSize) {
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title}>Board Size</h1>
+        {opponent && (
+          <p className={styles.subtitle} style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+            {gameModeDisplay && `${gameModeDisplay} • `}{opponent.name}
+          </p>
+        )}
+        <p className={styles.subtitle}>
+          This model was trained on {lockedBoardSize}×{lockedBoardSize} boards and can only play at that size.
+        </p>
+
+        <div className={styles.sizeOptions}>
+          <button
+            onClick={() => onSizeSelected(lockedBoardSize)}
+            className={styles.sizeOption}
+            aria-label={`Select ${lockedBoardSize}x${lockedBoardSize} board size`}
+          >
+            <div className={styles.sizeOptionLabel}>{lockedBoardSize}×{lockedBoardSize}</div>
+            <div className={styles.sizeOptionDescription}>Required by model</div>
+            <div className={styles.sizeOptionBadge}>Model locked</div>
+          </button>
+        </div>
+
+        {onBack && (
+          <button onClick={onBack} className={styles.backButton}>
+            Back
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>

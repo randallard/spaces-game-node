@@ -9,6 +9,7 @@ import {
   createHumanOpponent,
   createRemoteCpuOpponent,
   createAiAgentOpponent,
+  createModelOpponent,
   isCpuOpponent,
   selectRandomBoard,
   updateOpponentStats,
@@ -128,6 +129,32 @@ describe('createAiAgentOpponent', () => {
       expect(agent.skillLevel).toBe(level);
       expect(agent.type).toBe('ai-agent');
     }
+  });
+});
+
+describe('createModelOpponent', () => {
+  it('should create model-backed AI agent opponent', () => {
+    const opponent = createModelOpponent('MyModel', 'abc12345', 3);
+    expect(opponent.name).toBe('MyModel');
+    expect(opponent.type).toBe('ai-agent');
+    expect(opponent.modelId).toBe('abc12345');
+    expect(opponent.modelBoardSize).toBe(3);
+    expect(opponent.wins).toBe(0);
+    expect(opponent.losses).toBe(0);
+    expect(opponent.skillLevel).toBeUndefined();
+  });
+
+  it('should generate unique IDs for different model opponents', () => {
+    const opponent1 = createModelOpponent('Model A', 'abc12345', 3);
+    const opponent2 = createModelOpponent('Model B', 'def67890', 5);
+    expect(opponent1.id).not.toBe(opponent2.id);
+    expect(opponent1.id).toContain('ai-agent-');
+    expect(opponent2.id).toContain('ai-agent-');
+  });
+
+  it('should be recognized as CPU opponent', () => {
+    const opponent = createModelOpponent('MyModel', 'abc12345', 3);
+    expect(isCpuOpponent(opponent)).toBe(true);
   });
 });
 

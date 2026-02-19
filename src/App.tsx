@@ -2139,7 +2139,7 @@ function App(): React.ReactElement {
           .filter(r => r.playerBoard)
           .map(r => r.playerBoard!);
 
-        console.log(`[handleBoardSelect] AI Agent: requesting board for round ${currentRound}, skill=${state.opponent.skillLevel}`);
+        console.log(`[handleBoardSelect] AI Agent: requesting board for round ${currentRound}, skill=${state.opponent.skillLevel}, modelId=${state.opponent.modelId}`);
 
         const aiResult = await requestAiAgentBoard(
           state.boardSize!,
@@ -2147,7 +2147,8 @@ function App(): React.ReactElement {
           playerScore,
           opponentScore,
           playerBoardHistory,
-          state.opponent.skillLevel!
+          state.opponent.skillLevel!,
+          state.opponent.modelId
         );
 
         if (aiResult.failed || !aiResult.board) {
@@ -2257,8 +2258,11 @@ function App(): React.ReactElement {
       .filter(r => r.playerBoard)
       .map(r => r.playerBoard!);
 
-    const retrySkillLevel = toStochasticSkillLevel(state.opponent.skillLevel!);
-    console.log(`[handleAiRetry] Retrying with skill level: ${retrySkillLevel} (original: ${state.opponent.skillLevel})`);
+    // When using model_id, don't convert to stochastic — the model ID already overrides skill level
+    const retrySkillLevel = state.opponent.modelId
+      ? state.opponent.skillLevel!
+      : toStochasticSkillLevel(state.opponent.skillLevel!);
+    console.log(`[handleAiRetry] Retrying with skill level: ${retrySkillLevel} (original: ${state.opponent.skillLevel}, modelId: ${state.opponent.modelId})`);
 
     const retryResult = await requestAiAgentBoard(
       state.boardSize,
@@ -2266,7 +2270,8 @@ function App(): React.ReactElement {
       playerScore,
       opponentScore,
       playerBoardHistory,
-      retrySkillLevel
+      retrySkillLevel,
+      state.opponent.modelId
     );
 
     if (retryResult.failed || !retryResult.board) {
