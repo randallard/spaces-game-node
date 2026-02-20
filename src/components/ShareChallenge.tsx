@@ -35,6 +35,16 @@ export interface ShareChallengeProps {
   lastDiscordNotificationTime?: string | null;
   /** Whether URL is currently being generated */
   isGeneratingUrl?: boolean;
+  /** Override the default title text */
+  title?: string;
+  /** Override the default subtitle text */
+  subtitle?: string;
+  /** Override the "Back to Home" cancel button text */
+  cancelButtonText?: string;
+  /** Override the confirmation modal message when user hasn't shared yet */
+  confirmMessage?: string;
+  /** Override the "Go Home Anyway" dismiss button text in confirm modal */
+  confirmDismissText?: string;
 }
 
 /**
@@ -60,6 +70,11 @@ export function ShareChallenge({
   isConnectingDiscord = false,
   lastDiscordNotificationTime,
   isGeneratingUrl = false,
+  title: customTitle,
+  subtitle: customSubtitle,
+  cancelButtonText,
+  confirmMessage,
+  confirmDismissText,
 }: ShareChallengeProps): ReactElement {
   const [copySuccess, setCopySuccess] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
@@ -209,7 +224,13 @@ export function ShareChallenge({
     return (
       <div className={styles.container}>
         <div className={styles.content}>
-          <h1 className={styles.title}>Turn Complete!</h1>
+          <h1 className={styles.title}>{customTitle || 'Turn Complete!'}</h1>
+
+          {customSubtitle && (
+            <div className={styles.info}>
+              <p className={styles.infoText}>{customSubtitle}</p>
+            </div>
+          )}
 
           <div className={styles.notificationStatus}>
             <div className={styles.notificationIcon}>🔔</div>
@@ -344,7 +365,7 @@ export function ShareChallenge({
             }}
             className={styles.cancelButton}
           >
-            Back to Home
+            {cancelButtonText || 'Back to Home'}
           </button>
         </div>
       </div>
@@ -355,11 +376,11 @@ export function ShareChallenge({
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <h1 className={styles.title}>Share Your Challenge</h1>
+        <h1 className={styles.title}>{customTitle || 'Share Your Challenge'}</h1>
 
         <div className={styles.info}>
           <p className={styles.infoText}>
-            Send this challenge to <strong>{opponentName}</strong>!
+            {customSubtitle || <>Send this challenge to <strong>{opponentName}</strong>!</>}
           </p>
           <p className={styles.infoSubtext}>
             Round {round} • {boardSize}×{boardSize} Board
@@ -469,7 +490,7 @@ export function ShareChallenge({
           }}
           className={styles.cancelButton}
         >
-          Back to Home
+          {cancelButtonText || 'Back to Home'}
         </button>
 
         {/* Confirmation modal */}
@@ -478,7 +499,7 @@ export function ShareChallenge({
             <div className={styles.confirmModal}>
               <h2 className={styles.confirmTitle}>⚠️ Haven't Shared Yet</h2>
               <p className={styles.confirmMessage}>
-                You haven't copied the link yet! <strong>{opponentName}</strong> won't be able to take their turn without it.
+                {confirmMessage || <>You haven't copied the link yet! <strong>{opponentName}</strong> won't be able to take their turn without it.</>}
               </p>
               <div className={styles.confirmActions}>
                 <button
@@ -499,7 +520,7 @@ export function ShareChallenge({
                   }}
                   className={styles.confirmSecondaryButton}
                 >
-                  Go Home Anyway
+                  {confirmDismissText || 'Go Home Anyway'}
                 </button>
               </div>
             </div>

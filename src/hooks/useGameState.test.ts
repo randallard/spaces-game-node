@@ -384,17 +384,21 @@ describe('useGameState', () => {
 
   describe('endGame', () => {
     it('should update stats when player wins', () => {
-      // Set up game state with 5 complete rounds (game is over)
-      const completedRounds: RoundResult[] = Array.from({ length: 5 }, (_, i) => ({
-        round: i + 1,
-        winner: 'player' as const,
-        playerBoard: mockBoard,
-        opponentBoard: mockBoard,
-        playerFinalPosition: { row: 0, col: 0 },
-        opponentFinalPosition: { row: 1, col: 1 },
-        playerPoints: 2,
-        opponentPoints: 1,
-      }));
+      // Set up game state with 5 complete rounds + round 6 marker (game is over)
+      const completedRounds: RoundResult[] = [
+        ...Array.from({ length: 5 }, (_, i) => ({
+          round: i + 1,
+          winner: 'player' as const,
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 0, col: 0 },
+          opponentFinalPosition: { row: 1, col: 1 },
+          playerPoints: 2,
+          opponentPoints: 1,
+        })),
+        // Round 6 marker: signals that round 5 results have been viewed
+        { round: 6 } as RoundResult,
+      ];
 
       const stateWithGame: GameState = {
         ...initialState,
@@ -424,17 +428,21 @@ describe('useGameState', () => {
     });
 
     it('should update stats when opponent wins', () => {
-      // Set up game state with 5 complete rounds (game is over)
-      const completedRounds: RoundResult[] = Array.from({ length: 5 }, (_, i) => ({
-        round: i + 1,
-        winner: 'opponent' as const,
-        playerBoard: mockBoard,
-        opponentBoard: mockBoard,
-        playerFinalPosition: { row: 1, col: 1 },
-        opponentFinalPosition: { row: 0, col: 0 },
-        playerPoints: 1,
-        opponentPoints: 2,
-      }));
+      // Set up game state with 5 complete rounds + round 6 marker (game is over)
+      const completedRounds: RoundResult[] = [
+        ...Array.from({ length: 5 }, (_, i) => ({
+          round: i + 1,
+          winner: 'opponent' as const,
+          playerBoard: mockBoard,
+          opponentBoard: mockBoard,
+          playerFinalPosition: { row: 1, col: 1 },
+          opponentFinalPosition: { row: 0, col: 0 },
+          playerPoints: 1,
+          opponentPoints: 2,
+        })),
+        // Round 6 marker: signals that round 5 results have been viewed
+        { round: 6 } as RoundResult,
+      ];
 
       const stateWithGame: GameState = {
         ...initialState,
@@ -461,7 +469,7 @@ describe('useGameState', () => {
     });
 
     it('should update stats when game ends in tie', () => {
-      // Set up game state with 5 complete rounds (2-2-1 tie)
+      // Set up game state with 5 complete rounds (2-2-1 tie) + round 6 marker
       const completedRounds: RoundResult[] = [
         ...Array.from({ length: 2 }, (_, i) => ({
           round: i + 1,
@@ -493,6 +501,8 @@ describe('useGameState', () => {
           playerPoints: 1,
           opponentPoints: 1,
         },
+        // Round 6 marker: signals that round 5 results have been viewed
+        { round: 6 } as RoundResult,
       ];
 
       const stateWithGame: GameState = {

@@ -854,6 +854,99 @@ describe('ShareChallenge', () => {
     });
   });
 
+  describe('Custom text props', () => {
+    it('should render custom title instead of default', () => {
+      render(<ShareChallenge {...defaultProps} title="This is the Last Round!" />);
+
+      expect(screen.getByText('This is the Last Round!')).toBeInTheDocument();
+      expect(screen.queryByText('Share Your Challenge')).not.toBeInTheDocument();
+    });
+
+    it('should render custom title in Discord mode', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          title="Custom Discord Title"
+        />
+      );
+
+      expect(screen.getByText('Custom Discord Title')).toBeInTheDocument();
+      expect(screen.queryByText('Turn Complete!')).not.toBeInTheDocument();
+    });
+
+    it('should render custom subtitle instead of default', () => {
+      render(<ShareChallenge {...defaultProps} subtitle="Share the link so they can see the results!" />);
+
+      expect(screen.getByText('Share the link so they can see the results!')).toBeInTheDocument();
+      expect(screen.queryByText(/Send this challenge to/)).not.toBeInTheDocument();
+    });
+
+    it('should render custom subtitle in Discord mode', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          subtitle="Custom subtitle for Discord"
+        />
+      );
+
+      expect(screen.getByText('Custom subtitle for Discord')).toBeInTheDocument();
+    });
+
+    it('should render custom cancelButtonText on the cancel button', () => {
+      render(<ShareChallenge {...defaultProps} cancelButtonText="View Round 5 Results" />);
+
+      expect(screen.getByText('View Round 5 Results')).toBeInTheDocument();
+      expect(screen.queryByText('Back to Home')).not.toBeInTheDocument();
+    });
+
+    it('should render custom cancelButtonText in Discord mode', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          opponentHasDiscord={true}
+          cancelButtonText="View Results"
+        />
+      );
+
+      expect(screen.getByText('View Results')).toBeInTheDocument();
+      expect(screen.queryByText('Back to Home')).not.toBeInTheDocument();
+    });
+
+    it('should render custom confirmMessage in the confirmation modal', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          confirmMessage="Alice won't be able to see the final results without it."
+        />
+      );
+
+      // Trigger the confirm modal by clicking cancel without sharing
+      const cancelButton = screen.getByText('Back to Home');
+      fireEvent.click(cancelButton);
+
+      expect(screen.getByText("Alice won't be able to see the final results without it.")).toBeInTheDocument();
+      expect(screen.queryByText(/won't be able to take their turn/)).not.toBeInTheDocument();
+    });
+
+    it('should render custom confirmDismissText on the dismiss button in confirm modal', () => {
+      render(
+        <ShareChallenge
+          {...defaultProps}
+          confirmDismissText="View Results Anyway"
+        />
+      );
+
+      // Trigger the confirm modal
+      const cancelButton = screen.getByText('Back to Home');
+      fireEvent.click(cancelButton);
+
+      expect(screen.getByText('View Results Anyway')).toBeInTheDocument();
+      expect(screen.queryByText('Go Home Anyway')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Discord integration combinations', () => {
     const mockOnConnectDiscord = vi.fn();
 

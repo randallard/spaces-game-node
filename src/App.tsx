@@ -189,6 +189,7 @@ function App(): React.ReactElement {
   const [fallbackCompressedUrl, setFallbackCompressedUrl] = useState<string | null>(null);
   const [isGeneratingUrl, setIsGeneratingUrl] = useState(false);
   const [lastNotificationTimestamp, setLastNotificationTimestamp] = useState<string | null>(null);
+  const [finalRoundShareUrl, setFinalRoundShareUrl] = useState<string | null>(null);
 
   // Initialize default CPU data on first load
   useEffect(() => {
@@ -2012,6 +2013,11 @@ function App(): React.ReactElement {
               // Clear toast after 3 seconds
               setTimeout(() => setToastMessage(null), 3000);
             }
+
+            // Store URL for final round share modal (so responding player can share results link)
+            if (currentRound === 5) {
+              setFinalRoundShareUrl(roundResultUrl);
+            }
           }
         } catch (error) {
           console.error('[handleBoardSelect] Error during simulation:', error);
@@ -3307,6 +3313,11 @@ function App(): React.ReactElement {
         // If it's opponent's turn to go first and they haven't selected their board yet, show waiting message
         const waitingForOpponent = state.opponent?.type === 'human' && !isPlayerTurnToGoFirst && !opponentSelectedBoard;
 
+        // When all 5 rounds are complete (phase.round === 5 with isRoundComplete),
+        // the derived currentRound will be 6. Use phase.round for display instead.
+        const allRoundsComplete = phase.round === 5 && state.roundHistory.filter(r => r.playerBoard !== null && r.opponentBoard !== null && r.winner !== undefined).length >= 5;
+        const displayRound = allRoundsComplete ? phase.round : currentRound;
+
         console.log('[ROUND-REVIEW] Waiting check:', {
           gameCreatorId: state.gameCreatorId,
           userId: state.user.id,
@@ -3315,6 +3326,8 @@ function App(): React.ReactElement {
           isPlayerTurnToGoFirst,
           opponentType: state.opponent?.type,
           waitingForOpponent,
+          allRoundsComplete,
+          displayRound,
         });
 
         // Use AllRoundsResults in review mode with board selection capability
@@ -3343,8 +3356,8 @@ function App(): React.ReactElement {
             isCpuOpponent={state.opponent ? isCpuOpponent(state.opponent) : false}
             onPlayAgain={handleContinue}
             isReview={true}
-            currentRound={currentRound}
-            nextRound={currentRound}
+            currentRound={displayRound}
+            nextRound={allRoundsComplete ? undefined : currentRound}
             totalRounds={5}
             boardSize={effectiveBoardSize}
             onResendLink={() => setShowShareModal(true)}
@@ -3352,15 +3365,16 @@ function App(): React.ReactElement {
             onBoardSelected={handleBoardSelect}
             onBoardSaved={handleBoardSave}
             onBoardDeleted={handleBoardDelete}
-            showBoardSelection={!waitingForOpponent}
+            showBoardSelection={!allRoundsComplete && !waitingForOpponent}
             playerSelectedBoard={playerSelectedBoard ?? null}
             opponentSelectedBoard={opponentSelectedBoard ?? null}
             user={savedUser}
-            waitingForOpponentBoard={waitingForOpponent}
+            waitingForOpponentBoard={!allRoundsComplete && waitingForOpponent}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
             onExplanationStyleChange={handleExplanationStyleChange}
+            continueButtonText={allRoundsComplete ? 'View Final Results' : undefined}
           />
         );
       }
@@ -3379,6 +3393,28 @@ function App(): React.ReactElement {
         const nextRoundExists = state.roundHistory[nextRoundIndex] !== undefined;
         const isFinalRound = completedRound === 5;
         const waitingForOpponent = state.opponent?.type === 'human' && playerWentFirst && !nextRoundExists && !isFinalRound;
+
+        // Show share modal before round results for final round responding player
+        if (isFinalRound && finalRoundShareUrl && state.opponent?.type === 'human') {
+          const opponentName = state.opponent?.name || 'Opponent';
+          return (
+            <ShareChallenge
+              challengeUrl={finalRoundShareUrl}
+              opponentName={opponentName}
+              boardSize={state.boardSize || 3}
+              round={completedRound}
+              onCancel={() => setFinalRoundShareUrl(null)}
+              opponentHasDiscord={!!state.opponent?.discordId}
+              lastDiscordNotificationTime={lastNotificationTimestamp}
+              title="This is the Last Round!"
+              subtitle={`Share the link with ${opponentName} so they can see the results!`}
+              cancelButtonText="View Round 5 Results"
+              confirmMessage={`You haven't copied the link yet! ${opponentName} won't be able to see the final results without it.`}
+              confirmDismissText="View Results Anyway"
+            />
+          );
+        }
+
         return (
           <RoundResults
             result={phase.result}
@@ -3387,6 +3423,7 @@ function App(): React.ReactElement {
             playerScore={playerScore}
             opponentScore={opponentScore}
             onContinue={handleContinue}
+            continueButtonText={isFinalRound ? 'View Final Results' : undefined}
             showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
             onShowCompleteResultsChange={handleShowCompleteResultsChange}
             explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}

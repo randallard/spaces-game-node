@@ -451,10 +451,36 @@ describe('derivePhase', () => {
     }
   });
 
-  it('should return game-over when all rounds complete', () => {
+  it('should return round-results when round 5 is complete but results not yet viewed', () => {
     const history = Array.from({ length: GAME_RULES.TOTAL_ROUNDS }, (_, i) =>
       createCompleteRoundResult(i + 1, playerBoard1, opponentBoard1)
     );
+    const state = createTestGameState({
+      phaseOverride: null, // Allow phase to be derived
+      user: {
+        id: 'user-123',
+        name: 'Test User',
+        createdAt: Date.now(),
+        playerCreature: 'square',
+        stats: { totalGames: 0, wins: 0, losses: 0, ties: 0 },
+      },
+      opponent: { type: 'cpu', id: 'cpu-opponent', name: 'CPU Sam', wins: 0, losses: 0 },
+      gameMode: 'round-by-round' as const,
+      roundHistory: history,
+    });
+    const phase = derivePhase(state);
+    expect(phase.type).toBe('round-results');
+    if (phase.type === 'round-results') {
+      expect(phase.round).toBe(GAME_RULES.TOTAL_ROUNDS);
+    }
+  });
+
+  it('should return game-over only after round 5 results have been viewed (round 6 marker exists)', () => {
+    const history = Array.from({ length: GAME_RULES.TOTAL_ROUNDS }, (_, i) =>
+      createCompleteRoundResult(i + 1, playerBoard1, opponentBoard1)
+    );
+    // Add round 6 marker (created when user clicks Continue after viewing round 5 results)
+    history.push(createPartialRoundResult(GAME_RULES.TOTAL_ROUNDS + 1, null));
     const state = createTestGameState({
       phaseOverride: null, // Allow phase to be derived
       user: {
