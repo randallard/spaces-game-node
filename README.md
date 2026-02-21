@@ -224,6 +224,9 @@ See `planning/MIGRATION_PLAN.md` for detailed architecture decisions.
 - [Adding Creatures](docs/ADDING_CREATURES.md) - Guide for adding new creature graphics
 - [Minimal Board Encoding](docs/MINIMAL_BOARD_ENCODING.md) - URL compression format
 
+### Developer Tools
+- [MCP_SERVER.md](MCP_SERVER.md) - MCP server for Claude Desktop (game rules, board validation, simulation)
+
 ### Deployment
 - [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) - Vercel + Railway deployment guide
 - [VERCEL_KV_SETUP.md](VERCEL_KV_SETUP.md) - URL shortening setup with troubleshooting
