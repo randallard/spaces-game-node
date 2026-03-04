@@ -86,6 +86,9 @@ export type { RemoveGameModalProps } from './RemoveGameModal';
 export { RemoveOpponentModal } from './RemoveOpponentModal';
 export type { RemoveOpponentModalProps } from './RemoveOpponentModal';
 
+export { EditAiAgentModal } from './EditAiAgentModal';
+export type { EditAiAgentModalProps } from './EditAiAgentModal';
+
 export { WaitingForOpponent } from './WaitingForOpponent';
 export type { WaitingForOpponentProps } from './WaitingForOpponent';
 

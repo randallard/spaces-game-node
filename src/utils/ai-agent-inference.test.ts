@@ -242,6 +242,43 @@ describe('requestAiAgentBoard', () => {
     expect(result.failed).toBe(true);
   });
 
+  it('should convert roundHistory to round_scores with flipped perspective', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    } as Response);
+
+    const roundHistory = [
+      { playerPoints: 3, opponentPoints: 5 },
+      { playerPoints: 7, opponentPoints: 2 },
+    ] as import('@/types').RoundResult[];
+
+    await requestAiAgentBoard(3, 3, 10, 7, [], 'beginner', undefined, roundHistory);
+
+    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
+    const body = JSON.parse(fetchCall[1]!.body as string);
+
+    // round_scores should flip: agent = opponent (AI), opponent = player
+    expect(body.round_scores).toEqual([
+      { agent: 5, opponent: 3 },
+      { agent: 2, opponent: 7 },
+    ]);
+  });
+
+  it('should send empty round_scores when no roundHistory provided', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    } as Response);
+
+    await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
+
+    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
+    const body = JSON.parse(fetchCall[1]!.body as string);
+
+    expect(body.round_scores).toEqual([]);
+  });
+
   it('should include model_id in request body when provided', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,

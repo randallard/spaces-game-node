@@ -4,7 +4,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { CPU_OPPONENT_ID, CPU_OPPONENT_NAME, CPU_TOUGHER_OPPONENT_ID } from '@/constants/game-rules';
-import type { Opponent, Board, AiAgentSkillLevel } from '@/types';
+import type { Opponent, Board, AiAgentSkillLevel, ModelAssignment } from '@/types';
 
 /**
  * Generate opponent ID from type and name
@@ -84,6 +84,7 @@ export function createAiAgentOpponent(name: string, skillLevel: AiAgentSkillLeve
  * Create a model-backed AI agent opponent
  */
 export function createModelOpponent(name: string, modelId: string, modelBoardSize: number): Opponent {
+  const assignment: ModelAssignment = { modelId, label: name };
   return {
     id: generateOpponentId('ai-agent', name),
     name,
@@ -92,6 +93,20 @@ export function createModelOpponent(name: string, modelId: string, modelBoardSiz
     losses: 0,
     modelId,
     modelBoardSize,
+    modelAssignments: { [String(modelBoardSize)]: assignment },
+  };
+}
+
+/**
+ * Duplicate an opponent with a new name, resetting wins/losses to 0
+ */
+export function duplicateOpponent(opponent: Opponent, newName: string): Opponent {
+  return {
+    ...opponent,
+    id: generateOpponentId(opponent.type, newName),
+    name: newName,
+    wins: 0,
+    losses: 0,
   };
 }
 

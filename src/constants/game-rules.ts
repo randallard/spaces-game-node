@@ -72,4 +72,28 @@ export const AI_AGENT_SKILL_LEVELS = {
     color: '#DC2626',
     label: 'Test (Fail)',
   },
+  scripted_1: {
+    emoji: '🌱',
+    defaultName: 'Sprout',
+    color: '#90EE90',
+    label: 'Simple',
+  },
+  scripted_2: {
+    emoji: '🪴',
+    defaultName: 'Fern',
+    color: '#6DBE6D',
+    label: 'Reactive',
+  },
+  scripted_3: {
+    emoji: '🌿',
+    defaultName: 'Thorn',
+    color: '#4A9E4A',
+    label: 'Trapper',
+  },
+  scripted_4: {
+    emoji: '🌲',
+    defaultName: 'Cedar',
+    color: '#2E7D2E',
+    label: 'Adaptive',
+  },
 } as const;

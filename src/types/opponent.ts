@@ -11,7 +11,16 @@ export type AiAgentSkillLevel =
   | 'intermediate_plus'
   | 'advanced'
   | 'advanced_plus'
-  | 'test_fail';
+  | 'test_fail'
+  | 'scripted_1'
+  | 'scripted_2'
+  | 'scripted_3'
+  | 'scripted_4';
+
+export type ModelAssignment = {
+  modelId: string;    // stable model ID or scripted level name
+  label: string;      // display label (e.g., "model_alpha" or "Scripted Level 3")
+};
 
 export type Opponent = {
   id: string; // Generated from type + name
@@ -29,8 +38,9 @@ export type Opponent = {
 
   // AI Agent
   skillLevel?: AiAgentSkillLevel | undefined; // Skill level for AI agent opponents
-  modelId?: string | undefined; // Stable model ID from inference server (overrides skillLevel)
-  modelBoardSize?: number | undefined; // Board size the model was trained on (locks board size selection)
+  modelId?: string | undefined; // Stable model ID from inference server (overrides skillLevel) — deprecated, use modelAssignments
+  modelBoardSize?: number | undefined; // Board size the model was trained on — deprecated, use modelAssignments
+  modelAssignments?: Record<string, ModelAssignment> | undefined; // Per-board-size model assignments (key is board size as string)
 };
 
 export type OpponentStats = {

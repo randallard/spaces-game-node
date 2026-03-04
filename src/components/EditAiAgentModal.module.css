@@ -1,0 +1,337 @@
+/* Edit AI Agent Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* Modal Container */
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Title */
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Opponent Info */
+.opponentInfo {
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.opponentName {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1.125rem;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.opponentStats {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Duplicate Section */
+.duplicateSection {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.duplicateInput {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+}
+
+.duplicateButton {
+  padding: 0.5rem 1rem;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.duplicateButton:hover {
+  background-color: #7c3aed;
+}
+
+.duplicateButton:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+/* Assignments Table */
+.assignmentsSection {
+  margin-bottom: 1.5rem;
+}
+
+.assignmentsTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.75rem 0;
+}
+
+.assignmentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.assignmentRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.assignmentRow:hover {
+  border-color: #3b82f6;
+}
+
+.assignmentSize {
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 4rem;
+}
+
+.assignmentModel {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.assignmentModelSet {
+  color: #059669;
+  font-weight: 500;
+}
+
+.assignmentActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.changeButton {
+  padding: 0.375rem 0.75rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.changeButton:hover {
+  background-color: #2563eb;
+}
+
+.clearButton {
+  padding: 0.375rem 0.75rem;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clearButton:hover {
+  background-color: #dc2626;
+}
+
+/* Model Selector Sub-view */
+.modelSelector {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  background-color: #eff6ff;
+}
+
+.modelSelectorTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.75rem 0;
+}
+
+.modelList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.modelItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.modelItem:hover {
+  border-color: #3b82f6;
+  background-color: #f0f9ff;
+}
+
+.modelLabel {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.modelBadge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.modelFogBadge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.modelSelectorBack {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.modelSelectorBack:hover {
+  background-color: #4b5563;
+}
+
+.noModels {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-style: italic;
+  padding: 0.5rem;
+}
+
+.loadingModels {
+  font-size: 0.875rem;
+  color: #6b7280;
+  padding: 0.5rem;
+}
+
+/* Footer Buttons */
+.footerButtons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.saveButton {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background-color: #059669;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveButton:hover {
+  background-color: #047857;
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelButton:hover {
+  background-color: #4b5563;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .modalContent {
+    padding: 1.5rem;
+  }
+
+  .modalTitle {
+    font-size: 1.25rem;
+  }
+
+  .duplicateSection {
+    flex-direction: column;
+  }
+
+  .assignmentRow {
+    flex-wrap: wrap;
+  }
+
+  .footerButtons {
+    flex-direction: column;
+  }
+}

@@ -8,6 +8,7 @@ import {
   OpponentTypeSchema,
   OpponentStatsSchema,
   AiAgentSkillLevelSchema,
+  ModelAssignmentSchema,
 } from './opponent.schema';
 
 describe('OpponentTypeSchema', () => {
@@ -184,7 +185,7 @@ describe('OpponentSchema', () => {
 
 describe('AiAgentSkillLevelSchema', () => {
   it('should accept all valid skill levels', () => {
-    const levels = ['beginner', 'beginner_plus', 'intermediate', 'intermediate_plus', 'advanced', 'advanced_plus', 'test_fail'];
+    const levels = ['beginner', 'beginner_plus', 'intermediate', 'intermediate_plus', 'advanced', 'advanced_plus', 'test_fail', 'scripted_1', 'scripted_2', 'scripted_3', 'scripted_4'];
     for (const level of levels) {
       expect(AiAgentSkillLevelSchema.parse(level)).toBe(level);
     }
@@ -194,6 +195,62 @@ describe('AiAgentSkillLevelSchema', () => {
     expect(() => AiAgentSkillLevelSchema.parse('expert')).toThrow();
     expect(() => AiAgentSkillLevelSchema.parse('')).toThrow();
     expect(() => AiAgentSkillLevelSchema.parse('BEGINNER')).toThrow();
+  });
+});
+
+describe('ModelAssignmentSchema', () => {
+  it('should accept a valid model assignment', () => {
+    expect(() => ModelAssignmentSchema.parse({ modelId: 'abc12345', label: 'model_alpha' })).not.toThrow();
+  });
+
+  it('should reject empty modelId', () => {
+    expect(() => ModelAssignmentSchema.parse({ modelId: '', label: 'test' })).toThrow();
+  });
+
+  it('should reject empty label', () => {
+    expect(() => ModelAssignmentSchema.parse({ modelId: 'abc12345', label: '' })).toThrow();
+  });
+});
+
+describe('OpponentSchema modelAssignments', () => {
+  it('should accept opponent with modelAssignments', () => {
+    const opponent = {
+      id: 'ai-agent-123',
+      name: 'Custom Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      modelAssignments: {
+        '3': { modelId: 'abc12345', label: 'model_alpha' },
+        '5': { modelId: 'def67890', label: 'model_beta' },
+      },
+    };
+    expect(() => OpponentSchema.parse(opponent)).not.toThrow();
+  });
+
+  it('should accept opponent without modelAssignments', () => {
+    const opponent = {
+      id: 'ai-agent-123',
+      name: 'Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+    };
+    expect(() => OpponentSchema.parse(opponent)).not.toThrow();
+  });
+
+  it('should reject modelAssignments with invalid assignment', () => {
+    const opponent = {
+      id: 'ai-agent-123',
+      name: 'Agent',
+      type: 'ai-agent' as const,
+      wins: 0,
+      losses: 0,
+      modelAssignments: {
+        '3': { modelId: '', label: 'test' },
+      },
+    };
+    expect(() => OpponentSchema.parse(opponent)).toThrow();
   });
 });
 

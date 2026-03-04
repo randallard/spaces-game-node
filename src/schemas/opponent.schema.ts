@@ -14,7 +14,16 @@ export const AiAgentSkillLevelSchema = z.enum([
   'advanced',
   'advanced_plus',
   'test_fail',
+  'scripted_1',
+  'scripted_2',
+  'scripted_3',
+  'scripted_4',
 ]);
+
+export const ModelAssignmentSchema = z.object({
+  modelId: z.string().min(1),
+  label: z.string().min(1),
+});
 
 export const OpponentSchema = z.object({
   id: z.string().min(1),
@@ -34,6 +43,7 @@ export const OpponentSchema = z.object({
   skillLevel: AiAgentSkillLevelSchema.optional(),
   modelId: z.string().min(6).max(16).optional(),
   modelBoardSize: z.number().int().min(2).max(99).optional(),
+  modelAssignments: z.record(z.string(), ModelAssignmentSchema).optional(),
 });
 
 export const OpponentStatsSchema = z.object({

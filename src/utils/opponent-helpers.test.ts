@@ -10,6 +10,7 @@ import {
   createRemoteCpuOpponent,
   createAiAgentOpponent,
   createModelOpponent,
+  duplicateOpponent,
   isCpuOpponent,
   selectRandomBoard,
   updateOpponentStats,
@@ -122,8 +123,8 @@ describe('createAiAgentOpponent', () => {
     expect(agent2.id).toContain('ai-agent-');
   });
 
-  it('should support all six skill levels', () => {
-    const levels = ['beginner', 'beginner_plus', 'intermediate', 'intermediate_plus', 'advanced', 'advanced_plus'] as const;
+  it('should support all skill levels including scripted', () => {
+    const levels = ['beginner', 'beginner_plus', 'intermediate', 'intermediate_plus', 'advanced', 'advanced_plus', 'scripted_1', 'scripted_2', 'scripted_3', 'scripted_4'] as const;
     for (const level of levels) {
       const agent = createAiAgentOpponent('Test', level);
       expect(agent.skillLevel).toBe(level);
@@ -155,6 +156,41 @@ describe('createModelOpponent', () => {
   it('should be recognized as CPU opponent', () => {
     const opponent = createModelOpponent('MyModel', 'abc12345', 3);
     expect(isCpuOpponent(opponent)).toBe(true);
+  });
+
+  it('should populate modelAssignments for the board size', () => {
+    const opponent = createModelOpponent('MyModel', 'abc12345', 3);
+    expect(opponent.modelAssignments).toBeDefined();
+    expect(opponent.modelAssignments!['3']).toEqual({ modelId: 'abc12345', label: 'MyModel' });
+  });
+});
+
+describe('duplicateOpponent', () => {
+  it('should create a copy with new name and ID', () => {
+    const original = createAiAgentOpponent('Original', 'beginner');
+    original.wins = 10;
+    original.losses = 5;
+    const copy = duplicateOpponent(original, 'Copy');
+    expect(copy.name).toBe('Copy');
+    expect(copy.id).not.toBe(original.id);
+    expect(copy.type).toBe(original.type);
+    expect(copy.skillLevel).toBe(original.skillLevel);
+  });
+
+  it('should reset wins and losses to 0', () => {
+    const original = createAiAgentOpponent('Original', 'advanced');
+    original.wins = 10;
+    original.losses = 5;
+    const copy = duplicateOpponent(original, 'Copy');
+    expect(copy.wins).toBe(0);
+    expect(copy.losses).toBe(0);
+  });
+
+  it('should preserve modelAssignments', () => {
+    const original = createModelOpponent('ModelAgent', 'abc12345', 3);
+    original.modelAssignments!['5'] = { modelId: 'def67890', label: 'model_beta' };
+    const copy = duplicateOpponent(original, 'CopyAgent');
+    expect(copy.modelAssignments).toEqual(original.modelAssignments);
   });
 });
 

@@ -5,7 +5,7 @@
  */
 
 import { getInferenceApiEndpoint } from '@/config/api';
-import type { Board, BoardSize, AiAgentSkillLevel } from '@/types';
+import type { Board, BoardSize, AiAgentSkillLevel, RoundResult } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -154,6 +154,7 @@ function responseBoardToBoard(
  * @param playerBoardHistory - Player's boards from previous rounds
  * @param skillLevel - AI skill level
  * @param modelId - Optional stable model ID (overrides skillLevel on server)
+ * @param roundHistory - Optional round results for scripted agents
  * @returns AiAgentBoardResult with board (or null), failure status, and attempts used
  */
 export async function requestAiAgentBoard(
@@ -163,7 +164,8 @@ export async function requestAiAgentBoard(
   opponentScore: number,
   playerBoardHistory: Board[],
   skillLevel: AiAgentSkillLevel,
-  modelId?: string
+  modelId?: string,
+  roundHistory?: RoundResult[]
 ): Promise<AiAgentBoardResult> {
   try {
     const url = getInferenceApiEndpoint('/construct-board');
@@ -173,6 +175,12 @@ export async function requestAiAgentBoard(
 
     // Flip scores: API expects agent_score = AI's score, opponent_score = player's score
     // round_num is 0-indexed on the server (0-4), but Node uses 1-indexed (1-5)
+    // Convert round history to round_scores (flipped: agent=AI, opponent=player)
+    const roundScores = (roundHistory ?? []).map((r) => ({
+      agent: r.opponentPoints ?? 0,
+      opponent: r.playerPoints ?? 0,
+    }));
+
     const requestBody: Record<string, unknown> = {
       board_size: boardSize,
       round_num: roundNum - 1,
@@ -180,6 +188,7 @@ export async function requestAiAgentBoard(
       opponent_score: playerScore,    // Player's score from game perspective
       opponent_history: opponentHistory,
       skill_level: skillLevel,
+      round_scores: roundScores,
     };
 
     if (modelId) {

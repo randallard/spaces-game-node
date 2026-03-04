@@ -53,8 +53,8 @@ export function BoardSizeSelector({
   const [customError, setCustomError] = useState<string>('');
   const [generatingSize, setGeneratingSize] = useState<number | null>(null);
 
-  // If the opponent has a modelBoardSize, lock to that size
-  const lockedBoardSize = opponent?.modelBoardSize;
+  // If the opponent has a modelBoardSize but no modelAssignments, lock to that size (legacy behavior)
+  const lockedBoardSize = (opponent?.modelBoardSize && !opponent?.modelAssignments) ? opponent.modelBoardSize : undefined;
 
   // Get unlocked board sizes
   const { boardSizes: unlockedSizes } = getFeatureUnlocks(user ?? null);

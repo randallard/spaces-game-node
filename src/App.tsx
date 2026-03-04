@@ -39,6 +39,7 @@ import {
   CompletedRoundModal,
   ActiveGames,
   RemoveOpponentModal,
+  EditAiAgentModal,
   AiRetryModal,
 } from '@/components';
 import { CompletedGames } from '@/components/CompletedGames';
@@ -455,6 +456,8 @@ function App(): React.ReactElement {
 
   // Remove opponent modal state
   const [opponentToRemove, setOpponentToRemove] = useState<Opponent | null>(null);
+  // Edit AI agent modal state
+  const [opponentToEdit, setOpponentToEdit] = useState<Opponent | null>(null);
 
   // Board creation state - size to create when navigating to board management
   const [boardSizeToCreate, setBoardSizeToCreate] = useState<number | null>(null);
@@ -2145,7 +2148,12 @@ function App(): React.ReactElement {
           .filter(r => r.playerBoard)
           .map(r => r.playerBoard!);
 
-        console.log(`[handleBoardSelect] AI Agent: requesting board for round ${currentRound}, skill=${state.opponent.skillLevel}, modelId=${state.opponent.modelId}`);
+        // Look up model assignment for current board size, falling back to legacy modelId
+        const boardSizeKey = String(state.boardSize!);
+        const modelAssignment = state.opponent.modelAssignments?.[boardSizeKey];
+        const effectiveModelId = modelAssignment?.modelId ?? state.opponent.modelId;
+
+        console.log(`[handleBoardSelect] AI Agent: requesting board for round ${currentRound}, skill=${state.opponent.skillLevel}, modelId=${effectiveModelId}`);
 
         const aiResult = await requestAiAgentBoard(
           state.boardSize!,
@@ -2154,7 +2162,8 @@ function App(): React.ReactElement {
           opponentScore,
           playerBoardHistory,
           state.opponent.skillLevel!,
-          state.opponent.modelId
+          effectiveModelId,
+          state.roundHistory
         );
 
         if (aiResult.failed || !aiResult.board) {
@@ -2264,11 +2273,16 @@ function App(): React.ReactElement {
       .filter(r => r.playerBoard)
       .map(r => r.playerBoard!);
 
+    // Look up model assignment for current board size, falling back to legacy modelId
+    const retryBoardSizeKey = String(state.boardSize);
+    const retryModelAssignment = state.opponent.modelAssignments?.[retryBoardSizeKey];
+    const retryEffectiveModelId = retryModelAssignment?.modelId ?? state.opponent.modelId;
+
     // When using model_id, don't convert to stochastic — the model ID already overrides skill level
-    const retrySkillLevel = state.opponent.modelId
+    const retrySkillLevel = retryEffectiveModelId
       ? state.opponent.skillLevel!
       : toStochasticSkillLevel(state.opponent.skillLevel!);
-    console.log(`[handleAiRetry] Retrying with skill level: ${retrySkillLevel} (original: ${state.opponent.skillLevel}, modelId: ${state.opponent.modelId})`);
+    console.log(`[handleAiRetry] Retrying with skill level: ${retrySkillLevel} (original: ${state.opponent.skillLevel}, modelId: ${retryEffectiveModelId})`);
 
     const retryResult = await requestAiAgentBoard(
       state.boardSize,
@@ -2277,7 +2291,8 @@ function App(): React.ReactElement {
       opponentScore,
       playerBoardHistory,
       retrySkillLevel,
-      state.opponent.modelId
+      retryEffectiveModelId,
+      state.roundHistory
     );
 
     if (retryResult.failed || !retryResult.board) {
@@ -2810,6 +2825,14 @@ function App(): React.ReactElement {
                             >
                               Remove opponent from list
                             </button>
+                            {opponent.type === 'ai-agent' && (
+                              <button
+                                onClick={() => setOpponentToEdit(opponent)}
+                                className={styles.removeLink}
+                              >
+                                Edit AI Agent
+                              </button>
+                            )}
                           </div>
                         </div>
                         <button
@@ -3584,6 +3607,25 @@ function App(): React.ReactElement {
           onArchive={() => handleArchiveOpponent(opponentToRemove.id)}
           onDelete={() => handleDeleteOpponent(opponentToRemove.id)}
           onCancel={() => setOpponentToRemove(null)}
+        />
+      )}
+
+      {/* Edit AI Agent Modal */}
+      {opponentToEdit && (
+        <EditAiAgentModal
+          opponent={opponentToEdit}
+          onSave={(updated) => {
+            const updatedList = (savedOpponents || []).map((o) =>
+              o.id === updated.id ? updated : o
+            );
+            setSavedOpponents(updatedList);
+            setOpponentToEdit(null);
+          }}
+          onDuplicate={(newOpponent) => {
+            setSavedOpponents([...(savedOpponents || []), newOpponent]);
+            setOpponentToEdit(null);
+          }}
+          onCancel={() => setOpponentToEdit(null)}
         />
       )}
 
