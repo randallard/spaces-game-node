@@ -2163,7 +2163,7 @@ function App(): React.ReactElement {
           playerBoardHistory,
           state.opponent.skillLevel!,
           effectiveModelId,
-          state.roundHistory
+          state.roundHistory.filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined)
         );
 
         if (aiResult.failed || !aiResult.board) {
@@ -2292,7 +2292,7 @@ function App(): React.ReactElement {
       playerBoardHistory,
       retrySkillLevel,
       retryEffectiveModelId,
-      state.roundHistory
+      state.roundHistory.filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined)
     );
 
     if (retryResult.failed || !retryResult.board) {
