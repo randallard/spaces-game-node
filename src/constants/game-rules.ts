@@ -96,4 +96,10 @@ export const AI_AGENT_SKILL_LEVELS = {
     color: '#2E7D2E',
     label: 'Adaptive',
   },
+  scripted_5: {
+    emoji: '🍄',
+    defaultName: 'Myco',
+    color: '#1B5E20',
+    label: 'Supermove',
+  },
 } as const;

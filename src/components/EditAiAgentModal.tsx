@@ -36,6 +36,7 @@ const SCRIPTED_AGENTS: Array<{ id: string; label: string }> = [
   { id: 'scripted_2', label: 'Scripted Level 2' },
   { id: 'scripted_3', label: 'Scripted Level 3' },
   { id: 'scripted_4', label: 'Scripted Level 4' },
+  { id: 'scripted_5', label: 'Scripted Level 5' },
 ];
 
 export function EditAiAgentModal({

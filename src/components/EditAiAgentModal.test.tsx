@@ -141,6 +141,7 @@ describe('EditAiAgentModal', () => {
       expect(screen.getByText('Scripted Level 2')).toBeInTheDocument();
       expect(screen.getByText('Scripted Level 3')).toBeInTheDocument();
       expect(screen.getByText('Scripted Level 4')).toBeInTheDocument();
+      expect(screen.getByText('Scripted Level 5')).toBeInTheDocument();
     });
   });
 

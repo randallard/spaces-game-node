@@ -179,6 +179,46 @@ export function deriveGridFromSequence(
 }
 
 /**
+ * Build a fog-of-war filtered view of a board.
+ * Returns only the moves the AI agent could see during simulation:
+ * - Piece/final moves up to lastStep + 1
+ * - Trap only if the agent hit it at the matching position
+ *
+ * @param board - The full board to filter
+ * @param lastStep - Last sequence step the agent reached (-1 if none)
+ * @param hitTrap - Whether the agent hit a trap
+ * @param trapPosition - Position where the agent hit the trap
+ * @returns A new Board with filtered sequence and derived grid
+ */
+export function buildFogBoard(
+  board: Board,
+  lastStep: number,
+  hitTrap: boolean,
+  trapPosition?: { row: number; col: number }
+): Board {
+  const filtered = board.sequence.filter((move) => {
+    if (move.type === 'piece' || move.type === 'final') {
+      return move.order <= lastStep + 1;
+    }
+    if (move.type === 'trap' && hitTrap && trapPosition) {
+      return (
+        move.position.row === trapPosition.row &&
+        move.position.col === trapPosition.col
+      );
+    }
+    return false;
+  });
+
+  const grid = deriveGridFromSequence(filtered, board.boardSize);
+
+  return {
+    ...board,
+    sequence: filtered,
+    grid,
+  };
+}
+
+/**
  * Validate that a board can be properly encoded and decoded
  *
  * @param board - The board to validate

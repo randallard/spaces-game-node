@@ -6,6 +6,7 @@
 
 import { getInferenceApiEndpoint } from '@/config/api';
 import type { Board, BoardSize, AiAgentSkillLevel, RoundResult } from '@/types';
+import { buildFogBoard, encodeMinimalBoard } from './board-encoding';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -181,6 +182,33 @@ export async function requestAiAgentBoard(
       opponent: r.playerPoints ?? 0,
     }));
 
+    // Build rich round history for scripted_5+ agents
+    const roundHistoryPayload = (roundHistory ?? []).map((r) => {
+      // AI's board is opponentBoard from game perspective
+      const agentBoard = encodeMinimalBoard(r.opponentBoard);
+
+      // Fog view of the player's board: what the AI could see
+      const fogBoard = buildFogBoard(
+        r.playerBoard,
+        r.simulationDetails?.opponentLastStep ?? -1,
+        r.simulationDetails?.opponentHitTrap ?? false,
+        r.simulationDetails?.opponentTrapPosition
+      );
+      const opponentBoardFog = encodeMinimalBoard(fogBoard);
+
+      return {
+        agent_score: r.opponentPoints ?? 0,
+        opponent_score: r.playerPoints ?? 0,
+        agent_board: agentBoard,
+        opponent_board_fog: opponentBoardFog,
+        agent_last_step: r.simulationDetails?.opponentLastStep ?? -1,
+        opponent_last_step: r.simulationDetails?.playerLastStep ?? -1,
+        agent_hit_trap: r.simulationDetails?.opponentHitTrap ?? false,
+        opponent_hit_trap: r.simulationDetails?.playerHitTrap ?? false,
+        collision: r.collision ?? false,
+      };
+    });
+
     const requestBody: Record<string, unknown> = {
       board_size: boardSize,
       round_num: roundNum - 1,
@@ -189,6 +217,7 @@ export async function requestAiAgentBoard(
       opponent_history: opponentHistory,
       skill_level: skillLevel,
       round_scores: roundScores,
+      round_history: roundHistoryPayload,
     };
 
     if (modelId) {

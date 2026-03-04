@@ -8,6 +8,7 @@ import {
   decodeMinimalBoard,
   deriveGridFromSequence,
   validateBoardForEncoding,
+  buildFogBoard,
 } from './board-encoding';
 import type { Board, BoardMove } from '../types/board';
 
@@ -346,6 +347,127 @@ describe('validateBoardForEncoding', () => {
     };
 
     expect(() => validateBoardForEncoding(board)).toThrow('Sequence move at index 0 is undefined');
+  });
+});
+
+describe('buildFogBoard', () => {
+  const makeBoard = (sequence: BoardMove[]): Board => ({
+    id: 'fog-test',
+    name: 'Fog Test',
+    boardSize: 2,
+    grid: [['empty', 'empty'], ['empty', 'empty']],
+    sequence,
+    thumbnail: '',
+    createdAt: Date.now(),
+  });
+
+  it('should include piece moves up to lastStep + 1', () => {
+    const board = makeBoard([
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: 1, col: 0 }, type: 'piece', order: 2 },
+      { position: { row: 1, col: 1 }, type: 'trap', order: 3 },
+      { position: { row: -1, col: 0 }, type: 'final', order: 4 },
+    ]);
+
+    const fog = buildFogBoard(board, 1, false);
+
+    // lastStep=1, so include piece/final where order <= 2
+    expect(fog.sequence).toHaveLength(2);
+    expect(fog.sequence[0]!.type).toBe('piece');
+    expect(fog.sequence[1]!.type).toBe('piece');
+  });
+
+  it('should include final move when order is within range', () => {
+    const board = makeBoard([
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: 1, col: 0 }, type: 'piece', order: 2 },
+      { position: { row: -1, col: 0 }, type: 'final', order: 3 },
+    ]);
+
+    const fog = buildFogBoard(board, 2, false);
+
+    expect(fog.sequence).toHaveLength(3);
+    expect(fog.sequence[2]!.type).toBe('final');
+  });
+
+  it('should exclude trap when hitTrap is false', () => {
+    const board = makeBoard([
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: 1, col: 1 }, type: 'trap', order: 2 },
+      { position: { row: -1, col: 0 }, type: 'final', order: 3 },
+    ]);
+
+    const fog = buildFogBoard(board, 5, false);
+
+    const trapMoves = fog.sequence.filter(m => m.type === 'trap');
+    expect(trapMoves).toHaveLength(0);
+  });
+
+  it('should include trap when hitTrap is true and position matches', () => {
+    const board = makeBoard([
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: 1, col: 1 }, type: 'trap', order: 2 },
+      { position: { row: -1, col: 0 }, type: 'final', order: 3 },
+    ]);
+
+    const fog = buildFogBoard(board, 5, true, { row: 1, col: 1 });
+
+    const trapMoves = fog.sequence.filter(m => m.type === 'trap');
+    expect(trapMoves).toHaveLength(1);
+    expect(trapMoves[0]!.position).toEqual({ row: 1, col: 1 });
+  });
+
+  it('should exclude trap when hitTrap is true but position does not match', () => {
+    const board = makeBoard([
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: 1, col: 1 }, type: 'trap', order: 2 },
+      { position: { row: -1, col: 0 }, type: 'final', order: 3 },
+    ]);
+
+    const fog = buildFogBoard(board, 5, true, { row: 0, col: 1 });
+
+    const trapMoves = fog.sequence.filter(m => m.type === 'trap');
+    expect(trapMoves).toHaveLength(0);
+  });
+
+  it('should derive grid correctly from filtered sequence', () => {
+    const board = makeBoard([
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: 1, col: 1 }, type: 'trap', order: 2 },
+      { position: { row: 1, col: 0 }, type: 'piece', order: 3 },
+      { position: { row: -1, col: 0 }, type: 'final', order: 4 },
+    ]);
+
+    // lastStep=0 means only order <= 1 for piece/final
+    const fog = buildFogBoard(board, 0, false);
+
+    expect(fog.grid[0]![0]).toBe('piece');
+    expect(fog.grid[1]![1]).toBe('empty'); // trap excluded
+    expect(fog.grid[1]![0]).toBe('empty'); // piece at order 3 excluded
+  });
+
+  it('should return empty sequence when lastStep is -1 and no trap hit', () => {
+    const board = makeBoard([
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+      { position: { row: 1, col: 1 }, type: 'trap', order: 2 },
+      { position: { row: -1, col: 0 }, type: 'final', order: 3 },
+    ]);
+
+    const fog = buildFogBoard(board, -1, false);
+
+    expect(fog.sequence).toHaveLength(0);
+  });
+
+  it('should preserve board metadata', () => {
+    const board = makeBoard([
+      { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+    ]);
+
+    const fog = buildFogBoard(board, 5, false);
+
+    expect(fog.id).toBe(board.id);
+    expect(fog.name).toBe(board.name);
+    expect(fog.boardSize).toBe(board.boardSize);
   });
 });
 

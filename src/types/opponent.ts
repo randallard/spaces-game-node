@@ -15,7 +15,8 @@ export type AiAgentSkillLevel =
   | 'scripted_1'
   | 'scripted_2'
   | 'scripted_3'
-  | 'scripted_4';
+  | 'scripted_4'
+  | 'scripted_5';
 
 export type ModelAssignment = {
   modelId: string;    // stable model ID or scripted level name

@@ -248,9 +248,20 @@ describe('requestAiAgentBoard', () => {
       json: async () => mockApiResponse,
     } as Response);
 
+    const minBoard: Board = {
+      id: 'min', name: 'Min', boardSize: 3,
+      grid: [['piece','empty','empty'],['piece','empty','empty'],['piece','empty','empty']],
+      sequence: [
+        { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+        { position: { row: 1, col: 0 }, type: 'piece', order: 2 },
+        { position: { row: 2, col: 0 }, type: 'piece', order: 3 },
+        { position: { row: -1, col: 0 }, type: 'final', order: 4 },
+      ],
+      thumbnail: '', createdAt: 1000,
+    };
     const roundHistory = [
-      { playerPoints: 3, opponentPoints: 5 },
-      { playerPoints: 7, opponentPoints: 2 },
+      { playerPoints: 3, opponentPoints: 5, playerBoard: minBoard, opponentBoard: minBoard },
+      { playerPoints: 7, opponentPoints: 2, playerBoard: minBoard, opponentBoard: minBoard },
     ] as import('@/types').RoundResult[];
 
     await requestAiAgentBoard(3, 3, 10, 7, [], 'beginner', undefined, roundHistory);
@@ -263,6 +274,99 @@ describe('requestAiAgentBoard', () => {
       { agent: 5, opponent: 3 },
       { agent: 2, opponent: 7 },
     ]);
+  });
+
+  it('should send round_history with fog boards and flipped perspective', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    } as Response);
+
+    const playerBoard: Board = {
+      id: 'player-board',
+      name: 'Player Board',
+      boardSize: 2,
+      grid: [['piece', 'empty'], ['trap', 'piece']],
+      sequence: [
+        { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+        { position: { row: 1, col: 0 }, type: 'trap', order: 2 },
+        { position: { row: 1, col: 1 }, type: 'piece', order: 3 },
+        { position: { row: -1, col: 0 }, type: 'final', order: 4 },
+      ],
+      thumbnail: '',
+      createdAt: 1000,
+    };
+
+    const opponentBoard: Board = {
+      id: 'opponent-board',
+      name: 'Opponent Board',
+      boardSize: 2,
+      grid: [['piece', 'trap'], ['piece', 'empty']],
+      sequence: [
+        { position: { row: 0, col: 0 }, type: 'piece', order: 1 },
+        { position: { row: 0, col: 1 }, type: 'trap', order: 2 },
+        { position: { row: 1, col: 0 }, type: 'piece', order: 3 },
+        { position: { row: -1, col: 0 }, type: 'final', order: 4 },
+      ],
+      thumbnail: '',
+      createdAt: 1000,
+    };
+
+    const roundHistory = [{
+      round: 1,
+      winner: 'player' as const,
+      playerBoard,
+      opponentBoard,
+      playerFinalPosition: { row: -1, col: 0 },
+      opponentFinalPosition: { row: -1, col: 0 },
+      playerPoints: 3,
+      opponentPoints: 5,
+      simulationDetails: {
+        playerMoves: 3,
+        opponentMoves: 2,
+        playerHitTrap: false,
+        opponentHitTrap: true,
+        playerLastStep: 3,
+        opponentLastStep: 1,
+        opponentTrapPosition: { row: 1, col: 0 },
+      },
+      collision: false,
+    }] as import('@/types').RoundResult[];
+
+    await requestAiAgentBoard(2, 2, 3, 5, [], 'scripted_5', undefined, roundHistory);
+
+    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
+    const body = JSON.parse(fetchCall[1]!.body as string);
+
+    expect(body.round_history).toHaveLength(1);
+    const rh = body.round_history[0];
+    // Scores flipped: agent = opponent (AI), opponent = player
+    expect(rh.agent_score).toBe(5);
+    expect(rh.opponent_score).toBe(3);
+    // Agent board is the opponentBoard encoded
+    expect(rh.agent_board).toContain('2|');
+    // Fog board should be encoded
+    expect(rh.opponent_board_fog).toContain('2|');
+    // Simulation details flipped
+    expect(rh.agent_last_step).toBe(1);
+    expect(rh.opponent_last_step).toBe(3);
+    expect(rh.agent_hit_trap).toBe(true);
+    expect(rh.opponent_hit_trap).toBe(false);
+    expect(rh.collision).toBe(false);
+  });
+
+  it('should send empty round_history when no roundHistory provided', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    } as Response);
+
+    await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
+
+    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
+    const body = JSON.parse(fetchCall[1]!.body as string);
+
+    expect(body.round_history).toEqual([]);
   });
 
   it('should send empty round_scores when no roundHistory provided', async () => {
