@@ -1,3 +1,4 @@
 [submodule "spaces-game-python"]
 	path = spaces-game-python
 	url = git@github.com:randallard/spaces-game-python.git
+	ignore = dirty
