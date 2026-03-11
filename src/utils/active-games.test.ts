@@ -214,6 +214,28 @@ describe('active-games utilities', () => {
       expect(games[0]?.totalRounds).toBe(10);
     });
 
+    it('should save lotMetadata when provided', () => {
+      const state = createMockGameState('lot-game-1');
+      const lotMetadata = {
+        sessionId: 'test-session',
+        npcId: 'myco',
+        returnUrl: 'https://townage.vercel.app/',
+        npcDisplayName: 'Myco',
+      };
+      saveActiveGame(state, lotMetadata);
+
+      const games = getActiveGames();
+      expect(games[0]?.lotMetadata).toEqual(lotMetadata);
+    });
+
+    it('should not include lotMetadata when not provided', () => {
+      const state = createMockGameState('regular-game');
+      saveActiveGame(state);
+
+      const games = getActiveGames();
+      expect(games[0]?.lotMetadata).toBeUndefined();
+    });
+
     it('should add new games to the beginning of the list', () => {
       const state1 = createMockGameState('game-1');
       saveActiveGame(state1);

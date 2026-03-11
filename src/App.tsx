@@ -9,6 +9,7 @@ import { updateOpponentStats, createHumanOpponent, isCpuOpponent } from '@/utils
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
 import { generateChallengeUrl, generateChallengeUrlShortened, generateFinalResultsUrl, getChallengeFromUrl, getChallengeFromUrlAsync, clearChallengeFromUrl, hasChallengeInUrl } from '@/utils/challenge-url';
 import { hasLotLaunchInUrl, parseLotLaunch, clearLotHash, configureLotOpponent, returnToLot, type LotLaunchData, type LotReturnResults } from '@/utils/the-lot-integration';
+import { saveLotResultToServer, getLocalPendingResults, clearLocalPendingResult, type LotResultPayload } from '@/utils/pending-lot-results';
 import { decodeMinimalBoard } from '@/utils/board-encoding';
 import { calculateBoardScore } from '@/utils/board-scoring';
 import { fetchRemoteCpuBoards, fetchRemoteCpuDeck } from '@/utils/remote-cpu-boards';
@@ -483,13 +484,19 @@ function App(): React.ReactElement {
 
   // Save active game state when it changes
   useEffect(() => {
-    saveActiveGame(state);
+    const metadata = lotMode ? {
+      sessionId: lotMode.sessionId,
+      npcId: lotMode.npcId,
+      returnUrl: lotMode.returnUrl,
+      npcDisplayName: lotMode.npcDisplayName,
+    } : undefined;
+    saveActiveGame(state, metadata);
     setActiveGames(getActiveGames());
 
     // Note: We no longer auto-remove games when they reach game-over
     // Instead, completed games (Round 6 marker) appear in the Completed Games panel
     // Users can manually archive/delete them from there
-  }, [state]);
+  }, [state, lotMode]);
 
   // Detect feature unlocks when totalGames changes
   useEffect(() => {
@@ -1395,6 +1402,31 @@ function App(): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.gameId, state.roundHistory.length]); // Run when gameId or history length changes
 
+  // Save lot game results to Vercel KV when game ends (for async NPC messages)
+  useEffect(() => {
+    if (!lotMode) return;
+    if (phase.type !== 'game-over' && phase.type !== 'all-rounds-results') return;
+
+    const completeRounds = state.roundHistory.filter(r => r.playerBoard && r.opponentBoard);
+    const result: LotResultPayload = {
+      sessionId: lotMode.sessionId,
+      npcId: lotMode.npcId,
+      playerScore,
+      opponentScore,
+      winner: playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie',
+      rounds: completeRounds.map(r => ({
+        round: r.round,
+        playerPoints: r.playerPoints ?? 0,
+        opponentPoints: r.opponentPoints ?? 0,
+        winner: r.winner,
+      })),
+      completedAt: Date.now(),
+    };
+
+    saveLotResultToServer(result);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase.type, lotMode?.sessionId]);
+
   // Handle user creation
   const handleUserCreate = (newUser: UserProfileType) => {
     // Save user to localStorage
@@ -1709,6 +1741,19 @@ function App(): React.ReactElement {
         restoredState.opponent,
         restoredState.boardSize
       );
+    }
+
+    // Restore lot mode from saved metadata so "Return to Townage" button works
+    if (game.lotMetadata) {
+      setLotMode({
+        sessionId: game.lotMetadata.sessionId,
+        npcId: game.lotMetadata.npcId,
+        npcDisplayName: game.lotMetadata.npcDisplayName,
+        returnUrl: game.lotMetadata.returnUrl,
+        opponentType: 'ai-agent',
+        skillLevel: (restoredState.opponent?.skillLevel as string) || 'scripted_5',
+        modelAssignments: (restoredState.opponent?.modelAssignments as Record<string, { modelId: string; label: string }>) || {},
+      });
     }
 
     loadState({
@@ -2509,7 +2554,12 @@ function App(): React.ReactElement {
 
     // Save current game as active so it can be resumed later
     if (state.gameId && state.opponent) {
-      saveActiveGame(state);
+      saveActiveGame(state, {
+        sessionId: lotMode.sessionId,
+        npcId: lotMode.npcId,
+        returnUrl: lotMode.returnUrl,
+        npcDisplayName: lotMode.npcDisplayName,
+      });
     }
 
     const playerScore = state.roundHistory.filter(r => r.winner === 'player').length;
@@ -3670,6 +3720,21 @@ function App(): React.ReactElement {
               <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                 <button
                   onClick={() => {
+                    // Bundle any other pending results from localStorage
+                    const localPending = getLocalPendingResults()
+                      .filter(r => r.sessionId !== lotMode.sessionId)
+                      .map(r => ({
+                        sessionId: r.sessionId,
+                        npcId: r.npcId,
+                        playerScore: r.playerScore,
+                        opponentScore: r.opponentScore,
+                        winner: r.winner as 'player' | 'opponent' | 'tie',
+                        rounds: r.rounds.map(rd => ({
+                          ...rd,
+                          winner: rd.winner as 'player' | 'opponent' | 'tie',
+                        })),
+                      }));
+
                     const results: LotReturnResults = {
                       sessionId: lotMode.sessionId,
                       npcId: lotMode.npcId,
@@ -3682,7 +3747,22 @@ function App(): React.ReactElement {
                         opponentPoints: r.opponentPoints ?? 0,
                         winner: r.winner,
                       })),
+                      ...(localPending.length > 0 && { pendingResults: localPending }),
                     };
+
+                    // Delete this result from KV (fire-and-forget)
+                    fetch(getApiEndpoint('/api/lot-results'), {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ sessions: [lotMode.sessionId, ...localPending.map(r => r.sessionId)] }),
+                    }).catch(() => {});
+
+                    // Clear local pending results
+                    for (const r of localPending) {
+                      clearLocalPendingResult(r.sessionId);
+                    }
+                    clearLocalPendingResult(lotMode.sessionId);
+
                     returnToLot(lotMode.returnUrl, results);
                   }}
                   style={{

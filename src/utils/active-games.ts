@@ -9,6 +9,16 @@ import { derivePhase, deriveCurrentRound, derivePlayerScore, deriveOpponentScore
 
 
 /**
+ * Lot metadata stored with active games for resuming lot mode
+ */
+export type LotMetadata = {
+  sessionId: string;
+  npcId: string;
+  returnUrl: string;
+  npcDisplayName: string;
+};
+
+/**
  * Simplified game info for display in the active games list
  */
 export type ActiveGameInfo = {
@@ -23,6 +33,7 @@ export type ActiveGameInfo = {
   gameMode: 'round-by-round' | 'deck' | null;
   lastUpdated: number; // timestamp
   archived?: boolean; // If true, hidden from active games list until opponent makes a move
+  lotMetadata?: LotMetadata; // Lot mode data for resuming lot games
   // Store full state for restoration
   fullState: GameState;
 };
@@ -63,7 +74,7 @@ export function getActiveGames(includeArchived = false): ActiveGameInfo[] {
 /**
  * Save or update an active game
  */
-export function saveActiveGame(state: GameState): void {
+export function saveActiveGame(state: GameState, lotMetadata?: LotMetadata): void {
   // Only save if we have an opponent
   if (!state.opponent) {
     return;
@@ -106,6 +117,7 @@ export function saveActiveGame(state: GameState): void {
       boardSize: state.boardSize,
       gameMode: state.gameMode,
       lastUpdated: Date.now(),
+      ...(lotMetadata && { lotMetadata }),
       fullState: state,
     };
 

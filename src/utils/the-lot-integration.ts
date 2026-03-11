@@ -30,6 +30,7 @@ export interface LotReturnResults {
     opponentPoints: number;
     winner: 'player' | 'opponent' | 'tie';
   }>;
+  pendingResults?: LotReturnResults[];
 }
 
 /**
