@@ -213,11 +213,12 @@ describe('the-lot-integration', () => {
       returnToLot('https://townage.vercel.app/', results);
 
       expect(hrefSetter).toHaveBeenCalledTimes(1);
-      const url = hrefSetter.mock.calls[0][0] as string;
+      const url = hrefSetter.mock.calls[0]?.[0] as string;
+      expect(url).toBeDefined();
       expect(url).toMatch(/^https:\/\/townage\.vercel\.app\/#r=.+$/);
 
       // Verify the compressed data round-trips
-      const compressed = url.split('#r=')[1];
+      const compressed = url.split('#r=')[1]!;
       const json = LZString.decompressFromEncodedURIComponent(compressed);
       const parsed = JSON.parse(json!);
       expect(parsed.sessionId).toBe('test-session');
