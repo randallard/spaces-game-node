@@ -16,13 +16,15 @@ export interface TutorialIntroProps {
   onSkip: () => void;
   /** Whether user arrived via a challenge URL */
   hasIncomingChallenge?: boolean;
+  /** NPC name if launched from the-lot (lot mode) */
+  lotNpcName?: string;
 }
 
 /**
  * Tutorial introduction screen
  * Shows CPU Sam challenge, creature selection, and customization options
  */
-export function TutorialIntro({ onNext, onSkip, hasIncomingChallenge = false }: TutorialIntroProps): ReactElement {
+export function TutorialIntro({ onNext, onSkip, hasIncomingChallenge = false, lotNpcName }: TutorialIntroProps): ReactElement {
   const creatures = getAllCreatures();
 
   // Get random creature IDs for defaults
@@ -60,7 +62,16 @@ export function TutorialIntro({ onNext, onSkip, hasIncomingChallenge = false }: 
 
         {/* Challenge Text */}
         <div className={styles.challengeText}>
-          {hasIncomingChallenge ? (
+          {lotNpcName ? (
+            <>
+              <p className={styles.mainText}>
+                You're starting a game with <strong>{lotNpcName}</strong>!
+              </p>
+              <p className={styles.mainText}>
+                Let me show you how to play with a quick round against <strong>{cpuSamName}</strong> first!
+              </p>
+            </>
+          ) : hasIncomingChallenge ? (
             <>
               <p className={styles.mainText}>
                 Looks like you've been challenged!

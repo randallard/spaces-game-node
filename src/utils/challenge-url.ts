@@ -461,6 +461,9 @@ export function hasChallengeInUrl(): boolean {
   const hash = window.location.hash;
   if (!hash) return false;
 
+  // Lot launch uses #lot= prefix — not a challenge, handled separately
+  if (hash.startsWith('#lot=')) return false;
+
   const params = new URLSearchParams(hash.substring(1));
   // Check for compressed format (c), shortened format (s), or old format (challenge)
   return params.has('c') || params.has('s') || params.has('challenge');

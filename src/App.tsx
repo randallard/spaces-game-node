@@ -8,10 +8,11 @@ import { getOpponentIcon, getOpponentIconColor, createInitialState } from '@/uti
 import { updateOpponentStats, createHumanOpponent, isCpuOpponent } from '@/utils/opponent-helpers';
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
 import { generateChallengeUrl, generateChallengeUrlShortened, generateFinalResultsUrl, getChallengeFromUrl, getChallengeFromUrlAsync, clearChallengeFromUrl, hasChallengeInUrl } from '@/utils/challenge-url';
+import { hasLotLaunchInUrl, parseLotLaunch, clearLotHash, configureLotOpponent, returnToLot, type LotLaunchData, type LotReturnResults } from '@/utils/the-lot-integration';
 import { decodeMinimalBoard } from '@/utils/board-encoding';
 import { calculateBoardScore } from '@/utils/board-scoring';
 import { fetchRemoteCpuBoards, fetchRemoteCpuDeck } from '@/utils/remote-cpu-boards';
-import { requestAiAgentBoard, checkInferenceServerHealth, toStochasticSkillLevel } from '@/utils/ai-agent-inference';
+import { requestAiAgentBoard, toStochasticSkillLevel } from '@/utils/ai-agent-inference';
 import { getApiEndpoint } from '@/config/api';
 import { markRoundCompleted, markRoundPending, hasCompletedRound, getGameProgress } from '@/utils/game-progress';
 import { getActiveGames, saveActiveGame, removeActiveGame, archiveActiveGame, type ActiveGameInfo } from '@/utils/active-games';
@@ -429,6 +430,9 @@ function App(): React.ReactElement {
 
   // Incoming challenge state (preserved through tutorial if user is new)
   const [incomingChallenge, setIncomingChallenge] = useState<ReturnType<typeof getChallengeFromUrl>>(null);
+
+  // The-lot integration: lot mode state (NPC config from the-lot hub)
+  const [lotMode, setLotMode] = useState<LotLaunchData | null>(null);
 
   // Show challenge received modal
   const [showChallengeModal, setShowChallengeModal] = useState(false);
@@ -1201,6 +1205,72 @@ function App(): React.ReactElement {
     // The challenge will be preserved in state and handled after tutorial
   };
 
+  // Check for lot mode launch from the-lot on mount
+  useEffect(() => {
+    if (hasLotLaunchInUrl()) {
+      const lotData = parseLotLaunch();
+      if (lotData) {
+        console.log('[APP] Lot mode detected:', lotData.npcId);
+        clearLotHash();
+        setLotMode(lotData);
+
+        // If user has completed tutorial, auto-configure and start game
+        if (state.user.name) {
+          const gameId = `lot-${lotData.sessionId}`;
+
+          // Check for an existing active game with this session
+          const activeGames = getActiveGames(true); // include archived
+          const existingGame = activeGames.find(g => g.gameId === gameId);
+
+          if (existingGame) {
+            // Resume existing game
+            console.log('[APP] Resuming active lot game:', gameId, 'round:', existingGame.currentRound);
+            loadState(existingGame.fullState);
+          } else {
+            // Start new game
+            const lotOpponent = configureLotOpponent(lotData);
+
+            // Find existing opponent by lot NPC ID, or add new one
+            const existingIdx = (savedOpponents || []).findIndex(o => o.id === lotOpponent.id);
+            let opponent: Opponent;
+            if (existingIdx >= 0) {
+              // Update config but keep existing name and win/loss record
+              const existing = (savedOpponents || [])[existingIdx]!;
+              opponent = {
+                ...lotOpponent,
+                name: existing.name,
+                wins: existing.wins,
+                losses: existing.losses,
+              };
+              const updated = [...(savedOpponents || [])];
+              updated[existingIdx] = opponent;
+              setSavedOpponents(updated);
+            } else {
+              opponent = lotOpponent;
+              setSavedOpponents([...(savedOpponents || []), opponent]);
+            }
+
+            loadState({
+              ...state,
+              opponent,
+              gameId,
+              gameCreatorId: null,
+              gameMode: 'round-by-round',
+              boardSize: null,
+              phaseOverride: { type: 'board-size-selection', gameMode: 'round-by-round' },
+              roundHistory: [],
+              playerSelectedDeck: null,
+              opponentSelectedDeck: null,
+            });
+          }
+        }
+        // If no user yet, lot mode is preserved in state and
+        // handled after tutorial via handleTutorialNameContinue
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
+
   // Check for incoming challenge in URL on mount and when hash changes
   useEffect(() => {
     const handleHashChange = async () => {
@@ -1362,7 +1432,31 @@ function App(): React.ReactElement {
       return;
     }
 
-    // No incoming challenge - normal flow
+    // Check for lot mode
+    if (lotMode) {
+      console.log('[handleUserCreate] Processing lot mode:', lotMode.npcId);
+      const opponent = configureLotOpponent(lotMode);
+      const gameId = `lot-${lotMode.sessionId}`;
+
+      setSavedOpponents([...(savedOpponents || []), opponent]);
+
+      loadState({
+        ...state,
+        user: newUser,
+        opponent,
+        gameId,
+        gameCreatorId: null,
+        gameMode: 'round-by-round',
+        boardSize: null,
+        phaseOverride: { type: 'board-size-selection', gameMode: 'round-by-round' },
+        roundHistory: [],
+        playerSelectedDeck: null,
+        opponentSelectedDeck: null,
+      });
+      return;
+    }
+
+    // No incoming challenge or lot mode - normal flow
     loadState({
       ...state,
       user: newUser,
@@ -1461,24 +1555,10 @@ function App(): React.ReactElement {
           setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
         }, 500);
       } else if (state.opponent && state.opponent.type === 'ai-agent') {
-        // AI agent - check inference server health before proceeding
+        // AI agent boards are generated per-round with retry UI, no health check needed
         setGeneratingSize(size);
         setIsGeneratingCpuBoards(true);
 
-        try {
-          const isHealthy = await checkInferenceServerHealth();
-          if (!isHealthy) {
-            alert('AI Agent inference server is not available. Please make sure it is running and try again.');
-            setIsGeneratingCpuBoards(false);
-            return;
-          }
-        } catch {
-          alert('Could not connect to AI Agent inference server. Please check your connection.');
-          setIsGeneratingCpuBoards(false);
-          return;
-        }
-
-        // AI agent boards are generated per-round, no pre-fetching needed
         setTimeout(() => {
           setIsGeneratingCpuBoards(false);
           setPhase(gameMode === 'deck' ? { type: 'deck-selection' } : { type: 'board-selection', round: 1 });
@@ -2423,6 +2503,34 @@ function App(): React.ReactElement {
     setPhase({ type: 'board-management' });
   };
 
+  // Return to townage with incomplete results, preserving game as active
+  const handleReturnToTownage = () => {
+    if (!lotMode) return;
+
+    // Save current game as active so it can be resumed later
+    if (state.gameId && state.opponent) {
+      saveActiveGame(state);
+    }
+
+    const playerScore = state.roundHistory.filter(r => r.winner === 'player').length;
+    const opponentScore = state.roundHistory.filter(r => r.winner === 'opponent').length;
+
+    const results: LotReturnResults = {
+      sessionId: lotMode.sessionId,
+      npcId: lotMode.npcId,
+      playerScore,
+      opponentScore,
+      winner: 'incomplete',
+      rounds: state.roundHistory.map(r => ({
+        round: r.round,
+        playerPoints: r.playerPoints ?? 0,
+        opponentPoints: r.opponentPoints ?? 0,
+        winner: r.winner,
+      })),
+    };
+    returnToLot(lotMode.returnUrl, results);
+  };
+
   // Handle profile update
   const handleProfileUpdate = (updatedUser: UserProfileType) => {
     // Save to localStorage
@@ -2674,8 +2782,47 @@ function App(): React.ReactElement {
         // Show welcome modal on error
         setShowWelcomeModal(true);
       }
+    } else if (lotMode) {
+      // Lot mode: auto-configure opponent and start game
+      console.log('[APP] Processing lot mode after tutorial:', lotMode.npcId);
+      const gameId = `lot-${lotMode.sessionId}`;
+
+      // Check for an existing active game with this session
+      const activeGames = getActiveGames(true);
+      const existingGame = activeGames.find(g => g.gameId === gameId);
+
+      if (existingGame) {
+        console.log('[APP] Resuming active lot game after tutorial:', gameId);
+        loadState({ ...existingGame.fullState, user: userWithPreferences });
+      } else {
+        const opponent = configureLotOpponent(lotMode);
+
+        // Save opponent to localStorage
+        const existingIndex = (savedOpponents || []).findIndex(o => o.id === opponent.id);
+        if (existingIndex >= 0) {
+          const updated = [...(savedOpponents || [])];
+          updated[existingIndex] = opponent;
+          setSavedOpponents(updated);
+        } else {
+          setSavedOpponents([...(savedOpponents || []), opponent]);
+        }
+
+        loadState({
+          ...state,
+          user: userWithPreferences,
+          opponent,
+          gameId,
+          gameCreatorId: null,
+          gameMode: 'round-by-round',
+          boardSize: null,
+          phaseOverride: { type: 'board-size-selection', gameMode: 'round-by-round' },
+          roundHistory: [],
+          playerSelectedDeck: null,
+          opponentSelectedDeck: null,
+        });
+      }
     } else {
-      // No challenge, show welcome modal as usual
+      // No challenge or lot mode, show welcome modal as usual
       setShowWelcomeModal(true);
     }
   };
@@ -2689,6 +2836,7 @@ function App(): React.ReactElement {
             onNext={handleTutorialIntroNext}
             onSkip={handleTutorialSkip}
             hasIncomingChallenge={!!incomingChallenge}
+            lotNpcName={lotMode?.npcDisplayName}
           />
         );
 
@@ -3500,23 +3648,59 @@ function App(): React.ReactElement {
         const completeRounds = state.roundHistory.filter(r => r.playerBoard && r.opponentBoard);
 
         return (
-          <GameOver
-            winner={phase.winner}
-            playerName={state.user.name}
-            opponentName={state.opponent?.name || 'Opponent'}
-            playerScore={playerScore}
-            opponentScore={opponentScore}
-            roundHistory={completeRounds}
-            playerStats={state.user.stats}
-            onNewGame={handlePlayAgain}
-            {...(shouldShareResults && { onShare: () => setPhase({ type: 'share-final-results' }) })}
-            showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
-            onShowCompleteResultsChange={handleShowCompleteResultsChange}
-            explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
-            onExplanationStyleChange={handleExplanationStyleChange}
-            mobileExplanationMode={state.user.preferences?.mobileExplanationMode ?? 'overlay'}
-            onMobileExplanationModeChange={handleMobileExplanationModeChange}
-          />
+          <>
+            <GameOver
+              winner={phase.winner}
+              playerName={state.user.name}
+              opponentName={state.opponent?.name || 'Opponent'}
+              playerScore={playerScore}
+              opponentScore={opponentScore}
+              roundHistory={completeRounds}
+              playerStats={state.user.stats}
+              onNewGame={handlePlayAgain}
+              {...(shouldShareResults && { onShare: () => setPhase({ type: 'share-final-results' }) })}
+              showCompleteResultsByDefault={state.user.preferences?.showCompleteRoundResults ?? false}
+              onShowCompleteResultsChange={handleShowCompleteResultsChange}
+              explanationStyle={state.user.preferences?.explanationStyle ?? 'lively'}
+              onExplanationStyleChange={handleExplanationStyleChange}
+              mobileExplanationMode={state.user.preferences?.mobileExplanationMode ?? 'overlay'}
+              onMobileExplanationModeChange={handleMobileExplanationModeChange}
+            />
+            {lotMode && (
+              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                <button
+                  onClick={() => {
+                    const results: LotReturnResults = {
+                      sessionId: lotMode.sessionId,
+                      npcId: lotMode.npcId,
+                      playerScore,
+                      opponentScore,
+                      winner: phase.winner,
+                      rounds: completeRounds.map(r => ({
+                        round: r.round,
+                        playerPoints: r.playerPoints ?? 0,
+                        opponentPoints: r.opponentPoints ?? 0,
+                        winner: r.winner,
+                      })),
+                    };
+                    returnToLot(lotMode.returnUrl, results);
+                  }}
+                  style={{
+                    padding: '12px 32px',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    background: '#6a4c93',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Return to Townage
+                </button>
+              </div>
+            )}
+          </>
         );
       }
 
@@ -3534,6 +3718,16 @@ function App(): React.ReactElement {
         </div>
         {state.user.name && (
           <div className={styles.headerActions}>
+            {/* Townage link - show only when launched from the-lot */}
+            {lotMode && (
+              <button
+                className={styles.homeButton}
+                onClick={handleReturnToTownage}
+                aria-label="Return to Townage"
+              >
+                🌐 Townage
+              </button>
+            )}
             {/* Home button - show when not on board-management or tutorial */}
             {phase.type !== 'board-management' &&
               phase.type !== 'user-setup' &&
@@ -3666,11 +3860,12 @@ function App(): React.ReactElement {
         </div>
       )}
 
-      {/* Generating Modal (CPU boards/decks generation) */}
+      {/* Generating Modal (CPU boards/decks generation or AI agent setup) */}
       {isGeneratingCpuBoards && state.opponent && (
         <GeneratingModal
           opponentName={state.opponent.name}
           boardSize={generatingSize}
+          isAiAgent={state.opponent.type === 'ai-agent'}
         />
       )}
 
