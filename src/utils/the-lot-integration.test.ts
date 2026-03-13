@@ -188,6 +188,7 @@ describe('the-lot-integration', () => {
       const results: LotReturnResults = {
         sessionId: 'test-session',
         npcId: 'myco',
+        boardSize: 5,
         playerScore: 3,
         opponentScore: 2,
         winner: 'player',

@@ -1411,6 +1411,7 @@ function App(): React.ReactElement {
     const result: LotResultPayload = {
       sessionId: lotMode.sessionId,
       npcId: lotMode.npcId,
+      boardSize: state.boardSize ?? 5,
       playerScore,
       opponentScore,
       winner: playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie',
@@ -2568,6 +2569,7 @@ function App(): React.ReactElement {
     const results: LotReturnResults = {
       sessionId: lotMode.sessionId,
       npcId: lotMode.npcId,
+      boardSize: state.boardSize ?? 5,
       playerScore,
       opponentScore,
       winner: 'incomplete',
@@ -3726,6 +3728,7 @@ function App(): React.ReactElement {
                       .map(r => ({
                         sessionId: r.sessionId,
                         npcId: r.npcId,
+                        boardSize: r.boardSize,
                         playerScore: r.playerScore,
                         opponentScore: r.opponentScore,
                         winner: r.winner as 'player' | 'opponent' | 'tie',
@@ -3738,6 +3741,7 @@ function App(): React.ReactElement {
                     const results: LotReturnResults = {
                       sessionId: lotMode.sessionId,
                       npcId: lotMode.npcId,
+                      boardSize: state.boardSize ?? 5,
                       playerScore,
                       opponentScore,
                       winner: phase.winner,

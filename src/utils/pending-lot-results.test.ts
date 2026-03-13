@@ -13,6 +13,7 @@ import {
 const mockResult: LotResultPayload = {
   sessionId: 'test-session-1',
   npcId: 'myco',
+  boardSize: 5,
   playerScore: 3,
   opponentScore: 2,
   winner: 'player',

@@ -9,6 +9,7 @@ import { getApiEndpoint } from '@/config/api';
 export interface LotResultPayload {
   sessionId: string;
   npcId: string;
+  boardSize: number;
   playerScore: number;
   opponentScore: number;
   winner: 'player' | 'opponent' | 'tie';

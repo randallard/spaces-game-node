@@ -21,6 +21,7 @@ export interface LotLaunchData {
 export interface LotReturnResults {
   sessionId: string;
   npcId: string;
+  boardSize: number;
   playerScore: number;
   opponentScore: number;
   winner: 'player' | 'opponent' | 'tie' | 'incomplete';
