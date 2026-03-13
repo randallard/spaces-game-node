@@ -10,6 +10,17 @@ import { buildFogBoard, encodeMinimalBoard } from './board-encoding';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
+ * All valid AiAgentSkillLevel values.
+ * When a modelAssignment's modelId matches one of these, it's treated as a
+ * skill_level override rather than a model_id lookup on the inference server.
+ */
+const SKILL_LEVEL_VALUES: ReadonlySet<string> = new Set<string>([
+  'beginner', 'beginner_plus', 'intermediate', 'intermediate_plus',
+  'advanced', 'advanced_plus', 'test_fail',
+  'scripted_1', 'scripted_2', 'scripted_3', 'scripted_4', 'scripted_5',
+]);
+
+/**
  * Model info returned by GET /models
  */
 export interface ModelInfo {
@@ -209,19 +220,25 @@ export async function requestAiAgentBoard(
       };
     });
 
+    // If modelId is actually a skill level string (from per-board-size assignments),
+    // use it as the skill_level override instead of sending as model_id
+    const isSkillLevelOverride = modelId && SKILL_LEVEL_VALUES.has(modelId);
+    const effectiveSkillLevel = isSkillLevelOverride ? modelId : skillLevel;
+    const effectiveModelId = isSkillLevelOverride ? undefined : modelId;
+
     const requestBody: Record<string, unknown> = {
       board_size: boardSize,
       round_num: roundNum - 1,
       agent_score: opponentScore,    // AI's score from game perspective
       opponent_score: playerScore,    // Player's score from game perspective
       opponent_history: opponentHistory,
-      skill_level: skillLevel,
+      skill_level: effectiveSkillLevel,
       round_scores: roundScores,
       round_history: roundHistoryPayload,
     };
 
-    if (modelId) {
-      requestBody.model_id = modelId;
+    if (effectiveModelId) {
+      requestBody.model_id = effectiveModelId;
     }
 
     const controller = new AbortController();

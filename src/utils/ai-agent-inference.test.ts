@@ -398,6 +398,52 @@ describe('requestAiAgentBoard', () => {
     expect(body.skill_level).toBe('beginner');
   });
 
+  it('should treat skill level string as skill_level override, not model_id', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    } as Response);
+
+    // "intermediate" is a skill level, not a model hash — should override skill_level
+    await requestAiAgentBoard(3, 1, 0, 0, [], 'scripted_1', 'intermediate');
+
+    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
+    const body = JSON.parse(fetchCall[1]!.body as string);
+
+    expect(body.skill_level).toBe('intermediate');
+    expect(body.model_id).toBeUndefined();
+  });
+
+  it('should treat scripted level string as skill_level override', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    } as Response);
+
+    await requestAiAgentBoard(2, 1, 0, 0, [], 'beginner', 'scripted_5');
+
+    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
+    const body = JSON.parse(fetchCall[1]!.body as string);
+
+    expect(body.skill_level).toBe('scripted_5');
+    expect(body.model_id).toBeUndefined();
+  });
+
+  it('should send actual model hash as model_id, not skill_level override', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockApiResponse,
+    } as Response);
+
+    await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner', 'abc12345');
+
+    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
+    const body = JSON.parse(fetchCall[1]!.body as string);
+
+    expect(body.model_id).toBe('abc12345');
+    expect(body.skill_level).toBe('beginner');
+  });
+
   it('should not include model_id when not provided', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,

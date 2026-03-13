@@ -18,6 +18,7 @@ export const AiAgentSkillLevelSchema = z.enum([
   'scripted_2',
   'scripted_3',
   'scripted_4',
+  'scripted_5',
 ]);
 
 export const ModelAssignmentSchema = z.object({
