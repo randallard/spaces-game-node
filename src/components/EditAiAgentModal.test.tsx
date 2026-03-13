@@ -21,9 +21,9 @@ vi.mock('uuid', () => ({
 import { fetchAvailableModels } from '@/utils/ai-agent-inference';
 
 const mockModels: ModelInfo[] = [
-  { index: 0, model_id: 'abc12345', board_size: 3, stage: 'stage3', label: 'model_alpha', use_fog: false },
-  { index: 1, model_id: 'def67890', board_size: 3, stage: 'stage4', label: 'model_beta', use_fog: true },
-  { index: 2, model_id: 'ghi11111', board_size: 5, stage: 'stage2', label: 'model_gamma', use_fog: false },
+  { index: 0, model_id: 'abc12345', board_size: 3, category: 'difficulty', label: 'model_alpha', use_fog: true },
+  { index: 1, model_id: 'def67890', board_size: 3, category: 'level_advancement', label: 'model_beta', use_fog: true },
+  { index: 2, model_id: 'ghi11111', board_size: 5, category: 'best', label: 'model_gamma', use_fog: true },
 ];
 
 const baseOpponent: Opponent = {

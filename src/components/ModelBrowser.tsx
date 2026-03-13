@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useCallback, type ReactElement } from 'react';
 import { fetchAvailableModels, type ModelInfo } from '@/utils/ai-agent-inference';
-import { FogOfWarInfoModal } from './FogOfWarInfoModal';
 import styles from './ModelBrowser.module.css';
 
 export interface ModelBrowserProps {
@@ -15,7 +14,15 @@ export interface ModelBrowserProps {
   onBack: () => void;
 }
 
-type FogFilter = 'all' | 'standard' | 'fog';
+type CategoryFilter = 'all' | 'best' | 'difficulty' | 'scripted_checkpoints' | 'level_advancement';
+
+const CATEGORY_OPTIONS: Array<{ value: CategoryFilter; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'best', label: 'Best' },
+  { value: 'difficulty', label: 'Difficulty' },
+  { value: 'scripted_checkpoints', label: 'Scripted Checkpoints' },
+  { value: 'level_advancement', label: 'Level Advancement' },
+];
 
 /**
  * Browse and select from available AI models on the inference server.
@@ -27,8 +34,8 @@ export function ModelBrowser({ onModelSelected, onBack }: ModelBrowserProps): Re
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sizeFilter, setSizeFilter] = useState<number | 'all'>('all');
-  const [fogFilter, setFogFilter] = useState<FogFilter>('all');
-  const [showFogInfo, setShowFogInfo] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+
 
   const loadModels = useCallback(async () => {
     setLoading(true);
@@ -51,11 +58,7 @@ export function ModelBrowser({ onModelSelected, onBack }: ModelBrowserProps): Re
   // Apply filters
   const filtered = models
     .filter((m) => sizeFilter === 'all' || m.board_size === sizeFilter)
-    .filter((m) => {
-      if (fogFilter === 'standard') return !m.use_fog;
-      if (fogFilter === 'fog') return m.use_fog;
-      return true;
-    })
+    .filter((m) => categoryFilter === 'all' || m.category === categoryFilter)
     .sort((a, b) => a.label.localeCompare(b.label));
 
   if (loading) {
@@ -113,16 +116,18 @@ export function ModelBrowser({ onModelSelected, onBack }: ModelBrowserProps): Re
         </div>
 
         <div className={styles.filterGroup}>
-          <span className={styles.filterLabel}>Type:</span>
+          <span className={styles.filterLabel}>Category:</span>
           <select
             className={styles.filterSelect}
-            value={fogFilter}
-            onChange={(e) => setFogFilter(e.target.value as FogFilter)}
-            aria-label="Filter by model type"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value as CategoryFilter)}
+            aria-label="Filter by category"
           >
-            <option value="all">All</option>
-            <option value="standard">Standard</option>
-            <option value="fog">Fog of War</option>
+            {CATEGORY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -141,23 +146,7 @@ export function ModelBrowser({ onModelSelected, onBack }: ModelBrowserProps): Re
             >
               <span className={styles.modelLabel}>{m.label}</span>
               <span className={styles.sizeBadge}>{m.board_size}×{m.board_size}</span>
-              {m.use_fog ? (
-                <span className={styles.fogBadge}>fog</span>
-              ) : (
-                <span className={styles.standardBadge}>standard</span>
-              )}
-              <button
-                type="button"
-                className={styles.infoIcon}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowFogInfo(true);
-                }}
-                aria-label="What is fog of war?"
-                title="What is fog of war?"
-              >
-                ?
-              </button>
+              <span className={styles.fogBadge}>{m.category.replace(/_/g, ' ')}</span>
             </button>
           ))}
         </div>
@@ -173,7 +162,6 @@ export function ModelBrowser({ onModelSelected, onBack }: ModelBrowserProps): Re
         </button>
       </div>
 
-      <FogOfWarInfoModal isOpen={showFogInfo} onClose={() => setShowFogInfo(false)} />
     </div>
   );
 }

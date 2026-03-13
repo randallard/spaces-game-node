@@ -8,9 +8,9 @@ import { ModelBrowser } from './ModelBrowser';
 import type { ModelInfo } from '@/utils/ai-agent-inference';
 
 const mockModels: ModelInfo[] = [
-  { index: 0, model_id: 'aaa11111', board_size: 3, stage: 'stage3', label: 'model_alpha', use_fog: false },
-  { index: 1, model_id: 'bbb22222', board_size: 3, stage: 'stage4', label: 'model_beta', use_fog: true },
-  { index: 2, model_id: 'ccc33333', board_size: 5, stage: 'stage3', label: 'model_gamma', use_fog: false },
+  { index: 0, model_id: 'aaa11111', board_size: 3, category: 'difficulty', label: 'model_alpha', use_fog: true },
+  { index: 1, model_id: 'bbb22222', board_size: 3, category: 'level_advancement', label: 'model_beta', use_fog: true },
+  { index: 2, model_id: 'ccc33333', board_size: 5, category: 'best', label: 'model_gamma', use_fog: true },
 ];
 
 // Mock the fetch function
@@ -124,15 +124,15 @@ describe('ModelBrowser', () => {
     expect(screen.getByText('model_gamma')).toBeInTheDocument();
   });
 
-  it('should filter by fog type', async () => {
+  it('should filter by category', async () => {
     render(<ModelBrowser onModelSelected={mockOnModelSelected} onBack={mockOnBack} />);
 
     await waitFor(() => {
       expect(screen.getByText('model_alpha')).toBeInTheDocument();
     });
 
-    const typeSelect = screen.getByLabelText('Filter by model type');
-    fireEvent.change(typeSelect, { target: { value: 'fog' } });
+    const categorySelect = screen.getByLabelText('Filter by category');
+    fireEvent.change(categorySelect, { target: { value: 'level_advancement' } });
 
     expect(screen.queryByText('model_alpha')).not.toBeInTheDocument();
     expect(screen.getByText('model_beta')).toBeInTheDocument();
@@ -149,8 +149,8 @@ describe('ModelBrowser', () => {
     const sizeSelect = screen.getByLabelText('Filter by board size');
     fireEvent.change(sizeSelect, { target: { value: '5' } });
 
-    const typeSelect = screen.getByLabelText('Filter by model type');
-    fireEvent.change(typeSelect, { target: { value: 'fog' } });
+    const categorySelect = screen.getByLabelText('Filter by category');
+    fireEvent.change(categorySelect, { target: { value: 'difficulty' } });
 
     expect(screen.getByText('No models match the selected filters.')).toBeInTheDocument();
   });
@@ -170,16 +170,16 @@ describe('ModelBrowser', () => {
     expect(badges5x5.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('should display fog/standard badges', async () => {
+  it('should display category badges', async () => {
     render(<ModelBrowser onModelSelected={mockOnModelSelected} onBack={mockOnBack} />);
 
     await waitFor(() => {
       expect(screen.getByText('model_alpha')).toBeInTheDocument();
     });
 
-    const standardBadges = screen.getAllByText('standard');
-    expect(standardBadges.length).toBe(2);
-    expect(screen.getByText('fog')).toBeInTheDocument();
+    expect(screen.getByText('difficulty')).toBeInTheDocument();
+    expect(screen.getByText('level advancement')).toBeInTheDocument();
+    expect(screen.getByText('best')).toBeInTheDocument();
   });
 
   it('should show volatility notice', async () => {
@@ -192,17 +192,15 @@ describe('ModelBrowser', () => {
     expect(screen.getByText(/Models are volatile/)).toBeInTheDocument();
   });
 
-  it('should show fog info modal when info icon is clicked', async () => {
+  it('should display category filter with all options', async () => {
     render(<ModelBrowser onModelSelected={mockOnModelSelected} onBack={mockOnBack} />);
 
     await waitFor(() => {
       expect(screen.getByText('model_alpha')).toBeInTheDocument();
     });
 
-    const infoButtons = screen.getAllByLabelText('What is fog of war?');
-    fireEvent.click(infoButtons[0]!);
-
-    expect(screen.getByText('Standard vs Fog of War Models')).toBeInTheDocument();
+    const categorySelect = screen.getByLabelText('Filter by category');
+    expect(categorySelect).toBeInTheDocument();
   });
 
   it('should sort models alphabetically by label', async () => {

@@ -560,8 +560,8 @@ describe('fetchAvailableModels', () => {
 
   it('should return models on success', async () => {
     const mockModels = [
-      { index: 0, model_id: 'abc12345', board_size: 3, stage: 'stage3', label: 'model_a', use_fog: false },
-      { index: 1, model_id: 'def67890', board_size: 3, stage: 'stage4', label: 'model_b', use_fog: true },
+      { index: 0, model_id: 'abc12345', board_size: 3, category: 'difficulty', label: 'model_a', use_fog: true },
+      { index: 1, model_id: 'def67890', board_size: 3, category: 'level_advancement', label: 'model_b', use_fog: true },
     ];
 
     vi.mocked(global.fetch).mockResolvedValueOnce({

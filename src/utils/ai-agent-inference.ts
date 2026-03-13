@@ -27,7 +27,7 @@ export interface ModelInfo {
   index: number;
   model_id: string;
   board_size: number;
-  stage: string;
+  category: string;
   label: string;
   use_fog: boolean;
 }

@@ -173,8 +173,7 @@ export function EditAiAgentModal({
                   onClick={() => handleSelectModel(selectingSize, model.model_id, model.label)}
                 >
                   <span className={styles.modelLabel}>{model.label}</span>
-                  <span className={styles.modelBadge}>{model.stage}</span>
-                  {model.use_fog && <span className={styles.modelFogBadge}>fog</span>}
+                  <span className={styles.modelBadge}>{model.category.replace(/_/g, ' ')}</span>
                 </button>
               ))}
             </div>

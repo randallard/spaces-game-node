@@ -52,8 +52,8 @@ vi.mock('@/utils/opponent-helpers', () => ({
 // Mock the ai-agent-inference module for ModelBrowser
 vi.mock('@/utils/ai-agent-inference', () => ({
   fetchAvailableModels: vi.fn(() => Promise.resolve([
-    { index: 0, model_id: 'aaa11111', board_size: 3, stage: 'stage3', label: 'model_alpha', use_fog: false },
-    { index: 1, model_id: 'bbb22222', board_size: 5, stage: 'stage4', label: 'model_beta', use_fog: true },
+    { index: 0, model_id: 'aaa11111', board_size: 3, category: 'difficulty', label: 'model_alpha', use_fog: true },
+    { index: 1, model_id: 'bbb22222', board_size: 5, category: 'level_advancement', label: 'model_beta', use_fog: true },
   ])),
 }));
 
