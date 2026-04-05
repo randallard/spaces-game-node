@@ -177,7 +177,9 @@ export async function requestAiAgentBoard(
   playerBoardHistory: Board[],
   skillLevel: AiAgentSkillLevel,
   modelId?: string,
-  roundHistory?: RoundResult[]
+  roundHistory?: RoundResult[],
+  sessionId?: string,
+  playerCurrentBoard?: Board
 ): Promise<AiAgentBoardResult> {
   try {
     const url = getInferenceApiEndpoint('/construct-board');
@@ -237,8 +239,15 @@ export async function requestAiAgentBoard(
       round_history: roundHistoryPayload,
     };
 
+    if (sessionId) {
+      requestBody.session_id = sessionId;
+    }
+
     if (effectiveModelId) {
       requestBody.model_id = effectiveModelId;
+    }
+    if (playerCurrentBoard) {
+      requestBody.player_board = boardToHistoryEntry(playerCurrentBoard);
     }
 
     const controller = new AbortController();
@@ -325,6 +334,43 @@ export async function fetchAvailableModels(): Promise<ModelInfo[]> {
       console.error('[fetchAvailableModels] Error:', error.message);
     }
     return [];
+  }
+}
+
+/**
+ * Payload for reporting a completed AI-agent game
+ */
+export interface GameResultPayload {
+  session_id: string;
+  board_size: number;
+  skill_level: string;
+  model_id?: string;
+  player_score: number;
+  opponent_score: number;
+  winner: 'player' | 'opponent' | 'tie';
+  total_rounds: number;
+  lot_session_id?: string;
+  player_id?: string;
+}
+
+/**
+ * Report a completed AI-agent game result to the inference server for research logging.
+ * Fire-and-forget — never throws.
+ */
+export async function reportAiAgentGameResult(payload: GameResultPayload): Promise<void> {
+  try {
+    const url = getInferenceApiEndpoint('/game-result');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+  } catch (error) {
+    console.warn('[reportAiAgentGameResult] Failed to report game result:', error);
   }
 }
 

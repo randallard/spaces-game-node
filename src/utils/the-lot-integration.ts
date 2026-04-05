@@ -44,6 +44,38 @@ export function hasLotLaunchInUrl(): boolean {
 }
 
 /**
+ * Check if the current URL contains a lot-home parameter (launched from phone games menu).
+ */
+export function hasLotHomeInUrl(): boolean {
+  const hash = window.location.hash;
+  if (!hash) return false;
+  return hash.startsWith('#lot-home=');
+}
+
+/**
+ * Parse the #lot-home= hash from the phone games menu.
+ * Carries only { returnUrl } — no NPC or session data.
+ * Returns the returnUrl string or null if absent/malformed.
+ */
+export function parseLotHome(): string | null {
+  const hash = window.location.hash;
+  const match = hash.match(/^#lot-home=(.+)$/);
+  if (!match) return null;
+
+  try {
+    const decompressed = LZString.decompressFromEncodedURIComponent(match[1]!);
+    if (!decompressed) return null;
+
+    const data = JSON.parse(decompressed) as { returnUrl?: string };
+    if (!data.returnUrl || typeof data.returnUrl !== 'string') return null;
+
+    return data.returnUrl;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Parse the #lot= hash parameter to extract launch data.
  * Returns null if not present or invalid.
  */

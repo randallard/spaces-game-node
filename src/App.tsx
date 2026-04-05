@@ -8,12 +8,12 @@ import { getOpponentIcon, getOpponentIconColor, createInitialState } from '@/uti
 import { updateOpponentStats, createHumanOpponent, isCpuOpponent } from '@/utils/opponent-helpers';
 import { getNextUnlock, isDeckModeUnlocked, getFeatureUnlocks } from '@/utils/feature-unlocks';
 import { generateChallengeUrl, generateChallengeUrlShortened, generateFinalResultsUrl, getChallengeFromUrl, getChallengeFromUrlAsync, clearChallengeFromUrl, hasChallengeInUrl } from '@/utils/challenge-url';
-import { hasLotLaunchInUrl, parseLotLaunch, clearLotHash, configureLotOpponent, returnToLot, type LotLaunchData, type LotReturnResults } from '@/utils/the-lot-integration';
+import { hasLotLaunchInUrl, parseLotLaunch, clearLotHash, configureLotOpponent, returnToLot, hasLotHomeInUrl, parseLotHome, type LotLaunchData, type LotReturnResults } from '@/utils/the-lot-integration';
 import { saveLotResultToServer, getLocalPendingResults, clearLocalPendingResult, type LotResultPayload } from '@/utils/pending-lot-results';
 import { decodeMinimalBoard } from '@/utils/board-encoding';
 import { calculateBoardScore } from '@/utils/board-scoring';
 import { fetchRemoteCpuBoards, fetchRemoteCpuDeck } from '@/utils/remote-cpu-boards';
-import { requestAiAgentBoard, toStochasticSkillLevel } from '@/utils/ai-agent-inference';
+import { requestAiAgentBoard, reportAiAgentGameResult, toStochasticSkillLevel } from '@/utils/ai-agent-inference';
 import { getApiEndpoint } from '@/config/api';
 import { markRoundCompleted, markRoundPending, hasCompletedRound, getGameProgress } from '@/utils/game-progress';
 import { getActiveGames, saveActiveGame, removeActiveGame, archiveActiveGame, type ActiveGameInfo } from '@/utils/active-games';
@@ -434,6 +434,9 @@ function App(): React.ReactElement {
 
   // The-lot integration: lot mode state (NPC config from the-lot hub)
   const [lotMode, setLotMode] = useState<LotLaunchData | null>(null);
+
+  // Return URL when launched from townage phone games menu (no NPC context)
+  const [homeReturnUrl, setHomeReturnUrl] = useState<string | null>(null);
 
   // Show challenge received modal
   const [showChallengeModal, setShowChallengeModal] = useState(false);
@@ -1274,6 +1277,12 @@ function App(): React.ReactElement {
         // If no user yet, lot mode is preserved in state and
         // handled after tutorial via handleTutorialNameContinue
       }
+    } else if (hasLotHomeInUrl()) {
+      const returnUrl = parseLotHome();
+      if (returnUrl) {
+        clearLotHash();
+        setHomeReturnUrl(returnUrl);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
@@ -1427,6 +1436,32 @@ function App(): React.ReactElement {
     saveLotResultToServer(result);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase.type, lotMode?.sessionId]);
+
+  // Report game result for AI-agent games (research data logging)
+  useEffect(() => {
+    if (phase.type !== 'game-over' && phase.type !== 'all-rounds-results') return;
+    if (state.opponent?.type !== 'ai-agent') return;
+    if (!state.gameId) return;
+
+    const completeRounds = state.roundHistory.filter(r => r.playerBoard && r.opponentBoard);
+    const boardSizeKey = String(state.boardSize);
+    const modelAssignment = state.opponent.modelAssignments?.[boardSizeKey];
+    const effectiveModelId = modelAssignment?.modelId ?? state.opponent.modelId;
+
+    reportAiAgentGameResult({
+      session_id: state.gameId,
+      board_size: state.boardSize ?? 5,
+      skill_level: state.opponent.skillLevel ?? 'intermediate',
+      model_id: effectiveModelId,
+      player_score: playerScore,
+      opponent_score: opponentScore,
+      winner: playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie',
+      total_rounds: completeRounds.length,
+      lot_session_id: lotMode?.sessionId,
+      player_id: savedUser?.id,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase.type, state.gameId]);
 
   // Handle user creation
   const handleUserCreate = (newUser: UserProfileType) => {
@@ -2289,7 +2324,9 @@ function App(): React.ReactElement {
           playerBoardHistory,
           state.opponent.skillLevel!,
           effectiveModelId,
-          state.roundHistory.filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined)
+          state.roundHistory.filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined),
+          state.gameId ?? undefined,
+          board
         );
 
         if (aiResult.failed || !aiResult.board) {
@@ -2418,7 +2455,9 @@ function App(): React.ReactElement {
       playerBoardHistory,
       retrySkillLevel,
       retryEffectiveModelId,
-      state.roundHistory.filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined)
+      state.roundHistory.filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined),
+      state.gameId ?? undefined,
+      board
     );
 
     if (retryResult.failed || !retryResult.board) {
@@ -2995,6 +3034,20 @@ function App(): React.ReactElement {
                 </div>
                 {!isOpponentsMinimized && (
                   <div className={styles.opponentsList}>
+                  <button
+                    onClick={() => {
+                      if (homeReturnUrl) {
+                        window.location.href = homeReturnUrl;
+                      } else {
+                        const townageUrl = import.meta.env.VITE_TOWNAGE_URL ?? 'https://townage.app';
+                        window.location.href = `${townageUrl}#from-game`;
+                      }
+                    }}
+                    className={styles.addOpponentButton}
+                    aria-label="Find NPC opponents in Townage"
+                  >
+                    🌐 Find NPC Opponents in Townage
+                  </button>
                   {savedOpponents && savedOpponents.filter(o => !o.archived).length > 0 ? (
                     savedOpponents.filter(o => !o.archived).map((opponent) => (
                       <div key={opponent.id} className={styles.opponentItem}>
@@ -3802,11 +3855,11 @@ function App(): React.ReactElement {
         </div>
         {state.user.name && (
           <div className={styles.headerActions}>
-            {/* Townage link - show only when launched from the-lot */}
-            {lotMode && (
+            {/* Townage link - show when launched from the-lot (NPC or phone games menu) */}
+            {(lotMode || homeReturnUrl) && (
               <button
                 className={styles.homeButton}
-                onClick={handleReturnToTownage}
+                onClick={lotMode ? handleReturnToTownage : () => { window.location.href = homeReturnUrl!; }}
                 aria-label="Return to Townage"
               >
                 🌐 Townage
