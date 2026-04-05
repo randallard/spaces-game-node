@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { requestAiAgentBoard, reportAiAgentGameResult, checkInferenceServerHealth, toStochasticSkillLevel, fetchAvailableModels } from './ai-agent-inference';
+import { requestAiAgentBoard, checkInferenceServerHealth, toStochasticSkillLevel, fetchAvailableModels } from './ai-agent-inference';
 import type { Board } from '@/types';
 
 // Mock the api config module
@@ -486,51 +486,6 @@ describe('requestAiAgentBoard', () => {
     expect(body.session_id).toBeUndefined();
   });
 
-  it('should include player_board in request body when provided', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockApiResponse,
-    } as Response);
-
-    const playerBoard: Board = {
-      id: 'player-board-1',
-      name: 'My Board',
-      boardSize: 3,
-      grid: [['piece', 'empty', 'empty'], ['piece', 'empty', 'empty'], ['piece', 'empty', 'empty']],
-      sequence: [
-        { position: { row: 2, col: 0 }, type: 'piece', order: 1 },
-        { position: { row: 1, col: 0 }, type: 'piece', order: 2 },
-        { position: { row: 0, col: 0 }, type: 'piece', order: 3 },
-        { position: { row: -1, col: 0 }, type: 'final', order: 4 },
-      ],
-      thumbnail: '',
-      createdAt: 0,
-    };
-
-    await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner', undefined, undefined, undefined, playerBoard);
-
-    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
-    const body = JSON.parse(fetchCall[1]!.body as string);
-
-    expect(body.player_board).toBeDefined();
-    expect(body.player_board.sequence).toHaveLength(4);
-    expect(body.player_board.sequence[0]).toEqual({ row: 2, col: 0, type: 'piece', order: 1 });
-  });
-
-  it('should not include player_board when not provided', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockApiResponse,
-    } as Response);
-
-    await requestAiAgentBoard(3, 1, 0, 0, [], 'beginner');
-
-    const fetchCall = vi.mocked(global.fetch).mock.calls[0]!;
-    const body = JSON.parse(fetchCall[1]!.body as string);
-
-    expect(body.player_board).toBeUndefined();
-  });
-
   it('should reject board without a final move (local validation)', async () => {
     const noGoalResponse = {
       board: {
@@ -718,105 +673,3 @@ describe('toStochasticSkillLevel', () => {
   });
 });
 
-describe('reportAiAgentGameResult', () => {
-  beforeEach(() => {
-    vi.spyOn(global, 'fetch');
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  const basePayload = {
-    session_id: 'game-123',
-    board_size: 3,
-    skill_level: 'intermediate',
-    player_score: 3,
-    opponent_score: 2,
-    winner: 'player' as const,
-    total_rounds: 5,
-  };
-
-  it('should POST to the /game-result endpoint', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ok: true }),
-    } as Response);
-
-    await reportAiAgentGameResult(basePayload);
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8100/game-result',
-      expect.objectContaining({ method: 'POST' })
-    );
-  });
-
-  it('should send the payload as JSON', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ok: true }),
-    } as Response);
-
-    await reportAiAgentGameResult(basePayload);
-
-    const call = vi.mocked(global.fetch).mock.calls[0]!;
-    const body = JSON.parse(call[1]!.body as string);
-    expect(body.session_id).toBe('game-123');
-    expect(body.board_size).toBe(3);
-    expect(body.winner).toBe('player');
-    expect(body.total_rounds).toBe(5);
-  });
-
-  it('should include optional model_id when provided', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ok: true }),
-    } as Response);
-
-    await reportAiAgentGameResult({ ...basePayload, model_id: 'abc12345' });
-
-    const call = vi.mocked(global.fetch).mock.calls[0]!;
-    const body = JSON.parse(call[1]!.body as string);
-    expect(body.model_id).toBe('abc12345');
-  });
-
-  it('should include lot_session_id when provided', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ok: true }),
-    } as Response);
-
-    await reportAiAgentGameResult({ ...basePayload, lot_session_id: 'lot-session-xyz' });
-
-    const call = vi.mocked(global.fetch).mock.calls[0]!;
-    const body = JSON.parse(call[1]!.body as string);
-    expect(body.lot_session_id).toBe('lot-session-xyz');
-  });
-
-  it('should not throw on network error', async () => {
-    vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Connection refused'));
-
-    await expect(reportAiAgentGameResult(basePayload)).resolves.toBeUndefined();
-  });
-
-  it('should include player_id when provided', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ok: true }),
-    } as Response);
-
-    await reportAiAgentGameResult({ ...basePayload, player_id: 'user-uuid-abc' });
-
-    const call = vi.mocked(global.fetch).mock.calls[0]!;
-    const body = JSON.parse(call[1]!.body as string);
-    expect(body.player_id).toBe('user-uuid-abc');
-  });
-
-  it('should not throw on timeout', async () => {
-    const abortError = new Error('AbortError');
-    abortError.name = 'AbortError';
-    vi.mocked(global.fetch).mockRejectedValueOnce(abortError);
-
-    await expect(reportAiAgentGameResult(basePayload)).resolves.toBeUndefined();
-  });
-});

@@ -13,7 +13,8 @@ import { saveLotResultToServer, getLocalPendingResults, clearLocalPendingResult,
 import { decodeMinimalBoard } from '@/utils/board-encoding';
 import { calculateBoardScore } from '@/utils/board-scoring';
 import { fetchRemoteCpuBoards, fetchRemoteCpuDeck } from '@/utils/remote-cpu-boards';
-import { requestAiAgentBoard, reportAiAgentGameResult, toStochasticSkillLevel } from '@/utils/ai-agent-inference';
+import { requestAiAgentBoard, toStochasticSkillLevel } from '@/utils/ai-agent-inference';
+import { logRoundData } from '@/utils/game-logger';
 import { getApiEndpoint } from '@/config/api';
 import { markRoundCompleted, markRoundPending, hasCompletedRound, getGameProgress } from '@/utils/game-progress';
 import { getActiveGames, saveActiveGame, removeActiveGame, archiveActiveGame, type ActiveGameInfo } from '@/utils/active-games';
@@ -1437,32 +1438,6 @@ function App(): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase.type, lotMode?.sessionId]);
 
-  // Report game result for AI-agent games (research data logging)
-  useEffect(() => {
-    if (phase.type !== 'game-over' && phase.type !== 'all-rounds-results') return;
-    if (state.opponent?.type !== 'ai-agent') return;
-    if (!state.gameId) return;
-
-    const completeRounds = state.roundHistory.filter(r => r.playerBoard && r.opponentBoard);
-    const boardSizeKey = String(state.boardSize);
-    const modelAssignment = state.opponent.modelAssignments?.[boardSizeKey];
-    const effectiveModelId = modelAssignment?.modelId ?? state.opponent.modelId;
-
-    reportAiAgentGameResult({
-      session_id: state.gameId,
-      board_size: state.boardSize ?? 5,
-      skill_level: state.opponent.skillLevel ?? 'intermediate',
-      model_id: effectiveModelId,
-      player_score: playerScore,
-      opponent_score: opponentScore,
-      winner: playerScore > opponentScore ? 'player' : opponentScore > playerScore ? 'opponent' : 'tie',
-      total_rounds: completeRounds.length,
-      lot_session_id: lotMode?.sessionId,
-      player_id: savedUser?.id,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase.type, state.gameId]);
-
   // Handle user creation
   const handleUserCreate = (newUser: UserProfileType) => {
     // Save user to localStorage
@@ -2099,6 +2074,18 @@ function App(): React.ReactElement {
           completeRound(result);
           console.log('[handleBoardSelect] Saving round result');
           saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
+          if (state.gameId) {
+            logRoundData(result, {
+              gameId: state.gameId,
+              roundNum: result.round,
+              opponentType: state.opponent!.type,
+              boardSize: state.boardSize!,
+              playerScoreBefore: playerScore,
+              opponentScoreBefore: opponentScore,
+              playerId: savedUser?.id,
+              lotSessionId: lotMode?.sessionId,
+            });
+          }
           console.log('[handleBoardSelect] Setting isSimulatingRound to false');
           setIsSimulatingRound(false);
           console.log('[handleBoardSelect] Round completion flow finished');
@@ -2326,7 +2313,6 @@ function App(): React.ReactElement {
           effectiveModelId,
           state.roundHistory.filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined),
           state.gameId ?? undefined,
-          board
         );
 
         if (aiResult.failed || !aiResult.board) {
@@ -2355,6 +2341,20 @@ function App(): React.ReactElement {
 
         completeRound(result);
         saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
+        if (state.gameId) {
+          logRoundData(result, {
+            gameId: state.gameId,
+            roundNum: result.round,
+            opponentType: 'ai-agent',
+            boardSize: state.boardSize!,
+            playerScoreBefore: playerScore,
+            opponentScoreBefore: opponentScore,
+            playerId: savedUser?.id,
+            lotSessionId: lotMode?.sessionId,
+            skillLevel: state.opponent.skillLevel ?? undefined,
+            modelId: effectiveModelId,
+          });
+        }
         setIsSimulatingRound(false);
       } catch (error) {
         console.error('[handleBoardSelect] AI Agent error:', error);
@@ -2420,6 +2420,18 @@ function App(): React.ReactElement {
 
       completeRound(result);
       saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
+      if (state.gameId) {
+        logRoundData(result, {
+          gameId: state.gameId,
+          roundNum: result.round,
+          opponentType: state.opponent!.type,
+          boardSize: state.boardSize!,
+          playerScoreBefore: playerScore,
+          opponentScoreBefore: opponentScore,
+          playerId: savedUser?.id,
+          lotSessionId: lotMode?.sessionId,
+        });
+      }
       setIsSimulatingRound(false);
     }, 500); // Shorter delay for better UX
   };
@@ -2457,7 +2469,6 @@ function App(): React.ReactElement {
       retryEffectiveModelId,
       state.roundHistory.filter(r => r.playerBoard && r.opponentBoard && r.winner !== undefined),
       state.gameId ?? undefined,
-      board
     );
 
     if (retryResult.failed || !retryResult.board) {
@@ -2474,6 +2485,20 @@ function App(): React.ReactElement {
     if (savedUser?.opponentCreature) result.opponentCreature = savedUser.opponentCreature;
     completeRound(result);
     saveRoundResult(result, state.gameId, state.opponent, state.boardSize);
+    if (state.gameId) {
+      logRoundData(result, {
+        gameId: state.gameId,
+        roundNum: result.round,
+        opponentType: 'ai-agent',
+        boardSize: state.boardSize!,
+        playerScoreBefore: playerScore,
+        opponentScoreBefore: opponentScore,
+        playerId: savedUser?.id,
+        lotSessionId: lotMode?.sessionId,
+        skillLevel: state.opponent.skillLevel ?? undefined,
+        modelId: retryEffectiveModelId,
+      });
+    }
     setIsSimulatingRound(false);
   };
 
@@ -2500,6 +2525,19 @@ function App(): React.ReactElement {
 
     completeRound(forfeitResult);
     saveRoundResult(forfeitResult, state.gameId, state.opponent, state.boardSize);
+    if (state.gameId) {
+      logRoundData(forfeitResult, {
+        gameId: state.gameId,
+        roundNum: forfeitResult.round,
+        opponentType: 'ai-agent',
+        boardSize: state.boardSize!,
+        playerScoreBefore: playerScore,
+        opponentScoreBefore: opponentScore,
+        playerId: savedUser?.id,
+        lotSessionId: lotMode?.sessionId,
+        skillLevel: state.opponent.skillLevel ?? undefined,
+      });
+    }
   };
 
   // Handle continuing to next round
