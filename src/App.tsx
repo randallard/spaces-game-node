@@ -1221,6 +1221,8 @@ function App(): React.ReactElement {
     }
     // If user doesn't exist yet, they'll go through tutorial first
     // The challenge will be preserved in state and handled after tutorial
+    // Clear the loading-challenge phase so derivePhase can return user-setup
+    clearPhaseOverride();
   };
 
   // Check for lot mode launch from the-lot on mount
