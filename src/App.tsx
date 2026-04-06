@@ -1219,8 +1219,9 @@ function App(): React.ReactElement {
         setIncomingChallenge(null);
       }
     }
-    // If user doesn't exist yet, they'll go through tutorial first
-    // The challenge will be preserved in state and handled after tutorial
+    // If user doesn't exist yet, start the tutorial
+    // The challenge is preserved in incomingChallenge and handled after tutorial
+    setPhase({ type: 'tutorial-intro' });
   };
 
   // Check for lot mode launch from the-lot on mount

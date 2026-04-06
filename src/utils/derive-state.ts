@@ -183,9 +183,7 @@ export function derivePhase(state: GameState): GamePhase {
   console.log('[derivePhase] userId:', state.user.id);
 
   // Check for UI-only phase override first
-  // Exception: loading-challenge must not block user-setup for brand-new users
-  // (tutorial phases are also phaseOverrides and must pass through when no name yet)
-  if (state.phaseOverride && state.phaseOverride.type !== 'loading-challenge') {
+  if (state.phaseOverride) {
     console.log('[derivePhase] ✅ Returning phaseOverride:', state.phaseOverride);
     return state.phaseOverride;
   }
