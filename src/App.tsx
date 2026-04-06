@@ -34,6 +34,7 @@ import {
   TutorialIntro,
   TutorialBoardCreator,
   TutorialNameEntry,
+  DataConsentScreen,
   WelcomeModal,
   GeneratingModal,
   FeatureUnlockModal,
@@ -47,7 +48,7 @@ import {
 } from '@/components';
 import { CompletedGames } from '@/components/CompletedGames';
 import { LoadingChallenge } from '@/components/LoadingChallenge';
-import type { UserProfile as UserProfileType, Board, Opponent, GameState, GamePhase, Deck, GameMode, CreatureId, RoundResult } from '@/types';
+import type { UserProfile as UserProfileType, Board, Opponent, GameState, GamePhase, Deck, GameMode, CreatureId, RoundResult, DataSharingLevel } from '@/types';
 import { UserProfileSchema, BoardSchema, OpponentSchema, DeckSchema } from '@/schemas';
 import { CPU_OPPONENT_ID, CPU_TOUGHER_OPPONENT_ID, CPU_OPPONENT_NAME } from '@/constants/game-rules';
 import { deriveCurrentRound, deriveWhoMovesFirst, isRoundComplete } from '@/utils/derive-state';
@@ -187,6 +188,12 @@ function App(): React.ReactElement {
     DeckSchema.array(),
     []
   );
+
+  // Data consent choice for new users (applied when profile is created at end of tutorial)
+  const [pendingConsent, setPendingConsent] = useState<DataSharingLevel | null>(null);
+
+  // Effective data sharing level: use saved preference, or 'full' for existing users without one set
+  const effectiveDataSharing: DataSharingLevel = savedUser?.preferences?.dataSharing ?? 'full';
 
   // State for shortened challenge URL and fallback compressed URL (for ActiveGameView)
   const [shortenedChallengeUrl, setShortenedChallengeUrl] = useState<string | null>(null);
@@ -2074,7 +2081,7 @@ function App(): React.ReactElement {
           completeRound(result);
           console.log('[handleBoardSelect] Saving round result');
           saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
-          if (state.gameId) {
+          if (state.gameId && effectiveDataSharing !== 'none') {
             logRoundData(result, {
               gameId: state.gameId,
               roundNum: result.round,
@@ -2082,8 +2089,8 @@ function App(): React.ReactElement {
               boardSize: state.boardSize!,
               playerScoreBefore: playerScore,
               opponentScoreBefore: opponentScore,
-              playerId: savedUser?.id,
-              lotSessionId: lotMode?.sessionId,
+              playerId: effectiveDataSharing === 'full' ? savedUser?.id : undefined,
+              lotSessionId: effectiveDataSharing === 'full' ? lotMode?.sessionId : undefined,
             });
           }
           console.log('[handleBoardSelect] Setting isSimulatingRound to false');
@@ -2341,7 +2348,7 @@ function App(): React.ReactElement {
 
         completeRound(result);
         saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
-        if (state.gameId) {
+        if (state.gameId && effectiveDataSharing !== 'none') {
           logRoundData(result, {
             gameId: state.gameId,
             roundNum: result.round,
@@ -2349,8 +2356,8 @@ function App(): React.ReactElement {
             boardSize: state.boardSize!,
             playerScoreBefore: playerScore,
             opponentScoreBefore: opponentScore,
-            playerId: savedUser?.id,
-            lotSessionId: lotMode?.sessionId,
+            playerId: effectiveDataSharing === 'full' ? savedUser?.id : undefined,
+            lotSessionId: effectiveDataSharing === 'full' ? lotMode?.sessionId : undefined,
             skillLevel: state.opponent.skillLevel ?? undefined,
             modelId: effectiveModelId,
           });
@@ -2420,7 +2427,7 @@ function App(): React.ReactElement {
 
       completeRound(result);
       saveRoundResult(result, state.gameId, state.opponent, state.boardSize!);
-      if (state.gameId) {
+      if (state.gameId && effectiveDataSharing !== 'none') {
         logRoundData(result, {
           gameId: state.gameId,
           roundNum: result.round,
@@ -2428,8 +2435,8 @@ function App(): React.ReactElement {
           boardSize: state.boardSize!,
           playerScoreBefore: playerScore,
           opponentScoreBefore: opponentScore,
-          playerId: savedUser?.id,
-          lotSessionId: lotMode?.sessionId,
+          playerId: effectiveDataSharing === 'full' ? savedUser?.id : undefined,
+          lotSessionId: effectiveDataSharing === 'full' ? lotMode?.sessionId : undefined,
         });
       }
       setIsSimulatingRound(false);
@@ -2485,7 +2492,7 @@ function App(): React.ReactElement {
     if (savedUser?.opponentCreature) result.opponentCreature = savedUser.opponentCreature;
     completeRound(result);
     saveRoundResult(result, state.gameId, state.opponent, state.boardSize);
-    if (state.gameId) {
+    if (state.gameId && effectiveDataSharing !== 'none') {
       logRoundData(result, {
         gameId: state.gameId,
         roundNum: result.round,
@@ -2493,8 +2500,8 @@ function App(): React.ReactElement {
         boardSize: state.boardSize!,
         playerScoreBefore: playerScore,
         opponentScoreBefore: opponentScore,
-        playerId: savedUser?.id,
-        lotSessionId: lotMode?.sessionId,
+        playerId: effectiveDataSharing === 'full' ? savedUser?.id : undefined,
+        lotSessionId: effectiveDataSharing === 'full' ? lotMode?.sessionId : undefined,
         skillLevel: state.opponent.skillLevel ?? undefined,
         modelId: retryEffectiveModelId,
       });
@@ -2525,7 +2532,7 @@ function App(): React.ReactElement {
 
     completeRound(forfeitResult);
     saveRoundResult(forfeitResult, state.gameId, state.opponent, state.boardSize);
-    if (state.gameId) {
+    if (state.gameId && effectiveDataSharing !== 'none') {
       logRoundData(forfeitResult, {
         gameId: state.gameId,
         roundNum: forfeitResult.round,
@@ -2533,8 +2540,8 @@ function App(): React.ReactElement {
         boardSize: state.boardSize!,
         playerScoreBefore: playerScore,
         opponentScoreBefore: opponentScore,
-        playerId: savedUser?.id,
-        lotSessionId: lotMode?.sessionId,
+        playerId: effectiveDataSharing === 'full' ? savedUser?.id : undefined,
+        lotSessionId: effectiveDataSharing === 'full' ? lotMode?.sessionId : undefined,
         skillLevel: state.opponent.skillLevel ?? undefined,
       });
     }
@@ -2840,12 +2847,14 @@ function App(): React.ReactElement {
 
   // Handle tutorial name entry continue
   const handleTutorialNameContinue = (newUser: UserProfileType) => {
-    // Merge preferences from current user (set during tutorial) into new user
+    // Merge preferences from current user (set during tutorial) into new user,
+    // and bake in the data sharing choice made on the consent screen
     const userWithPreferences: UserProfileType = {
       ...newUser,
       preferences: {
         ...newUser.preferences,
         ...state.user.preferences,
+        dataSharing: pendingConsent ?? 'full',
       },
     };
 
@@ -2960,6 +2969,10 @@ function App(): React.ReactElement {
   const renderPhase = () => {
     switch (phase.type) {
       case 'tutorial-intro':
+        // New users see the data consent screen before the tutorial
+        if (savedUser === null && pendingConsent === null) {
+          return <DataConsentScreen onContinue={setPendingConsent} />;
+        }
         return (
           <TutorialIntro
             onNext={handleTutorialIntroNext}

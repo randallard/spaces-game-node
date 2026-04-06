@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Research — Spaces Game</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      background: #f5f5f5;
+      color: #2c2c2c;
+      line-height: 1.7;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 2rem;
+      color: #4a90e2;
+      text-decoration: none;
+      font-size: 0.9375rem;
+    }
+    .back:hover { text-decoration: underline; }
+
+    h1 {
+      font-size: 2rem;
+      color: #2c2c2c;
+      margin-bottom: 0.5rem;
+    }
+
+    .lead {
+      font-size: 1.125rem;
+      color: #555;
+      margin-bottom: 2.5rem;
+      line-height: 1.65;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      color: #2c2c2c;
+      margin: 2.25rem 0 0.75rem;
+      padding-bottom: 0.375rem;
+      border-bottom: 2px solid #e8e8e8;
+    }
+
+    p { margin-bottom: 1rem; color: #444; }
+    p:last-child { margin-bottom: 0; }
+
+    ul, ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+      color: #444;
+    }
+    li { margin-bottom: 0.4rem; }
+
+    /* Callout */
+    .callout {
+      background: #fff;
+      border-left: 4px solid #4a90e2;
+      border-radius: 0 0.5rem 0.5rem 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+    }
+    .callout p { color: #444; }
+
+    /* Skill level grid */
+    .levels {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .level {
+      background: #fff;
+      border: 2px solid #e8e8e8;
+      border-radius: 0.5rem;
+      padding: 0.875rem 1rem;
+    }
+
+    .level-name {
+      font-weight: 700;
+      font-size: 0.9375rem;
+      color: #2c2c2c;
+      margin-bottom: 0.25rem;
+    }
+
+    .level-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #e8e8e8;
+      color: #666;
+      border-radius: 0.25rem;
+      padding: 1px 6px;
+      margin-bottom: 0.375rem;
+    }
+
+    .level-desc {
+      font-size: 0.8125rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    /* Training pipeline */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 1rem 0 1.5rem;
+      position: relative;
+    }
+
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      left: 1.125rem;
+      top: 1.5rem;
+      bottom: 1.5rem;
+      width: 2px;
+      background: #e8e8e8;
+    }
+
+    .step {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      padding: 0.75rem 0;
+      position: relative;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      background: #4a90e2;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-body { padding-top: 0.25rem; }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: #2c2c2c;
+      margin-bottom: 0.2rem;
+    }
+
+    .step-desc {
+      font-size: 0.875rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    /* Question section */
+    .question {
+      background: #fff;
+      border: 2px solid #e8e8e8;
+      border-radius: 0.5rem;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .question-q {
+      font-weight: 600;
+      color: #2c2c2c;
+      margin-bottom: 0.5rem;
+    }
+
+    .question-a {
+      font-size: 0.9rem;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+
+    .link-btn {
+      display: inline-block;
+      padding: 0.5rem 1.25rem;
+      background: #4a90e2;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 0.5rem;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      transition: background 0.15s ease;
+    }
+    .link-btn:hover { background: #3a7bc8; }
+
+    .link-btn.secondary {
+      background: transparent;
+      color: #4a90e2;
+      border: 2px solid #4a90e2;
+    }
+    .link-btn.secondary:hover { background: #eef4fc; }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e8e8e8;
+      font-size: 0.875rem;
+      color: #999;
+    }
+
+    @media (max-width: 520px) {
+      .levels { grid-template-columns: 1fr; }
+      .pipeline::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="/" class="back">← Back to Spaces Game</a>
+
+    <h1>AI Research</h1>
+    <p class="lead">
+      Spaces Game is also a research platform for studying reinforcement learning in
+      competitive strategy games — and for understanding how AI agents at different skill
+      levels match up against real human players.
+    </p>
+
+    <h2>The game as a research environment</h2>
+    <p>
+      Each round of Spaces Game is a simultaneous, imperfect-information contest: both
+      players build their boards before either one is revealed, then the boards race
+      against each other. This makes it a rich environment for training and testing AI
+      agents — there's no turn-order advantage, bluffing is meaningful, and the fog of
+      war means neither side ever has the full picture.
+    </p>
+    <p>
+      Unlike chess or Go, where perfect play is well-studied, Spaces Game is an original
+      ruleset where the optimal strategy is genuinely unknown. That makes it useful for
+      studying how agents learn from scratch.
+    </p>
+
+    <h2>How the agents are trained</h2>
+    <p>
+      AI opponents are trained using <strong>reinforcement learning</strong> — the agent
+      plays millions of games, receives rewards for winning, and gradually figures out
+      better strategies without being told any rules explicitly.
+    </p>
+
+    <div class="pipeline">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Scripted opponents</div>
+          <div class="step-desc">
+            The agent starts by playing against simple rule-based opponents with
+            predictable strategies. This gives it a foundation to build on before
+            anything more adaptive is introduced.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Self-play curriculum</div>
+          <div class="step-desc">
+            The agent begins playing against saved copies of itself from earlier in
+            training. A curriculum progressively introduces stronger opponents so the
+            agent is always playing near the edge of its current ability.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Fog of war &amp; opponent history</div>
+          <div class="step-desc">
+            Agents learn under fog-of-war conditions — they only see what their opponent
+            reveals by how far their piece gets. They also observe a history of their
+            opponent's past boards, letting them adapt to patterns across rounds.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-num" style="background:#52c41a">✓</div>
+        <div class="step-body">
+          <div class="step-title">Checkpoint snapshots at skill levels</div>
+          <div class="step-desc">
+            Model checkpoints are saved at different points during training — early,
+            mid, and late — giving us distinct skill levels that represent real stages
+            of learning rather than artificial difficulty dials.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p>
+        The training algorithm is <strong>Proximal Policy Optimization (PPO)</strong> with
+        action masking, implemented using <a href="https://stable-baselines3.readthedocs.io/" target="_blank" rel="noopener noreferrer" style="color:#4a90e2">Stable-Baselines3</a>
+        and a custom <a href="https://gymnasium.farama.org/" target="_blank" rel="noopener noreferrer" style="color:#4a90e2">Gymnasium</a> environment.
+        Full source at <a href="https://github.com/randallard/spaces-game-python" target="_blank" rel="noopener noreferrer" style="color:#4a90e2">spaces-game-python</a>.
+      </p>
+    </div>
+
+    <h2>Skill levels</h2>
+    <p>
+      Each level corresponds to a checkpoint from a real training run. The <em>_plus</em>
+      variants use deterministic action selection (always picks the highest-probability move)
+      while the base levels sample stochastically, making them more varied and less predictable.
+    </p>
+
+    <div class="levels">
+      <div class="level">
+        <div class="level-name">Beginner</div>
+        <div class="level-tag">early checkpoint</div>
+        <div class="level-desc">Just starting to learn the rules. Makes obvious structural mistakes.</div>
+      </div>
+      <div class="level">
+        <div class="level-name">Intermediate</div>
+        <div class="level-tag">mid checkpoint</div>
+        <div class="level-desc">Understands the basics. Starting to exploit traps and scoring consistently.</div>
+      </div>
+      <div class="level">
+        <div class="level-name">Advanced</div>
+        <div class="level-tag">late checkpoint</div>
+        <div class="level-desc">Strong and adaptive. Reads opponent history and builds efficiently.</div>
+      </div>
+      <div class="level">
+        <div class="level-name">Scripted 1–5</div>
+        <div class="level-tag">rule-based</div>
+        <div class="level-desc">Hand-coded strategies used during early training. Deterministic and inspectable.</div>
+      </div>
+    </div>
+
+    <h2>What we want to learn</h2>
+    <p>
+      The core research question is: <strong>how do AI agents at different stages of
+      training compare against human players of varying experience?</strong>
+    </p>
+    <p>
+      When you play against an AI opponent, your game becomes a data point in that
+      question. We record the boards you both build and the outcome — which lets us
+      study things like:
+    </p>
+    <ul>
+      <li>Which skill levels are genuinely challenging for new players vs. experienced ones?</li>
+      <li>Do humans exploit weaknesses in early-stage agents that self-play training doesn't discover?</li>
+      <li>Do players adapt their strategy across rounds when playing the same agent repeatedly?</li>
+      <li>Does the agent's fog-of-war modeling reflect what humans actually do?</li>
+    </ul>
+
+    <div class="callout">
+      <p>
+        Human vs. AI game data is rare in novel rulesets. Every game you play genuinely
+        contributes to a dataset that doesn't exist anywhere else.
+      </p>
+    </div>
+
+    <h2>Common questions</h2>
+
+    <div class="question">
+      <div class="question-q">Can I see the AI's code?</div>
+      <div class="question-a">
+        Yes. The training environment and inference server are open source at
+        <a href="https://github.com/randallard/spaces-game-python" target="_blank" rel="noopener noreferrer" style="color:#4a90e2">github.com/randallard/spaces-game-python</a>.
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="question-q">Will my game data be used to train future agents?</div>
+      <div class="question-a">
+        Possibly. The current agents are pre-trained and don't update in real time, but
+        the dataset we're building may inform future training runs. That's part of why
+        we ask for your consent — and why "No data" is a real option, not a formality.
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="question-q">What if I don't want my games used?</div>
+      <div class="question-a">
+        Set your data sharing preference to "No data" in your Profile and nothing
+        is written to the research database. You can change this at any time.
+      </div>
+    </div>
+
+    <h2>Responsible AI — by design</h2>
+    <p>
+      The initial agents were trained on a recycled Dell Optiplex with a hand-me-down GPU —
+      no cloud datacenters, no large energy footprint. That was a deliberate choice, not a
+      limitation we're trying to overcome.
+    </p>
+    <p>
+      This project is an attempt to show that meaningful AI research can be done
+      <strong>ecologically</strong> (low energy, reused hardware),
+      <strong>economically</strong> (accessible without institutional resources), and
+      <strong>socially responsibly</strong> (transparent about methods and data use,
+      designed so AI augments rather than harms the communities it touches).
+    </p>
+    <p>
+      We're not claiming to have solved these tensions — we're striving toward them, openly,
+      and we think that effort is worth naming.
+    </p>
+
+    <h2>Play &amp; contribute</h2>
+    <p>
+      The best way to contribute is to play — especially against the AI agent opponents.
+      Each game helps us understand what humans do that the models don't expect.
+    </p>
+    <div class="links">
+      <a href="/" class="link-btn">Play now</a>
+      <a href="/privacy" target="_blank" class="link-btn secondary">Privacy &amp; data details</a>
+    </div>
+
+    <footer>
+      Spaces Game &mdash; research platform for multi-agent reinforcement learning
+    </footer>
+  </div>
+</body>
+</html>

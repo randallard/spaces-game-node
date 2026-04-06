@@ -94,3 +94,6 @@ export type { WaitingForOpponentProps } from './WaitingForOpponent';
 
 export { AiRetryModal } from './AiRetryModal';
 export type { AiRetryModalProps } from './AiRetryModal';
+
+export { DataConsentScreen } from './DataConsentScreen';
+export type { DataConsentScreenProps } from './DataConsentScreen';

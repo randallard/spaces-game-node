@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy &amp; Data Sharing — Spaces Game</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      background: #f5f5f5;
+      color: #2c2c2c;
+      line-height: 1.7;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 2rem;
+      color: #4a90e2;
+      text-decoration: none;
+      font-size: 0.9375rem;
+    }
+    .back:hover { text-decoration: underline; }
+
+    h1 {
+      font-size: 2rem;
+      color: #2c2c2c;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 0.9375rem;
+      margin-bottom: 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      color: #2c2c2c;
+      margin: 2rem 0 0.75rem;
+      padding-bottom: 0.375rem;
+      border-bottom: 2px solid #e8e8e8;
+    }
+
+    p { margin-bottom: 1rem; color: #444; }
+
+    ul, ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+      color: #444;
+    }
+    li { margin-bottom: 0.375rem; }
+
+    .tiers {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .tier {
+      background: #fff;
+      border: 2px solid #e8e8e8;
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+    }
+
+    .tier-name {
+      font-weight: 600;
+      color: #2c2c2c;
+      margin-bottom: 0.25rem;
+    }
+
+    .tier-desc {
+      font-size: 0.875rem;
+      color: #666;
+      margin: 0;
+    }
+
+    .callout {
+      background: #fff;
+      border-left: 4px solid #4a90e2;
+      border-radius: 0 0.5rem 0.5rem 0;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .callout p { margin: 0; color: #444; }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e8e8e8;
+      font-size: 0.875rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="/" class="back">← Back to Spaces Game</a>
+
+    <h1>Privacy &amp; Data Sharing</h1>
+    <p class="subtitle">Last updated: 2026</p>
+
+    <h2>What we collect</h2>
+    <p>
+      When you play Spaces Game, some information about your games may be sent to our server.
+      This is used exclusively for academic research into how artificial intelligence learns to
+      play strategy games.
+    </p>
+
+    <div class="callout">
+      <p>
+        <strong>We never collect</strong> your name, email, IP address, cookies, or anything
+        else that could identify you as a real person. This is a hard constraint, not a policy
+        that could change.
+      </p>
+    </div>
+
+    <p>Depending on your data sharing choice, we may collect:</p>
+    <ul>
+      <li>The board layouts constructed during each round</li>
+      <li>Round outcomes — who won, by how much, whether a trap was triggered</li>
+      <li>
+        An <strong>anonymous player ID</strong> — a random identifier generated on your device,
+        stored only in your browser's local storage, with no connection to any real identity
+      </li>
+    </ul>
+
+    <h2>How data is used</h2>
+    <p>Collected game data is used to:</p>
+    <ul>
+      <li>Train and evaluate reinforcement learning AI models that play Spaces Game</li>
+      <li>Study how human players develop strategies over time</li>
+      <li>Publish academic research (always in aggregate — never per-player)</li>
+    </ul>
+    <p>No data is sold, shared with third parties, or used for advertising.</p>
+
+    <h2>Your choices</h2>
+    <p>
+      You choose how much to share when you first play, and can change it at any time in
+      your <strong>Profile</strong> settings.
+    </p>
+
+    <div class="tiers">
+      <div class="tier">
+        <div class="tier-name">Full anonymous data</div>
+        <p class="tier-desc">
+          Board and outcome data is collected and linked by your anonymous player ID.
+          This lets us study how individual players improve over time — by game patterns,
+          never by identity. Most useful for research.
+        </p>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Minimal — AI research only</div>
+        <p class="tier-desc">
+          Board and outcome data is collected with no player ID. Each game is treated
+          as independent. Useful for training AI models but cannot track learning
+          across sessions.
+        </p>
+      </div>
+      <div class="tier">
+        <div class="tier-name">No data — offline only</div>
+        <p class="tier-desc">
+          Nothing is sent to our servers for research. Your game data stays entirely on
+          your device. Multiplayer still works — board data in game links is used to run
+          your game but is not stored in our research database.
+        </p>
+      </div>
+    </div>
+
+    <h2>The anonymous player ID</h2>
+    <p>Your player ID is a randomly generated UUID created the first time you play. It is:</p>
+    <ul>
+      <li>Stored in your browser's local storage only</li>
+      <li>Never linked to your name, email, or any account</li>
+      <li>Not sent to the server at all if you choose Minimal or No data</li>
+      <li>Deleted when you clear your browser data or start fresh from a backup restore</li>
+    </ul>
+    <p>
+      If you play on multiple devices, each has its own player ID with no way to link them.
+    </p>
+
+    <h2>Multiplayer</h2>
+    <p>
+      The server coordinates turn-taking for games with friends by passing board data through
+      game links. This coordination happens regardless of your data sharing choice — it's
+      required for multiplayer to work. With "No data" selected, the board content in those
+      links is processed to run your game but is <strong>not</strong> written to our research
+      database.
+    </p>
+
+    <h2>Server backup (coming soon)</h2>
+    <p>
+      We are working on an optional feature that saves your game history and boards to the
+      cloud so you can restore them on a new device. This will be opt-in and separate from
+      research data collection. It will be free initially.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Questions or requests to delete data associated with your anonymous player ID?
+      Open an issue in the project repository.
+    </p>
+
+    <footer>
+      Spaces Game &mdash; research platform for multi-agent reinforcement learning
+    </footer>
+  </div>
+</body>
+</html>

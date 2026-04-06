@@ -5,6 +5,14 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/$1"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/research",
+      "destination": "/research.html"
     }
   ],
   "headers": [

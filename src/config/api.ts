@@ -9,13 +9,15 @@
  * In production: uses the same origin as the frontend
  */
 export function getApiUrl(): string {
-  // In development, use the configured API URL (Vercel dev server)
-  if (import.meta.env.DEV) {
-    return import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  // In production, API is served from the same origin
+  if (!import.meta.env.DEV) {
+    return window.location.origin;
   }
 
-  // In production, API is served from the same origin
-  return window.location.origin;
+  // In development, use an explicit override if set.
+  // Otherwise use '' (relative) so Vite's proxy forwards /api/* to the API
+  // server without a cross-origin request from the browser.
+  return import.meta.env.VITE_API_URL || '';
 }
 
 /**
@@ -46,3 +48,4 @@ export function getInferenceApiEndpoint(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${baseUrl}${normalizedPath}`;
 }
+

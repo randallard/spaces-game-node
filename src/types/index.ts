@@ -23,7 +23,7 @@ export {
 export type { Opponent, OpponentType, OpponentStats, AiAgentSkillLevel, ModelAssignment } from './opponent';
 
 // User types
-export type { UserProfile, UserStats, OpponentStatsMap } from './user';
+export type { UserProfile, UserStats, OpponentStatsMap, DataSharingLevel } from './user';
 
 // Game state types
 export type {

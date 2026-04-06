@@ -13,10 +13,13 @@ export type UserStats = {
   ties: number;
 };
 
+export type DataSharingLevel = 'none' | 'minimal' | 'full';
+
 export type UserPreferences = {
   showCompleteRoundResults?: boolean | undefined; // Default to false if undefined
   explanationStyle?: 'lively' | 'technical' | undefined; // Default to 'lively' if undefined
   mobileExplanationMode?: 'overlay' | 'below' | 'hidden' | undefined; // Default to 'overlay' if undefined
+  dataSharing?: DataSharingLevel | undefined; // undefined = not yet chosen; existing users default to 'full'
 };
 
 export type UserProfile = {

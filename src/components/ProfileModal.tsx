@@ -4,11 +4,13 @@
  */
 
 import { useState, useCallback, useRef, type ReactElement } from 'react';
-import type { UserProfile, CreatureId } from '@/types';
+import type { UserProfile, CreatureId, DataSharingLevel } from '@/types';
 import { getAllCreatures } from '@/types/creature';
 import { downloadBackup, loadBackupFromFile, importBackup } from '@/utils/backup';
 import { DiscordConnectionModal } from './DiscordConnectionModal';
 import { getApiEndpoint } from '@/config/api';
+
+const PRIVACY_URL = '/privacy';
 import { FEATURES, isStaticMode, getModeDescription } from '@/config/features';
 import styles from './ProfileModal.module.css';
 
@@ -93,7 +95,25 @@ export function ProfileModal({
     user.preferences?.showCompleteRoundResults ?? false
   );
 
+  const [dataSharing, setDataSharing] = useState<DataSharingLevel>(
+    user.preferences?.dataSharing ?? 'full'
+  );
+
   // Auto-save preference changes
+  const handleDataSharingChange = useCallback(
+    (level: DataSharingLevel): void => {
+      setDataSharing(level);
+      onUpdate({
+        ...user,
+        preferences: {
+          ...user.preferences,
+          dataSharing: level,
+        },
+      });
+    },
+    [user, onUpdate]
+  );
+
   const handleToggleShowCompleteRoundResults = useCallback(
     (checked: boolean): void => {
       setShowCompleteRoundResults(checked);
@@ -174,12 +194,13 @@ export function ProfileModal({
         preferences: {
           ...user.preferences,
           showCompleteRoundResults,
+          dataSharing,
         },
       });
 
       onClose();
     },
-    [name, user, validateName, onUpdate, onClose, playerCreature, opponentCreature, showCompleteRoundResults]
+    [name, user, validateName, onUpdate, onClose, playerCreature, opponentCreature, showCompleteRoundResults, dataSharing]
   );
 
   const handleBackdropClick = useCallback(
@@ -260,7 +281,8 @@ export function ProfileModal({
     name.trim() !== user.name ||
     playerCreature !== user.playerCreature ||
     opponentCreature !== user.opponentCreature ||
-    showCompleteRoundResults !== (user.preferences?.showCompleteRoundResults ?? false);
+    showCompleteRoundResults !== (user.preferences?.showCompleteRoundResults ?? false) ||
+    dataSharing !== (user.preferences?.dataSharing ?? 'full');
 
   return (
     <div className={styles.backdrop} onClick={handleBackdropClick}>
@@ -441,6 +463,49 @@ export function ProfileModal({
                 <span className={styles.statLabel}>Ties</span>
                 <span className={styles.statValue}>{user.stats.ties}</span>
               </div>
+            </div>
+          </div>
+
+          {/* Data Sharing */}
+          <div className={styles.dataSharing}>
+            <h3 className={styles.dataSharingTitle}>
+              Data Sharing
+              {user.preferences?.dataSharing === undefined && (
+                <span className={styles.dataSharingBadge}>not set</span>
+              )}
+            </h3>
+            <p className={styles.dataSharingDescription}>
+              Anonymous game data may be used to research AI learning. No PII, no IP address, no cookies.{' '}
+              <a
+                href={PRIVACY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.dataSharingLink}
+              >
+                Learn more
+              </a>
+            </p>
+            <div className={styles.dataSharingOptions}>
+              {([
+                { value: 'full' as DataSharingLevel, label: 'Full anonymous data', sub: 'Boards + outcomes linked by anonymous player ID' },
+                { value: 'minimal' as DataSharingLevel, label: 'Minimal — AI research only', sub: 'Boards + outcomes, no player ID' },
+                { value: 'none' as DataSharingLevel, label: 'No data', sub: 'Nothing sent to our research database' },
+              ] as const).map((opt) => (
+                <label key={opt.value} className={`${styles.dataSharingOption} ${dataSharing === opt.value ? styles.dataSharingOptionSelected : ''}`}>
+                  <input
+                    type="radio"
+                    name="data-sharing-profile"
+                    value={opt.value}
+                    checked={dataSharing === opt.value}
+                    onChange={() => handleDataSharingChange(opt.value)}
+                    className={styles.dataSharingRadio}
+                  />
+                  <span className={styles.dataSharingOptionText}>
+                    <span className={styles.dataSharingOptionLabel}>{opt.label}</span>
+                    <span className={styles.dataSharingOptionSub}>{opt.sub}</span>
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
 

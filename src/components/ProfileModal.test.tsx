@@ -212,6 +212,7 @@ describe('ProfileModal', () => {
       expect(onUpdate).toHaveBeenCalledWith({
         ...mockUser,
         name: 'NewName',
+        preferences: { ...mockUser.preferences, dataSharing: 'full' },
       });
     });
 
@@ -404,7 +405,7 @@ describe('ProfileModal', () => {
         stats: mockUser.stats, // Stats should be preserved
         playerCreature: mockUser.playerCreature,
         opponentCreature: mockUser.opponentCreature,
-        preferences: mockUser.preferences, // Preferences should be preserved
+        preferences: { ...mockUser.preferences, dataSharing: 'full' },
       });
     });
 
