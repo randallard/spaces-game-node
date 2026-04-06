@@ -182,16 +182,16 @@ export function derivePhase(state: GameState): GamePhase {
   console.log('[derivePhase] gameCreatorId:', state.gameCreatorId);
   console.log('[derivePhase] userId:', state.user.id);
 
-  // Check for UI-only phase override first
-  if (state.phaseOverride) {
-    console.log('[derivePhase] ✅ Returning phaseOverride:', state.phaseOverride);
-    return state.phaseOverride;
-  }
-
-  // User setup not complete
+  // User setup not complete - always takes priority over any phase override
   if (!state.user.name) {
     console.log('[derivePhase] ✅ Returning user-setup');
     return { type: 'user-setup' };
+  }
+
+  // Check for UI-only phase override
+  if (state.phaseOverride) {
+    console.log('[derivePhase] ✅ Returning phaseOverride:', state.phaseOverride);
+    return state.phaseOverride;
   }
 
   // No game mode selected yet
